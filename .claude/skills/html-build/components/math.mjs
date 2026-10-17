@@ -6,11 +6,11 @@ import { esc, need } from "./_util.mjs";
 
 // math：数式（試作）。TeX の記法で書いた式を、ビルド時に KaTeX で HTML に変える。表示するときに何も読み込まない（D8）。
 // data: { tex, output?: "html" | "mathml", size?: "large" | "body", caption? }
-// - output: html（既定。KaTeX の CSS とフォントを deck.html に埋め込む。どの環境でも同じ見た目）
+// - output: html（既定。ユーザーが決定。KaTeX の CSS とフォントを deck.html に埋め込む。どの環境でも同じ見た目）
 //           mathml（ブラウザが自分で描く。KaTeX はビルド時だけ使う。見た目は環境のフォントで変わる）
 // - size: large（既定。式だけを大きく見せる）／body（本文と同じ大きさ）
 // - html を使うデッキは、katexCss() の CSS を deck.html に入れる。
-// ライセンス：KaTeX のコードは MIT、フォントは OFL-1.1（どちらも policy.md の「許可」）。使うと決めたら registry.yaml に登録する。
+// ライセンス：KaTeX のコードは MIT、フォントは OFL-1.1。registry.yaml に登録済み（id: katex）。数式のあるデッキはクレジットに両方を載せる。
 
 export default function math(data) {
   need("math", data, ["tex"]);

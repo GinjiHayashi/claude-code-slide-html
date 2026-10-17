@@ -22,9 +22,9 @@ export default function kpi(data) {
   const cards = items
     .map((it) => {
       need("kpi", it, ["label", "value"]);
-      const box = it.highlight ? "bg-highlight" : "bg-panel";
+      const box = it.highlight ? "bg-highlight border-primary" : "bg-panel border-gray-400"; // 塗りの箱には必ず枠を付ける（地の色だけだと境目がわかりにくい）
       const val = it.highlight ? "text-primary" : "text-ink";
-      return `<div class="flex flex-1 flex-col rounded-panel ${box} p-[24px]">
+      return `<div class="flex flex-1 flex-col rounded-panel border-2 ${box} p-[24px]">
   <div class="text-body font-bold text-label">${esc(it.label)}</div>
   <div class="mt-[12px] flex items-baseline gap-[6px]">
     <span class="text-kpi font-bold ${val}">${esc(it.value)}</span>

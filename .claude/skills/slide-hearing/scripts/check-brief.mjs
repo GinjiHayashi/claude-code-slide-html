@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // brief.md のチェック：空の項目（まだ聞いていない）と、書式の誤りを出す。ヒアリングで聞く項目はここから決める（要求文書 6.2・6.3）。
-// 使い方：node .claude/skills/slide-intake/scripts/check-brief.mjs decks/<deck-id>/brief.md
-// - 書式は slide-intake/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
+// 使い方：node .claude/skills/slide-hearing/scripts/check-brief.mjs decks/<deck-id>/brief.md
+// - 書式は slide-hearing/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
 // - 戻り値：{ errors（書式の誤り）, missing（空の項目）, questions（「確認したいこと」に書かれた行）, meta, sections }
 // - 終了コード：0＝すべて埋まっている、1＝空の項目か確認したいことがある、2＝書式の誤り
 import fs from "fs";

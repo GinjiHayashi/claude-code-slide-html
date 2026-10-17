@@ -36,7 +36,7 @@ export default function area(data, opt = {}) {
   return `<div class="flex h-full w-full gap-[32px]" data-kind="area">
 <div class="flex min-w-0 flex-1 flex-col">
   ${unitLabel(data.percent ? "%" : data.unit)}
-  <svg class="mt-[8px] block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="面グラフ">
+  <svg data-origin="generated" class="mt-[8px] block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="面グラフ">
   ${yGrid(y, m.l, w - m.r, fmt)}
   ${paths}
   <line class="stroke-gray-600" x1="${m.l}" x2="${w - m.r}" y1="${y(0)}" y2="${y(0)}" stroke-width="2"/>

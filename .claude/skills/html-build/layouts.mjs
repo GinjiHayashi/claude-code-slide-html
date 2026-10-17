@@ -125,8 +125,8 @@ ${topics}</div>`);
   // チェックリスト：済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）
   checklist: (s, ctx) => {
     const ck = (done) => done
-      ? `<svg width="24" height="24" viewBox="0 0 24 24" class="shrink-0" role="img" aria-label="済み"><rect x="1" y="1" width="22" height="22" rx="4" class="fill-primary"/><path d="M6 12.5l4 4 8-9" class="fill-none stroke-canvas" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
-      : `<svg width="24" height="24" viewBox="0 0 24 24" class="shrink-0" role="img" aria-label="未済み"><rect x="2" y="2" width="20" height="20" rx="4" class="fill-canvas stroke-lightblue-1200" stroke-width="2"/></svg>`;
+      ? `<svg data-origin="generated" width="24" height="24" viewBox="0 0 24 24" class="shrink-0" role="img" aria-label="済み"><rect x="1" y="1" width="22" height="22" rx="4" class="fill-primary"/><path d="M6 12.5l4 4 8-9" class="fill-none stroke-canvas" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      : `<svg data-origin="generated" width="24" height="24" viewBox="0 0 24 24" class="shrink-0" role="img" aria-label="未済み"><rect x="2" y="2" width="20" height="20" rx="4" class="fill-canvas stroke-lightblue-1200" stroke-width="2"/></svg>`;
     const it = s.fields.items, done = it.filter((x) => x.done).length;
     return page(s, ctx, () => `<div class="grid grid-cols-2 gap-x-[48px]">${it.map((x) => `<div class="flex items-center gap-[16px] border-b border-line py-[16px]">${ck(x.done)}<span class="text-heading ${x.done ? "text-label" : "font-bold text-ink"}">${esc(x.text)}</span></div>`).join("")}</div><div class="mt-[24px] text-body text-label">${it.length}項目のうち${done}項目が済み</div>`);
   },
@@ -150,4 +150,14 @@ export async function renderDeck(outline) {
     out.push(await LAYOUTS[s.fields.layout](s, ctx));
   }
   return out;
+}
+
+// ---- ライセンス表記（credits）：outline.md には書かない。license-notice のスクリプトが作った行から、最後のスライドを作る ----
+// rows：[{ name, license, copyright }]（license-notice/scripts/credits.mjs）。文面は registry.yaml の値をそのまま使う
+export function renderCredits(rows) {
+  const s = { id: "CREDITS", fields: { layout: "credits", title: "ライセンス表記", lead: "このスライドで使っている素材と、そのライセンスです。ライセンスの全文は、このファイル（deck.html）の中に含めています。" } };
+  return page(s, {}, () => `<table class="w-full border-collapse text-left">
+<thead><tr class="border-b-2 border-ink text-caption font-bold text-label"><th class="w-[280px] py-[8px] pr-[24px] font-bold">素材</th><th class="w-[200px] py-[8px] pr-[24px] font-bold">ライセンス</th><th class="py-[8px] font-bold">著作権者・表記</th></tr></thead>
+<tbody>${rows.map((r) => `<tr class="border-b border-line align-top"><td class="py-[12px] pr-[24px] text-body font-bold text-ink">${esc(r.name)}</td><td class="py-[12px] pr-[24px] text-body text-ink">${esc(r.license)}</td><td class="py-[12px] text-caption text-ink">${esc(r.copyright)}</td></tr>`).join("")}</tbody>
+</table>`);
 }

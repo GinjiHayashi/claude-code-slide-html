@@ -9,7 +9,7 @@ const spark = (values) => {
   const y = (v) => (max === min ? h / 2 : h - ((v - min) / (max - min)) * (h - 4) - 2);
   const pts = values.map((v, i) => `${((i / (values.length - 1)) * (w - 4) + 2).toFixed(1)},${y(v).toFixed(1)}`);
   const last = pts.at(-1).split(",");
-  return `<svg class="mt-[12px] block" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+  return `<svg data-origin="generated" class="mt-[12px] block" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
   <polyline class="fill-none stroke-blue-600" stroke-width="2" points="${pts.join(" ")}"/>
   <circle class="fill-blue-600" cx="${last[0]}" cy="${last[1]}" r="3"/>
 </svg>`;

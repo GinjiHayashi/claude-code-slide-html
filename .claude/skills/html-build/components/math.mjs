@@ -16,7 +16,7 @@ export default function math(data) {
   need("math", data, ["tex"]);
   const output = data.output ?? "html";
   // html のときも MathML を併せて出す（読み上げソフトのため。見た目は KaTeX の CSS で隠れる）
-  const html = katex.renderToString(data.tex, { displayMode: true, output: output === "mathml" ? "mathml" : "htmlAndMathml", throwOnError: true });
+  const html = katex.renderToString(data.tex, { displayMode: true, output: output === "mathml" ? "mathml" : "htmlAndMathml", throwOnError: true }).replace(/<svg /g, '<svg data-origin="generated" '); // KaTeX が作る SVG（根号など）にも、部品が作ったことを示す印を付ける
   const size = data.size === "body" ? "text-body" : "flex h-full flex-col justify-center text-title"; // large は枠の縦の中央に置く
   const cap = data.caption ? `<div class="mt-[12px] text-center text-caption text-label">${esc(data.caption)}</div>` : "";
   return `<div class="${size} text-ink" data-kind="math" data-output="${output}">${html}${cap}</div>`;

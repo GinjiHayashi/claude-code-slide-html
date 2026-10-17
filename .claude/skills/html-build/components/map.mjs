@@ -54,7 +54,7 @@ export default function map(data, opt = {}) {
     }).join("");
     const [ix, iy, iw, ih] = S.inset;
     const k = Math.min(1, H / S.height); // 説明文があって本文が低いときは、高さに合わせて縮める
-    body = `<svg class="block shrink-0" width="${Math.floor(S.width * k)}" height="${Math.floor(S.height * k)}" viewBox="0 0 ${S.width} ${S.height}" role="img" aria-label="都道府県の地図"><rect class="fill-none stroke-gray-400" stroke-width="1" x="${ix + 0.5}" y="${iy + 0.5}" width="${iw}" height="${ih}"/>${paths}</svg>`;
+    body = `<svg data-origin="generated" data-asset-id="natural-earth:japan-prefectures" class="block shrink-0" width="${Math.floor(S.width * k)}" height="${Math.floor(S.height * k)}" viewBox="0 0 ${S.width} ${S.height}" role="img" aria-label="都道府県の地図"><rect class="fill-none stroke-gray-400" stroke-width="1" x="${ix + 0.5}" y="${iy + 0.5}" width="${iw}" height="${ih}"/>${paths}</svg>`;
   }
   return `<div class="flex h-full w-full items-center justify-center gap-[48px]" data-kind="map" style="max-width:${W}px">
 ${body}

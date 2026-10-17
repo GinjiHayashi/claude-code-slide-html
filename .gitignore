@@ -19,3 +19,4 @@ Thumbs.db
 examples/*/deck.html
 examples/*/deck.pdf
 examples/*/build-log.md
+examples/*/assets-manifest.yaml

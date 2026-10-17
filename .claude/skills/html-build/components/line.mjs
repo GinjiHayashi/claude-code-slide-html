@@ -55,7 +55,7 @@ export default function line(data, opt = {}) {
   return `<div class="flex h-full w-full gap-[32px]" data-kind="line">
 <div class="flex min-w-0 flex-1 flex-col">
   ${unitLabel(data.unit)}
-  <svg class="mt-[8px] block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="折れ線グラフ">
+  <svg data-origin="generated" class="mt-[8px] block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="折れ線グラフ">
   ${yGrid(y, m.l, w - m.r)}
   <line class="stroke-gray-600" x1="${m.l}" x2="${w - m.r}" y1="${y(lo)}" y2="${y(lo)}" stroke-width="2"/>
   ${xLabels(xs, (l) => x(l), h - 8)}

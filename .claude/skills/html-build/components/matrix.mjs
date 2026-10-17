@@ -12,10 +12,10 @@ import { esc, need, lineOf } from "./_util.mjs";
 
 const head = (dir, cls) =>
   ({
-    left: `<svg class="absolute left-0 top-1/2 -translate-y-1/2" width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path class="${cls}" d="M0 7L12 0V14Z"/></svg>`,
-    right: `<svg class="absolute right-0 top-1/2 -translate-y-1/2" width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path class="${cls}" d="M12 7L0 0V14Z"/></svg>`,
-    up: `<svg class="absolute top-0 left-1/2 -translate-x-1/2" width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path class="${cls}" d="M7 0L14 12H0Z"/></svg>`,
-    down: `<svg class="absolute bottom-0 left-1/2 -translate-x-1/2" width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path class="${cls}" d="M7 12L14 0H0Z"/></svg>`,
+    left: `<svg data-origin="generated" class="absolute left-0 top-1/2 -translate-y-1/2" width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path class="${cls}" d="M0 7L12 0V14Z"/></svg>`,
+    right: `<svg data-origin="generated" class="absolute right-0 top-1/2 -translate-y-1/2" width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path class="${cls}" d="M12 7L0 0V14Z"/></svg>`,
+    up: `<svg data-origin="generated" class="absolute top-0 left-1/2 -translate-x-1/2" width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path class="${cls}" d="M7 0L14 12H0Z"/></svg>`,
+    down: `<svg data-origin="generated" class="absolute bottom-0 left-1/2 -translate-x-1/2" width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path class="${cls}" d="M7 12L14 0H0Z"/></svg>`,
   })[dir];
 
 export default function matrix(data) {

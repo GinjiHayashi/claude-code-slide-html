@@ -100,7 +100,7 @@ export default function tree(data, opt = {}) {
     });
   }
   return `<div class="relative mx-auto" style="width:${W}px;height:${H}px" data-kind="tree">
-<svg class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines.join("")}</svg>
+<svg data-origin="generated" class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines.join("")}</svg>
 ${boxes.join("")}
 </div>`;
 }

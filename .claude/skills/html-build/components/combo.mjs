@@ -36,7 +36,7 @@ export default function combo(data, opt = {}) {
     .join("");
   return `<div class="flex h-full w-full gap-[32px]" data-kind="combo">
 <div class="flex min-w-0 flex-1 flex-col">
-  <svg class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="複合グラフ">
+  <svg data-origin="generated" class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="複合グラフ">
   <rect class="fill-gray-400" x="${m.l - 56}" y="4" width="14" height="14"/>
   <text class="fill-ink text-body" x="${m.l - 36}" y="20">${esc(bar.name)}（${esc(bar.unit)}・左の目盛）</text>
   <circle class="fill-primary" cx="${w - m.r + 50}" cy="11" r="6"/>

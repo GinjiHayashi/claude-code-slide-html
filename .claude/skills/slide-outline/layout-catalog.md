@@ -50,8 +50,8 @@
 | title | `text-cover`（48px）・太字・`primary` | 2行まで、1行あたり全角22字 |
 | subtitle | `text-heading`（20px）・`ink` | 1行、全角50字 |
 | date | **必須**。右下に `text-body`（16px）・`label` | 1行。例「2026年10月17日」 |
-| author.org | 所属。左下に `text-body`（16px）・`label` | 1行、全角40字 |
-| author.name | 氏名。左下に `text-heading`（20px）・太字・`ink` | 1行、全角20字 |
+| author.org | 所属。左下に `text-body`（16px）・`label`（日付と同じ） | 1行、全角40字 |
+| author.name | 氏名。所属と同じ `text-body`（16px）・`label`。太字にしない（ユーザーが決定） | 1行、全角20字 |
 
 - 下端に横の帯（`primary`、高さ `strip`＝20）を引く。左端の縦の帯は使わない。
 - title と subtitle をひとまとまりにし、左揃え（x=80）で縦の中央に揃える。文字の見た目の中心を合わせるため、0.04 文字分だけ上にずらす（Noto Sans JP での実測）。title と subtitle の間は 16。

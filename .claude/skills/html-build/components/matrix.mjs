@@ -59,7 +59,7 @@ export default function matrix(data) {
       <span class="shrink-0 [writing-mode:vertical-rl]">${esc(Y.low)}</span>
     </div>
   </div>`;
-  return `<div class="grid h-full w-full gap-[12px]" style="grid-template-columns: 56px 1fr; grid-template-rows: 1fr 56px" data-kind="matrix">
+  return `<div class="grid h-full w-full gap-[12px]" style="grid-template-columns: 56px 1fr; grid-template-rows: 1fr 64px" data-kind="matrix">
   ${yAxis}
   <div class="grid min-h-0 grid-cols-2 grid-rows-2 gap-[16px]">${cells.join("\n")}</div>
   <div></div>

@@ -38,9 +38,9 @@ export default function combo(data, opt = {}) {
 <div class="flex min-w-0 flex-1 flex-col">
   <svg class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="複合グラフ">
   <rect class="fill-gray-400" x="${m.l - 56}" y="4" width="14" height="14"/>
-  <text class="fill-ink text-body" x="${m.l - 36}" y="16">${esc(bar.name)}（${esc(bar.unit)}・左の目盛）</text>
+  <text class="fill-ink text-body" x="${m.l - 36}" y="20">${esc(bar.name)}（${esc(bar.unit)}・左の目盛）</text>
   <circle class="fill-primary" cx="${w - m.r + 50}" cy="11" r="6"/>
-  <text class="fill-primary text-body font-bold" x="${w - m.r + 36}" y="16" text-anchor="end">${esc(ln.name)}（${esc(ln.unit)}・右の目盛）</text>
+  <text class="fill-primary text-body font-bold" x="${w - m.r + 36}" y="20" text-anchor="end">${esc(ln.name)}（${esc(ln.unit)}・右の目盛）</text>
   ${yGrid(yb, m.l, w - m.r)}
   ${yl.ticks(5).map((t) => `<text class="fill-primary text-caption" x="${w - m.r + 10}" y="${yl(t).toFixed(1)}" dominant-baseline="middle">${t.toLocaleString("ja-JP")}</text>`).join("")}
   ${bars}

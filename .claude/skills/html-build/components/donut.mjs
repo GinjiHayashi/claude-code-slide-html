@@ -20,7 +20,7 @@ export default function donut(data, opt = {}) {
   const items = data.items.filter((d) => d.label !== "その他").sort((a, b) => b.value - a.value).concat(others);
   const sum = items.reduce((a, d) => a + d.value, 0);
   const { w, h: h0 } = svgSize(data, opt);
-  const h = h0 - 24;
+  const h = h0 - 28; // 単位（18）と間（8）の分を引き、枠の高さに収める
   const legend = data.legend ?? "direct";
   // 輪の大きさは書き方ごとに決める。direct は左右に名前を書く幅、table は右の表の幅、compact は下の1行の高さを残す
   const r = Math.max(60, Math.min(200,
@@ -77,7 +77,7 @@ export default function donut(data, opt = {}) {
     const [ox, oy] = out.centroid(a);
     return { a, k, side: ox >= 0 ? 1 : -1, y: cy + oy, ex: edge.centroid(a), ox, oy };
   });
-  const lab = [1, -1].flatMap((side) => spread(L.filter((l) => l.side === side), 44, 16, h - 16));
+  const lab = [1, -1].flatMap((side) => spread(L.filter((l) => l.side === side), 44, 24, h - 26)); // 名前（上）と割合（下）が SVG の内側に収まる範囲
   const cw = 2 * r + 2 * 170; // 輪の左右に名前を書く幅
   const dcx = cw / 2;
   const tags = lab

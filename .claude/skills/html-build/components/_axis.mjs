@@ -31,6 +31,7 @@ export const xLabels = (labels, xOf, yPos) => {
 /** 右端に直接書く系列名が重ならないよう、上下に押し広げる */
 export const spread = (items, minGap = 20, top = 0, bottom = Infinity) => {
   const s = [...items].sort((a, b) => a.y - b.y);
+  if (s.length) s[0].y = Math.max(top, s[0].y); // 上の端より上には出さない
   for (let i = 1; i < s.length; i++) if (s[i].y - s[i - 1].y < minGap) s[i].y = s[i - 1].y + minGap;
   const over = s.length ? s.at(-1).y - bottom : 0;
   if (over > 0) s.forEach((it) => (it.y = Math.max(top, it.y - over)));

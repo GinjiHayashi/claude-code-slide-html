@@ -15,7 +15,7 @@ export default function area(data, opt = {}) {
   if (series.length < 2 || series.length > 5) throw new Error("area: 系列は2〜5");
   if (xs.length < 2 || xs.length > 24) throw new Error("area: 時点は2〜24");
   const { w, h: h0 } = svgSize(data, opt);
-  const h = h0 - 24;
+  const h = h0 - 26; // 単位（18）と間（8）の分
   const m = { l: 64, r: 168, t: 12, b: 32 };
   const rows = xs.map((_, i) => Object.fromEntries(series.map((s) => [s.name, s.values[i]])));
   const st = stack().keys(series.map((s) => s.name));

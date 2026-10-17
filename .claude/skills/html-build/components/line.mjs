@@ -17,7 +17,7 @@ export default function line(data, opt = {}) {
   if (series.length < 1 || series.length > 4) throw new Error("line: 系列は1〜4");
   if (xs.length < 2 || xs.length > 24) throw new Error("line: 時点は2〜24");
   const { w, h: h0 } = svgSize(data, opt);
-  const h = h0 - 24; // 上に単位を書く分
+  const h = h0 - 26; // 上に単位を書く分（単位 18 ＋ 間 8）
   const m = { l: 64, r: 184, t: 12, b: 32 };
   const all = series.flatMap((s) => s.values).concat(data.target ? [data.target.value] : []);
   const lo = data.zero === false ? Math.min(...all) : Math.min(0, ...all);

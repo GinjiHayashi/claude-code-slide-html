@@ -31,7 +31,7 @@ export default function scatter(data, opt = {}) {
   return `<div class="flex h-full w-full gap-[32px]" data-kind="scatter">
 <div class="flex min-w-0 flex-1 flex-col">
   <svg class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="散布図">
-  <text class="fill-label text-caption" x="${m.l - 64}" y="12">縦：${esc(data.y_label ?? "")}（${esc(data.y_unit)}）</text>
+  <text class="fill-label text-caption" x="${m.l - 64}" y="14">縦：${esc(data.y_label ?? "")}（${esc(data.y_unit)}）</text>
   ${yGrid(y, m.l, w - m.r)}
   ${xt}
   <line class="stroke-gray-600" x1="${m.l}" x2="${w - m.r}" y1="${h - m.b}" y2="${h - m.b}" stroke-width="2"/>

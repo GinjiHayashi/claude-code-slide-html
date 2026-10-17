@@ -3,7 +3,7 @@ import { esc, need } from "./_util.mjs";
 // table：正確な値を一覧で読ませる。8行×6列まで。
 // data: { columns: [string], rows: [[...]], highlight?: [行の番号（1から）], align?: ["left"|"right"|"center"], style? }
 // highlight は任意（書かなければ強調しない）。
-// style（見た目の種類。4-5 の試作で既定を決める）：
+// style（見た目の種類）：既定は zebra（ユーザーが決定。見出しの青がタイトルの青とそろい、統一感があるため）
 //   panel  本文の行は薄いグレーの地＋横線（見本のガイドブックと同じ）
 //   lines  白地＋横線だけ
 //   zebra  白と薄いグレーを1行おきに。線なし
@@ -17,7 +17,7 @@ export default function table(data) {
   if (columns.length > 6) throw new Error("table: 列は6まで");
   if (rows.length > 8) throw new Error("table: 行は8まで");
   const hi = new Set(data.highlight ?? []);
-  const style = data.style ?? "panel";
+  const style = data.style ?? "zebra";
   const ST = {
     panel: { th: "bg-primary text-on-primary", row: () => "bg-panel", td: "border-b border-line" },
     lines: { th: "bg-primary text-on-primary", row: () => "bg-canvas", td: "border-b border-line" },

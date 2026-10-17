@@ -1,0 +1,84 @@
+/*
+ * theme.css：スライドの見た目のトークン（D2）。運用時は固定（D4）。
+ * - @theme に書いた値は、Tailwind のクラス（例：text-primary、bg-panel、text-title）と CSS 変数の両方になる。
+ * - 値の出どころは design-reference/reference/palette.md（色）と slide-style.md（寸法・文字）。
+ *   見本を差し替えたら、このファイルを人間が見直す。
+ * - スライドは 1280×720px で作る。
+ * - ここにない色・文字サイズは使わない（機械的なチェックで検出する）。
+ */
+
+@theme {
+  /* Tailwind の既定の色をすべて外し、ここで定義した色だけを使えるようにする */
+  --color-*: initial;
+
+  /* ---- 書体 ---- */
+  --font-sans: "Noto Sans JP", sans-serif;
+
+  /* ---- 文字と背景（役割） ---- */
+  --color-ink: #1a1a1a;          /* 本文。SolidGray 900 */
+  --color-label: #626264;        /* 補足、ラベル、軸の文字 */
+  --color-primary: #0017c1;      /* タイトル、強調の文字、表紙・扉の背景。Blue 900 */
+  --color-on-primary: #ffffff;   /* 濃い背景の上の文字 */
+  --color-canvas: #ffffff;       /* スライドの背景 */
+  --color-panel: #f8f8fb;        /* カード・パネルの背景。Standard */
+  --color-control: #f1f1f4;      /* 表の行など、さらに区別したい面。Control */
+  --color-line: #cccccc;         /* 罫線、目盛線。SolidGray 200 */
+  --color-highlight: #e8f1fe;    /* 強調したいカードの背景、淡色の扉。Blue 50 */
+
+  /* ---- グラフ：主（Blue の段階。面に使えるのは 600 以上） ---- */
+  --color-blue-1200: #000060;
+  --color-blue-900: #0017c1;
+  --color-blue-600: #3460fb;
+  --color-blue-400: #7096f8;
+  --color-blue-200: #c5d7fb;
+  --color-blue-50: #e8f1fe;
+
+  /* ---- グラフ：副 ---- */
+  --color-yellow-800: #a58000;
+  --color-yellow-600: #d2a400;
+  --color-yellow-400: #ffc700;
+
+  /* ---- グラフ：中立（比較対象・その他） ---- */
+  --color-gray-800: #333333;
+  --color-gray-600: #666666;
+  --color-gray-400: #999999;
+  --color-gray-200: #cccccc;
+
+  /* ---- 意味のある色 ---- */
+  --color-positive: #3460fb;     /* 増加。Blue 600 */
+  --color-positive-soft: #c5d7fb;
+  --color-negative: #fe3939;     /* 減少。Red 600 */
+  --color-negative-soft: #ffbbbb;
+  --color-success: #197a4b;      /* 良い例（Do） */
+  --color-error: #ce0000;        /* 悪い例（Don't）、注意 */
+
+  /* ---- 文字サイズ（1280×720 のとき） ---- */
+  --text-cover: 48px;            /* 表紙のタイトル */
+  --text-cover--line-height: 1.3;
+  --text-section: 64px;          /* 章の扉のタイトル */
+  --text-section--line-height: 1.2;
+  --text-title: 36px;            /* ページのタイトル */
+  --text-title--line-height: 1.3;
+  --text-breadcrumb: 16px;       /* タイトルの上の節名 */
+  --text-breadcrumb--line-height: 1.4;
+  --text-heading: 20px;          /* 小見出し */
+  --text-heading--line-height: 1.5;
+  --text-body: 16px;             /* 本文 */
+  --text-body--line-height: 1.7;
+  --text-kpi: 40px;              /* 指標（大きな数字） */
+  --text-kpi--line-height: 1.2;
+  --text-caption: 12px;          /* 図表の目盛り、注記、出典 */
+  --text-caption--line-height: 1.5;
+  --text-footer: 11px;           /* フッター（ページ番号、更新日） */
+  --text-footer--line-height: 1.4;
+
+  /* ---- 余白と寸法（1280×720 のとき） ---- */
+  --spacing-slide-x: 54px;       /* 左右の余白 */
+  --spacing-slide-top: 63px;     /* タイトルの上端 */
+  --spacing-slide-bottom: 27px;  /* フッターの下端 */
+  --spacing-title-gap: 50px;     /* タイトルから本文まで */
+  --spacing-column: 560px;       /* 左文・右図のときの文章の列幅 */
+
+  /* ---- 角の丸み ---- */
+  --radius-panel: 8px;
+}

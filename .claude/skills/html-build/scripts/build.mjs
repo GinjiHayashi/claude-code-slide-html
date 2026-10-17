@@ -14,10 +14,11 @@ import { createRequire } from "module";
 import { scanDeck } from "../../license-notice/scripts/scan.mjs";
 import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
+import { checkGate } from "../../make-slides/scripts/gate.mjs";
 
 // ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る（要求文書 11章）。
 // 使い方：node build.mjs decks/<deck-id>
-// 1. 書式チェック（check-outline.mjs）。エラーがあれば止める
+// 1. 書式チェック（check-outline.mjs）。エラーがあれば止める。承認ゲート（gate.mjs）が通らなければ注意として記録する
 // 2. スライドを組み立てる（layouts.mjs と components/）
 // 3. Tailwind の CLI で、使っているクラスだけの CSS を作る（theme.css のトークンを含む）
 // 4. Noto Sans JP を使っている文字だけにサブセット化して埋め込む（font-subset.py）
@@ -32,6 +33,8 @@ const YAML = createRequire(import.meta.url)("yaml");
 export async function build(deckDir) {
   const outlineFile = path.join(deckDir, "outline.md");
   const chk = await checkOutline(outlineFile);
+  // 承認ゲート：単独で呼んだときは止めずに注意として記録する（要求文書 11章。止めるのは make-slides が gate.mjs で行う）
+  chk.warnings.unshift(...checkGate(deckDir, "build").errors.map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   if (chk.errors.length) {
     const r = { ok: false, check: chk, custom: customs(outline) };

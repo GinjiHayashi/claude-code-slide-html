@@ -82,3 +82,28 @@ export function rounded(p, r = 8) {
   const [lx, ly] = p.at(-1);
   return d + `L${f(lx)},${f(ly)}`;
 }
+
+// ---- 量の大小を青の濃淡で示す色（heatmap・map で共通）----
+// 薄い方から5段階。濃い2段は白い文字。
+export const SEQ = [
+  { bg: "bg-blue-50", fill: "fill-blue-50", text: "text-ink" },
+  { bg: "bg-blue-200", fill: "fill-blue-200", text: "text-ink" },
+  { bg: "bg-blue-400", fill: "fill-blue-400", text: "text-ink" },
+  { bg: "bg-blue-600", fill: "fill-blue-600", text: "text-on-primary" },
+  { bg: "bg-blue-900", fill: "fill-blue-900", text: "text-on-primary" },
+];
+const PICK = { 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4] };
+
+/** 値の並びを、最小から最大まで等しい幅で n 段階に分ける。shades（色）、step（値→段階）、legend（凡例の項目の HTML）を返す */
+export function seqStep(values, n = 5) {
+  if (!PICK[n]) throw new Error("steps は3〜5");
+  const shades = PICK[n].map((i) => SEQ[i]);
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const w = (hi - lo) / n || 1;
+  const step = (v) => Math.min(n - 1, Math.floor((v - lo) / w));
+  const legend = shades.map((s, k) => {
+    const a = lo + w * k, b = k === n - 1 ? hi : lo + w * (k + 1);
+    return `<div class="flex items-center gap-[6px]"><span class="inline-block h-[16px] w-[24px] border border-line ${s.bg}"></span><span class="text-caption text-label">${num(Math.round(a))}〜${num(Math.round(b))}</span></div>`;
+  }).join("");
+  return { shades, step, legend };
+}

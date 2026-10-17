@@ -85,7 +85,7 @@
 | `er` | データの項目と関係（ER 図）。同上 | entities（name, fields）, relations | 表は6まで | SVG/CSS | 使う場面があるか。`flowchart` で足りないか |
 | `venn` | 2〜3つの集合の重なり | sets（label, items?）, overlaps | 集合は3つまで | SVG | `matrix` や `compare` で足りないか |
 
-`heatmap`・`venn`・`sequence`・`er` は部品を試作済み（`html-build/components/` の同名のファイル）。`venn` は highlight で全部が重なる部分だけを塗り、`sequence` は応答（reply）を点線、`er` は表の見出しを塗って両端に多重度（1・N）を書く。`map` は地図データのライセンスを確かめてから作る。
+`heatmap`・`venn`・`sequence`・`er` は部品を試作済み（`html-build/components/` の同名のファイル）。`venn` は highlight で全部が重なる部分だけを塗り、`sequence` は応答（reply）を点線、`er` は表の見出しを塗って両端に多重度（1・N）を書く。`map` は style: tile（既定。タイルグリッド地図、外部データなし）と shape（実際の形。地図データを別に用意する）の2通りを試作した。shape の見本は Natural Earth（パブリックドメイン）で作ったが、地図データはリポジトリに入れていない。`math` は KaTeX（コード MIT、フォント OFL-1.1）で、HTML 出力（既定）と MathML 出力を試作した。どちらも使うと決めたら registry.yaml に登録する。
 
 数式（`math:`、KaTeX）も同じく試作の対象にする。使うと決めたら、license-notice の許可済み一覧に登録してから使う（D9）。
 

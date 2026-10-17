@@ -39,7 +39,7 @@ export function checkGate(deckDir, stage) {
     const file = path.join(deckDir, target);
     if (!fs.existsSync(file)) { errors.push(`${target} がない`); continue; }
     const a = latest(approvals, target);
-    if (!a) { errors.push(`${target} が承認されていない（approve.mjs で人間が承認する）`); continue; }
+    if (!a) { errors.push(`${target} が承認されていない（人間がプロンプトに「承認 ${target}」と打つ）`); continue; }
     const text = fs.readFileSync(file);
     if (a.sha256 === sha256(text)) continue;
     let where = "";

@@ -1,6 +1,7 @@
 # 使ってよい素材と道具の一覧（registry.yaml）
 # - 基準は policy.md。登録と確認は人間が行う（AI は下調べまで）。運用時は固定ファイル。
 # - verified_by / verified_at が空の項目は「未確認」。照合スクリプトは未確認の項目を不合格にする。
+# - verification：何をもって確認したか（公式の LICENSE と照合 / AI の転記を承認）
 # - scope: distributed（deck.html に埋め込まれる。クレジットに載せる）| build-only（ビルド時だけ使う。クレジットに載せない）
 # - files: distributed の素材の実体（assets/ からの相対パス）と sha256。外部からは読み込まない。
 
@@ -23,8 +24,9 @@
     - サブセット化は改変にあたるため、予約フォント名「Source」を含む名前を付けない（「Noto Sans JP」は含まない）
   notes:
     - 著作権表示はフォントファイルの name テーブル（ID 0）から取った。Fontsource の LICENSE ファイルの1行目は「Google Inc.」で、フォント本体の表記と食い違う
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
 
 - id: lucide
   name: Lucide
@@ -44,8 +46,9 @@
   notice_required: true             # ISC・MIT とも、著作権表示と許諾文を含める
   conditions:
     - アイコンを1つでも使ったら、ISC と MIT（Feather）の両方の表記を載せる（どのアイコンが Feather 由来かを判定しなくて済むようにする）
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
 
 # ---- ビルド時だけ使う道具（クレジットに載せない） ----
 
@@ -62,8 +65,9 @@
   notice_required: false
   conditions:
     - 生成した CSS の先頭の「/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */」を消さない
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: mermaid
   name: Mermaid
@@ -76,8 +80,9 @@
   package: "npm:mermaid@12.2.0"
   commercial_use: true
   notice_required: false
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: d3-scale
   name: d3-scale
@@ -90,8 +95,9 @@
   package: "npm:d3-scale@4.0.2"
   commercial_use: true
   notice_required: false
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: d3-shape
   name: d3-shape
@@ -104,8 +110,9 @@
   package: "npm:d3-shape@3.2.0"
   commercial_use: true
   notice_required: false
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: playwright
   name: Playwright
@@ -120,8 +127,9 @@
   notice_required: false
   notes:
     - 検査と PDF 化だけに使う。ブラウザ本体（Chromium）は配布物に入らない
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: fonttools
   name: fontTools（フォントのサブセット化）
@@ -136,8 +144,9 @@
   notice_required: false
   notes:
     - スクリプトを Node.js に統一する場合（レビュー R13）は差し替えを検討する
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
 - id: brotli
   name: Brotli（woff2 の圧縮）
@@ -150,5 +159,6 @@
   package: "pypi:brotli==1.2.0"
   commercial_use: true
   notice_required: false
-  verified_by:
-  verified_at:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）

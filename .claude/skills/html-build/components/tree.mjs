@@ -39,12 +39,26 @@ export default function tree(data, opt = {}) {
     const leaves = [];
     const walk = (n, d) => ((n.children ?? []).length ? n.children.forEach((c) => walk(c, d + 1)) : leaves.push(n));
     walk(root, 0);
-    const slot = H / leaves.length, bh = Math.min(56, slot - 12);
+    // 葉どうしの間は gap、親が変わるところはさらに group だけ空ける
+    const parentOf = new Map();
+    const link = (n) => (n.children ?? []).forEach((k) => (parentOf.set(k, n), link(k)));
+    link(root);
+    const gap = 20, group = 16;
+    const breaks = leaves.filter((l, i) => i && parentOf.get(l) !== parentOf.get(leaves[i - 1])).length;
+    const bh = Math.min(48, (H - gap * (leaves.length - 1) - group * breaks) / leaves.length);
+    const leafY = new Map();
+    let y = 0;
+    leaves.forEach((l, i) => {
+      if (i) y += gap + (parentOf.get(l) !== parentOf.get(leaves[i - 1]) ? group : 0);
+      leafY.set(l, y + bh / 2);
+      y += bh;
+    });
+    const top = (H - y) / 2; // 全体を縦の中央に置く
     const P = new Map();
     const place = (n, d) => {
       const c = n.children ?? [];
       c.forEach((k) => place(k, d + 1));
-      const cy = c.length ? (P.get(c[0]).cy + P.get(c.at(-1)).cy) / 2 : (leaves.indexOf(n) + 0.5) * slot;
+      const cy = c.length ? (P.get(c[0]).cy + P.get(c.at(-1)).cy) / 2 : top + leafY.get(n);
       P.set(n, { x: d * colW, y: cy - bh / 2, cy });
     };
     place(root, 0);
@@ -63,21 +77,23 @@ export default function tree(data, opt = {}) {
   } else {
     // 上に root、2段目を横に並べ、孫は子の下に縦に積む
     const C = root.children, n = C.length;
-    const rw = 280, rh = 56, y2 = rh + 40, h2 = 56;
+    const rw = 280, rh = 56, y2 = rh + 48, h2 = 56;
     const cw = W / n, bw = Math.min(240, cw - 32);
     const rx = (W - rw) / 2;
     boxes.push(box(root, rx, 0, rw, rh));
-    const busY = rh + 20;
+    const busY = rh + 24;
     lines.push(line([[W / 2, rh], [W / 2, busY]])); // root から分かれ目までは1本
     C.forEach((c, i) => {
       const x = i * cw + (cw - bw) / 2, cx = x + bw / 2;
       boxes.push(box(c, x, y2, bw, h2));
       lines.push(line([[W / 2, busY], [cx, busY], [cx, y2]]));
       const g = c.children ?? [];
-      const gh = 40, gap = 12, gx = x + 28, gw = bw - 28;
+      // 孫どうしの間は 20（入りきらないときだけ詰める）
+      const gh = 40, start = y2 + h2 + 20, gx = x + 28, gw = bw - 28;
+      const gap = g.length > 1 ? Math.min(20, (H - start - g.length * gh) / (g.length - 1)) : 0;
       g.forEach((k, j) => {
-        const gy = y2 + h2 + 16 + j * (gh + gap);
-        if (gy + gh > H) throw new Error("tree: 孫が多すぎて収まらない（direction: right を使う）");
+        const gy = start + j * (gh + gap);
+        if (gap < 8 || gy + gh > H + 0.5) throw new Error("tree: 孫が多すぎて収まらない（direction: right を使う）");
         boxes.push(box(k, gx, gy, gw, gh, true));
         lines.push(line([[x + 14, y2 + h2], [x + 14, gy + gh / 2], [gx, gy + gh / 2]]));
       });

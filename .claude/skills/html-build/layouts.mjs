@@ -155,7 +155,7 @@ export async function renderDeck(outline) {
 // ---- ライセンス表記（credits）：outline.md には書かない。license-notice のスクリプトが作った行から、最後のスライドを作る ----
 // rows：[{ name, license, copyright }]（license-notice/scripts/credits.mjs）。文面は registry.yaml の値をそのまま使う
 export function renderCredits(rows) {
-  const s = { id: "CREDITS", fields: { layout: "credits", title: "ライセンス表記", lead: "このスライドで使っている素材と、そのライセンスです。ライセンスの全文は、このファイル（deck.html）の中に含めています。" } };
+  const s = { id: "CREDITS", fields: { layout: "credits", title: "ライセンス表記", lead: "このスライドで使っている素材と、そのライセンスです。ライセンスの全文は、HTML 版（deck.html）の中に含めています。" } };
   return page(s, {}, () => `<table class="w-full border-collapse text-left">
 <thead><tr class="border-b-2 border-ink text-caption font-bold text-label"><th class="w-[280px] py-[8px] pr-[24px] font-bold">素材</th><th class="w-[200px] py-[8px] pr-[24px] font-bold">ライセンス</th><th class="py-[8px] font-bold">著作権者・表記</th></tr></thead>
 <tbody>${rows.map((r) => `<tr class="border-b border-line align-top"><td class="py-[12px] pr-[24px] text-body font-bold text-ink">${esc(r.name)}</td><td class="py-[12px] pr-[24px] text-body text-ink">${esc(r.license)}</td><td class="py-[12px] text-caption text-ink">${esc(r.copyright)}</td></tr>`).join("")}</tbody>

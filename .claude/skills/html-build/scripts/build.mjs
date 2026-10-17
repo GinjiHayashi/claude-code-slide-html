@@ -9,6 +9,7 @@ import { checkOutline } from "./check-outline.mjs";
 import { renderDeck, renderCredits } from "../layouts.mjs";
 import { katexCss } from "../components/math.mjs";
 import { inspect } from "./inspect.mjs";
+import { toPdf } from "./pdf.mjs";
 import crypto from "crypto";
 import { createRequire } from "module";
 import { scanDeck } from "../../license-notice/scripts/scan.mjs";
@@ -26,6 +27,7 @@ import { checkGate } from "../../make-slides/scripts/gate.mjs";
 // 6. 組み立てたものを走査し、registry.yaml・policy.md と照合する（license-notice）。不合格なら止める
 // 7. 合格した素材の credits スライドとライセンスの全文を入れて組み立て直し、deck.html と assets-manifest.yaml を書き出す。外部から何も読み込まない（D8）
 // 8. ブラウザで開いて機械的に検査し（inspect.mjs）、結果を build-log.md に書く。問題があれば失敗として返す
+// 9. 合格し、outline.md が pdf: true なら deck.pdf も作る（pdf.mjs）
 
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const YAML = createRequire(import.meta.url)("yaml");
@@ -81,6 +83,11 @@ export async function build(deckDir) {
     const insp = await inspect(out, count);
     const r = { check: chk, out, slides: count, bytes: Buffer.byteLength(html), math, fontLog, inspect: insp, custom: customs(outline), license: { ...lic, assets: scan.assets, rows: cr.rows } };
     r.ok = CATEGORIES.every(([k]) => !insp[k].length);
+    // PDF：検査に合格し、outline.md で pdf: true のときだけ作る
+    if (r.ok && outline.meta.pdf === true) {
+      r.pdf = path.join(deckDir, "deck.pdf");
+      await toPdf(out, r.pdf);
+    }
     fs.writeFileSync(path.join(deckDir, "build-log.md"), buildLog(outline, r));
     return r;
   } finally {
@@ -145,6 +152,7 @@ function buildLog(outline, r) {
     `- 日時：${new Date().toISOString()}`,
     `- 結果：${r.ok ? "合格" : r.inspect ? "不合格（下の検査を確認）" : r.license ? "ライセンスの照合で不合格のため止めた（deck.html は作っていない）" : "書式チェックのエラーで止めた（deck.html は作っていない）"}`,
     ...(r.inspect ? [`- 出力：deck.html（${r.slides}枚、${Math.round(r.bytes / 1024)} KB。フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`] : []),
+    ...(r.inspect ? [`- PDF：${r.pdf ? `deck.pdf（${Math.round(fs.statSync(r.pdf).size / 1024)} KB）` : outline.meta.pdf === true ? "検査に合格しなかったので作っていない" : "作らない（outline.md の pdf: false）"}`] : []),
     "",
     "## 書式チェック（check-outline.mjs）",
     "",
@@ -206,5 +214,6 @@ if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.re
   console.log(`${r.out}：${r.slides}枚、${Math.round(r.bytes / 1024)} KB（フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`);
   for (const [k, label] of CATEGORIES) for (const x of r.inspect[k]) console.log(`検査    ${label}：${x}`);
   console.log(r.ok ? "検査：合格（build-log.md に記録した）" : "検査：不合格（build-log.md を確認）");
+  if (r.pdf) console.log(`PDF：${r.pdf}`);
   if (!r.ok) process.exit(1);
 }

@@ -65,3 +65,20 @@ export const LINES = {
 };
 export const DEFAULT_LINE = "deepnavy";
 export const lineOf = (data) => LINES[data.line ?? DEFAULT_LINE];
+
+/** 折れ線（点の並び）を SVG の path にする。角は半径 r で丸める（前後の線の半分より大きくはしない）。flowchart・tree で共通 */
+export function rounded(p, r = 8) {
+  const f = (n) => n.toFixed(1);
+  let d = `M${f(p[0][0])},${f(p[0][1])}`;
+  for (let i = 1; i < p.length - 1; i++) {
+    const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1];
+    const l1 = Math.hypot(x1 - x0, y1 - y0), l2 = Math.hypot(x2 - x1, y2 - y1);
+    const k = Math.min(r, l1 / 2, l2 / 2);
+    if (k <= 0) { d += `L${f(x1)},${f(y1)}`; continue; }
+    const ax = x1 - ((x1 - x0) / l1) * k, ay = y1 - ((y1 - y0) / l1) * k;
+    const bx = x1 + ((x2 - x1) / l2) * k, by = y1 + ((y2 - y1) / l2) * k;
+    d += `L${f(ax)},${f(ay)}Q${f(x1)},${f(y1)} ${f(bx)},${f(by)}`;
+  }
+  const [lx, ly] = p.at(-1);
+  return d + `L${f(lx)},${f(ly)}`;
+}

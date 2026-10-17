@@ -1,4 +1,4 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, need, lineOf, rounded } from "./_util.mjs";
 
 // flowchart：流れ図。一列の流れから、枝分かれ・合流・戻りのある図まで、Mermaid を使わずに描く。
 // （以前の flow を統合した。箱を格子に置き、矢印は縦横の線を角の丸い折れ線でつなぐ）
@@ -116,23 +116,6 @@ export default function flowchart(data, opt = {}) {
     }
     return `<path class="fill-none ${LN.stroke}" stroke-width="2.5" stroke-linejoin="round" d="${d}"/><polygon class="${LN.fill}" points="${tri}"/>${lab}`;
   }).join("");
-
-  // 折れ線の角を、半径 r の円弧で丸める（前後の線の半分より大きくはしない）
-  function rounded(p, r) {
-    const f = (n) => n.toFixed(1);
-    let d = `M${f(p[0][0])},${f(p[0][1])}`;
-    for (let i = 1; i < p.length - 1; i++) {
-      const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1];
-      const l1 = Math.hypot(x1 - x0, y1 - y0), l2 = Math.hypot(x2 - x1, y2 - y1);
-      const k = Math.min(r, l1 / 2, l2 / 2);
-      if (k <= 0) { d += `L${f(x1)},${f(y1)}`; continue; }
-      const ax = x1 - ((x1 - x0) / l1) * k, ay = y1 - ((y1 - y0) / l1) * k;
-      const bx = x1 + ((x2 - x1) / l2) * k, by = y1 + ((y2 - y1) / l2) * k;
-      d += `L${f(ax)},${f(ay)}Q${f(x1)},${f(y1)} ${f(bx)},${f(by)}`;
-    }
-    const [lx, ly] = p.at(-1);
-    return d + `L${f(lx)},${f(ly)}`;
-  }
 
   return `<div class="relative mx-auto" style="width:${W}px;height:${H}px" data-kind="flowchart">
 <svg class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${edges}</svg>

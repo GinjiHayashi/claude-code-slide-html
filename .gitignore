@@ -1,0 +1,13 @@
+# 案件ごとの作業フォルダは git 管理外（レビュー R10）
+decks/*
+!decks/.gitkeep
+
+# ビルドで使う依存パッケージ
+node_modules/
+
+# 個人用の Claude Code 設定
+.claude/settings.local.json
+
+# OS が作るファイル
+.DS_Store
+Thumbs.db

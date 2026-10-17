@@ -1,5 +1,0 @@
-# いま使う見本（references/ の下のフォルダ名）
-# - 見本を差し替えるときは、references/<id>/ を用意してからここを書き換える。
-# - 書き換えるのは人間。スライド作成中に AI は変更しない（見た目を作成中に変えないため。要求文書 D4）。
-# - 差し替えたら theme.css と layout-catalog.md も見直す（構築時の作業）。
-reference: digital-agency-dashboard

@@ -48,7 +48,7 @@
     - アイコンを1つでも使ったら、ISC と MIT（Feather）の両方の表記を載せる（どのアイコンが Feather 由来かを判定しなくて済むようにする）
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
-  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
+  verification: 公式の LICENSE と照合した
 
 # ---- ビルド時だけ使う道具（クレジットに載せない） ----
 

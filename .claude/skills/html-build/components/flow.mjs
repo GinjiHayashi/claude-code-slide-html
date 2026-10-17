@@ -1,30 +1,33 @@
-import { esc, need } from "./_util.mjs";
+import { esc, need, lineOf } from "./_util.mjs";
 
 // flow：物やデータの流れを、箱と矢印で一列に示す。2〜8個。分岐や合流があるなら mermaid を使う。
 // data: { nodes: [{ label, caption?, type?: "store" | "process" }], highlight?: [label], direction?, wrap? }
-// - type: store（置き場所。白地に濃い枠）／process（処理。薄いグレーの地に枠）。書かなければ process。
-// - 箱には必ず枠を付ける（地の色だけだと境目がわかりにくいため）。highlight の箱は primary の地に白い文字。
+// - type: process（処理。白地に枠）／store（置き場所。淡い青の地に枠）。書かなければ process。
+// - 箱には必ず枠を付ける。枠と矢印の色は _util.mjs の LINES（line: で選べる。既定は DEFAULT_LINE）。
+// - highlight の箱は primary の地に白い文字。
 // - caption は短い説明。横向きでは箱の下、縦向きでは箱の右に書く。
 // - direction: "right"（既定。左から右）／"down"（上から下）。
 // - wrap: 1行に置く箱の数。超えたら端で下に折り返し、次の行は右から左へ進む（矢印が短くつながる「蛇行」の形）。
 // - 箱の文字は文節で折り返す（word-break: auto-phrase。base.html で指定済み）。
 
-const ARROW = {
-  right: `<svg class="shrink-0" width="40" height="24" viewBox="0 0 40 24" aria-hidden="true"><path class="fill-none stroke-gray-600" stroke-width="3" d="M2 12H34M26 4l8 8-8 8"/></svg>`,
-  left: `<svg class="shrink-0" width="40" height="24" viewBox="0 0 40 24" aria-hidden="true"><path class="fill-none stroke-gray-600" stroke-width="3" d="M38 12H6M14 4l-8 8 8 8"/></svg>`,
-  down: `<svg class="shrink-0" width="24" height="40" viewBox="0 0 24 40" aria-hidden="true"><path class="fill-none stroke-gray-600" stroke-width="3" d="M12 2V34M4 26l8 8 8-8"/></svg>`,
-};
+const arrows = (st) => ({
+  right: `<svg class="shrink-0" width="40" height="24" viewBox="0 0 40 24" aria-hidden="true"><path class="fill-none ${st}" stroke-width="3" d="M2 12H34M26 4l8 8-8 8"/></svg>`,
+  left: `<svg class="shrink-0" width="40" height="24" viewBox="0 0 40 24" aria-hidden="true"><path class="fill-none ${st}" stroke-width="3" d="M38 12H6M14 4l-8 8 8 8"/></svg>`,
+  down: `<svg class="shrink-0" width="24" height="40" viewBox="0 0 24 40" aria-hidden="true"><path class="fill-none ${st}" stroke-width="3" d="M12 2V34M4 26l8 8 8-8"/></svg>`,
+});
 
 export default function flow(data) {
   need("flow", data, ["nodes"]);
   const N = data.nodes;
   if (N.length < 2 || N.length > 8) throw new Error("flow: nodes は2〜8");
   const hi = new Set(data.highlight ?? []);
+  const LN = lineOf(data);
+  const ARROW = arrows(LN.stroke);
   const anyCap = N.some((n) => n.caption);
   const look = (n) =>
     hi.has(n.label) ? "bg-primary text-on-primary border-primary"
-    : n.type === "store" ? "bg-canvas text-ink border-gray-600"
-    : "bg-panel text-ink border-gray-400";
+    : n.type === "store" ? `bg-highlight text-ink ${LN.border}`
+    : `bg-canvas text-ink ${LN.border}`;
 
   if (data.direction === "down") {
     const items = N.map((n, i) => {

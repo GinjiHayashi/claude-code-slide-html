@@ -7,7 +7,7 @@ import { esc, need, lineOf } from "./_util.mjs";
 // 1) 一列の流れ（簡単な書き方）：nodes を並べるだけ。col・row と edges を書かなければ、順に自動でつなぐ。
 //    data: { nodes: [{ label, caption?, type? }], direction?: "right" | "down", wrap?: 1行の箱の数 }
 //    - direction: "right"（既定。左から右）／"down"（上から下。caption は箱の右に書く）
-//    - wrap: 超えたら端で下に折り返し、次の行は右から左へ進む
+//    - wrap: 1行の箱の数。超えたら、行の右端の箱から矢印を折り曲げて次の行の左端の箱へつなぎ、次の行も左から右へ進む（ユーザーが決定）
 // 2) 枝分かれ・合流・戻りのある図：箱に id・col（列）・row（行）を付け、edges でつなぎ方を書く。
 //    data: { nodes: [{ id, label, col, row, caption?, type? }], edges: [{ from, to, label? }] }
 //
@@ -17,9 +17,10 @@ import { esc, need, lineOf } from "./_util.mjs";
 // opt:  { width, height }（置く枠の大きさ。既定は 1172×440）
 // 矢印の通り方：
 //   - 右の列へ：箱の右から出て、2つの列の間で上下に折れ、相手の箱の左に入る（枝分かれ・合流）
-//   - 同じ行で左の列へ：まっすぐ左へ（折り返した行）
+//   - 下の行の左の列へ（折り返し）：箱の下から出て、2つの行の間で左へ折れ、相手の箱の上に入る
+//   - 同じ行で左の列へ：まっすぐ左へ
 //   - 同じ列：上下にまっすぐ
-//   - 別の行で左の列へ（戻り）：箱の下から出て、図のいちばん下を通り、相手の箱の下に入る
+//   - 上の行の左の列へ（戻り・ループ）：箱の下から出て、図のいちばん下を通り、相手の箱の下に入る
 // 矢印に書く文字（label）は、最後の線の途中に白い縁取りを付けて書く。
 
 export default function flowchart(data, opt = {}) {
@@ -32,7 +33,7 @@ export default function flowchart(data, opt = {}) {
     if (down) return { ...n, id, col: 0, row: i };
     const per = data.wrap ?? data.nodes.length;
     const row = Math.floor(i / per), k = i % per;
-    return { ...n, id, row, col: row % 2 ? per - 1 - k : k };
+    return { ...n, id, row, col: k };
   });
   const E = data.edges ?? (auto ? N.slice(1).map((n, i) => ({ from: N[i].id, to: n.id })) : null);
   if (!E) throw new Error("flowchart: col・row を書いたときは edges も書く");
@@ -42,7 +43,7 @@ export default function flowchart(data, opt = {}) {
   const cols = Math.max(...N.map((n) => n.col)) + 1;
   const rows = Math.max(...N.map((n) => n.row)) + 1;
   const anyCap = N.some((n) => n.caption);
-  const back = E.some((e) => byId(e.to).col < byId(e.from).col && byId(e.to).row !== byId(e.from).row);
+  const back = E.some((e) => byId(e.to).col < byId(e.from).col && byId(e.to).row < byId(e.from).row);
   const capH = anyCap && !down ? 44 : 0; // 箱の下の説明の高さ
   const cw = W / cols, ch = (H - (back ? 48 : 0)) / rows;
   const bw = down ? 320 : Math.min(220, cw - 56);
@@ -84,6 +85,16 @@ export default function flowchart(data, opt = {}) {
     if (B.col > A.col) {
       const sx = a.x + bw, ex = b.x, mx = sx + (ex - sx) / 2;
       pts = a.cy === b.cy ? [[sx, a.cy], [ex, b.cy]] : [[sx, a.cy], [mx, a.cy], [mx, b.cy], [ex, b.cy]];
+    } else if (B.row > A.row) {
+      // 折り返し：行と行の間（説明があればその下）で左へ折れる
+      const top = a.y + bh + capH, gy = top + (b.y - top) / 2;
+      if (capH) {
+        // 箱の下に説明があるときは、説明に重ならないよう箱の右から出て回り込む
+        const rx = a.x + bw + Math.min(20, (cw - bw) / 2 - 4);
+        pts = [[a.x + bw, a.cy], [rx, a.cy], [rx, gy], [b.cx, gy], [b.cx, b.y]];
+      } else {
+        pts = [[a.cx, a.y + bh], [a.cx, gy], [b.cx, gy], [b.cx, b.y]];
+      }
     } else if (B.row === A.row) {
       pts = [[a.x, a.cy], [b.x + bw, b.cy]]; // 折り返した行：まっすぐ左へ
     } else if (B.col === A.col) {

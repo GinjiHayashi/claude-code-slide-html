@@ -12,7 +12,7 @@
 |---|---|
 | 余白 | 左右 `slide-x`（54）、タイトルの上端 `slide-top`（63）、下端 `slide-bottom`（27） |
 | タイトル | 左上。`text-title`（36px）・太字・`primary`。前に縦長の帯（幅 8px、高さは文字の 1.25 倍、タイトルとの間 24px、帯と文字の中心を揃える）。**1行のみ、全角30字まで** |
-| パンくず（任意） | タイトルの上に、所属する章の名前を `text-breadcrumb`（16px）・太字・`primary` で書く |
+| パンくず（任意） | 書かなければ「CHAPTER 01: 章の名前」の形で自動で入る（ユーザーが決定）。タイトルの上に、所属する章の名前を `text-breadcrumb`（16px）・太字・`primary` で書く |
 | 説明文（lead） | 本文のある型（表紙・目次・章の扉・締め以外）では、タイトルの下 32 の位置に固定で置く（ユーザーが決定）。`text-body`（16px）・`ink`。幅は 640 を基本にし、3行を超える長さなら、3行に収まるまで幅を広げる（最大 1172＝本文の幅いっぱい）。それでも3行を超える長さ（全角およそ210字）は書式チェックのエラー。**必須**で、説明文の要らないスライドだけ `lead: false` と書いて外す |
 | 本文の開始位置 | 説明文の下 32。説明文がないときはタイトルの下 `title-gap`（50） |
 | 出典・図の番号 | 左下に `text-caption`（12px）・`label` の色で書く |
@@ -26,7 +26,7 @@
 | 型の名前 | 用途 | 枠（必須） | 枠（任意） | 制約 |
 |---|---|---|---|---|
 | `title` | 表紙 | title | subtitle, date, author | 下の 3.1 |
-| `toc` | 目次 | — | title | 項目は書かない。後ろの `section` の title から自動で作る。章の数は8まで |
+| `toc` | 目次 | — | title | 項目は書かない。後ろの `section` の title から自動で作る。6章までは1列、7章以上は2列（1列目を埋めてから2列目へ）。章の数は12まで |
 | `section` | 章の扉 | title | description, topics | 下の 3.2 |
 | `title-body` | 文章中心 | title, body | breadcrumb, source | 箇条書きは5項目まで、各項目は2行まで |
 | `text-diagram` | 左に文章・右に図 | title, body, diagram | breadcrumb, caption, source | 文章の列は幅 `column`（560）。箇条書きは4項目まで |
@@ -68,7 +68,7 @@
 
 | 枠 | 書き方 | 上限 |
 |---|---|---|
-| 章番号 | 「CHAPTER 1」の形。`text-heading`（20px）・太字・`blue-600`。**自動で付ける**（outline.md には書かない） | — |
+| 章番号 | 「CHAPTER 01」の形（2桁）。`text-heading`（20px）・太字・`blue-600`。**自動で付ける**（outline.md には書かない） | — |
 | 進み具合 | 章番号の右に、章の数だけ小さな点（8px）を並べ、今の章を `primary`、ほかを `gray-200` で塗る。**自動で付ける**。章が増えても潰れない | — |
 | title | `text-section`（64px）・太字・`primary` | 1行、全角16字 |
 | description | その章で話すことの説明。`text-body`（16px）・`ink` | 3行まで |

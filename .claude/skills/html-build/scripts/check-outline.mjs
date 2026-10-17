@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
@@ -52,6 +53,8 @@ export async function checkOutline(file) {
   if (!o.meta.title) errors.push("先頭の設定に title（デッキの題名）がない");
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
   if (!o.slides.length) errors.push("スライドが1枚もない");
+  const nch = o.slides.filter((s) => s.fields.layout === "section").length;
+  if (nch > 12 && o.slides.some((s) => s.fields.layout === "toc")) errors.push(`章が${nch}ある。目次（toc）に載せられるのは12章まで`);
 
   const seen = new Set();
   const comps = {};
@@ -168,7 +171,7 @@ export async function checkOutline(file) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) { // シンボリックリンク越しに呼ばれても判定できるよう、実体のパスで比べる
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-outline.mjs <outline.md>"); process.exit(2); }
   const r = await checkOutline(file);

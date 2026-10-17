@@ -49,7 +49,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | `notes` | 発表者ノート。スライドには出ない |
 | `claims` | このスライドの主張の ID。`[C-001, C-002]` の形（`research.md`・`factcheck.md` と同じ ID） |
 | `html` | 独自の表現。部品で表しにくいときだけ使う（`html-build/components.md` 4.1） |
-| `breadcrumb` | タイトルの上の章の名前。**書かなければ、前の `section` の title が自動で入る** |
+| `breadcrumb` | タイトルの上の章の名前。**書かなければ「CHAPTER 01: 章の名前」（前の `section`）が自動で入る** |
 | `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（下の表で「本文」と書いた型）では必須**。要らないスライドだけ `lead: false` と書く。3行まで（長いときはビルドが幅を広げて3行に収める。全角およそ210字を超えるとエラー） |
 
 ## 3. 型ごとの項目
@@ -59,7 +59,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | 型 | 必須 | 任意 | 書き方 |
 |---|---|---|---|
 | `title` | title, date | subtitle, author | title は2行まで（1行 22字）。author は `{org: 所属, name: 氏名}`（片方でもよい。両方なら2行）。日付と発表者は構成のときに人間に聞く |
-| `toc` | — | title | 項目は書かない。後ろの `section` の title から自動で作る |
+| `toc` | — | title | 項目は書かない。後ろの `section` の title から自動で作る。7章以上は2列。12章まで |
 | `section` | title | description, topics | title は 16字。topics は箇条書き 3〜6項目（各 20字）。章番号と進み具合の点は自動 |
 | `title-body` | title, body | breadcrumb, source | body は箇条書き 1〜5項目（各 110字） |
 | `text-diagram` | title, body ＋ 図 | breadcrumb, caption, source | body は 1〜4項目（各 68字）。図は右に置く |

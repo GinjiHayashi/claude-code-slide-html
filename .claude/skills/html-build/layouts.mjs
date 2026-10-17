@@ -11,7 +11,9 @@ import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "components");
 const SLIDE_W = 1280, SLIDE_H = 720, X = 54, BODY_W = SLIDE_W - 2 * X; // BODY_W = 1172
-const LINE = 27.2; // text-body（16px）の1行の高さ（行の高さ 1.7）
+const LINE = 27.2;
+const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01）
+const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む // text-body（16px）の1行の高さ（行の高さ 1.7）
 
 // ---- 文字 ----
 const strong = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>'); // **語句** → 太字（components.md 4.2）
@@ -28,7 +30,7 @@ const leadLines = (t) => Math.ceil(width(plain(t)) / (leadWidth(t) / LEAD.px - 2
 // 本文の枠の高さを計算し、inner(w, h) に渡す。下端は出典の上（720 − 64）
 function page(s, ctx, inner) {
   const f = s.fields;
-  const crumb = f.breadcrumb ?? ctx.chapter;
+  const crumb = f.breadcrumb ?? (ctx.chapter && `CHAPTER ${NN(ctx.chapterNo)}: ${ctx.chapter}`); // 書かなければ「CHAPTER 01: 章の名前」
   let top = 63 + (crumb ? 22 + 8 : 0) + 47; // 余白の上端 slide-top ＋ パンくず ＋ タイトル（36px × 1.3）
   let lead = "";
   if (typeof f.lead === "string") {
@@ -87,7 +89,7 @@ const LAYOUTS = {
   },
   // 目次：後ろの章の扉の title から自動で作る
   toc: (s, ctx) => section(s, ctx, `<div class="px-slide-x pt-slide-top"><h2 class="${TITLE}">${esc(s.fields.title ?? "目次")}</h2>
-<ol class="m-0 mt-title-gap flex list-none flex-col p-0">${ctx.chapters.map((c, i) => `<li class="flex items-baseline gap-[32px] border-b border-line py-[20px]"><span class="w-[48px] text-heading font-bold text-blue-600">${String(i + 1).padStart(2, "0")}</span><span class="text-heading font-bold text-ink">${esc(c)}</span></li>`).join("")}</ol></div>`),
+<ol class="m-0 mt-title-gap grid list-none grid-flow-col gap-x-[48px] p-0 ${ctx.chapters.length > TOC_ROWS ? "grid-cols-2" : "grid-cols-1"}" style="grid-template-rows:repeat(${Math.min(TOC_ROWS, Math.ceil(ctx.chapters.length / (ctx.chapters.length > TOC_ROWS ? 2 : 1)))},auto)">${ctx.chapters.map((c, i) => `<li class="flex items-baseline gap-[32px] border-b border-line py-[20px]"><span class="w-[48px] text-heading font-bold text-blue-600">${String(i + 1).padStart(2, "0")}</span><span class="text-heading font-bold text-ink">${esc(c)}</span></li>`).join("")}</ol></div>`),
   // 章の扉：左に章番号・進み具合の点・タイトル・説明、右にトピック（layout-catalog 3.2）
   section: (s, ctx) => {
     const f = s.fields, n = ctx.chapterNo;
@@ -95,7 +97,7 @@ const LAYOUTS = {
     const topics = f.topics?.length ? `<div class="border-l-2 border-line pl-[32px]"><div class="text-body font-bold text-label">トピック</div><ol class="m-0 mt-[8px] list-decimal pl-[24px] text-body text-ink">${f.topics.map((t) => `<li class="py-[4px]">${esc(t)}</li>`).join("")}</ol></div>` : "<div></div>";
     return section(s, ctx, `${STRIP_LEFT}
 <div class="absolute inset-y-0 left-[80px] right-slide-x grid grid-cols-[1fr_400px] items-center gap-[64px]">
-<div><div class="text-heading font-bold text-blue-600">CHAPTER ${n}<span class="ml-[16px] inline-flex gap-[6px] align-middle">${dots}</span></div>
+<div><div class="text-heading font-bold text-blue-600">CHAPTER ${NN(n)}<span class="ml-[16px] inline-flex gap-[6px] align-middle">${dots}</span></div>
 <h2 class="m-0 mt-[8px] text-section font-bold text-primary">${esc(f.title)}</h2>${f.description ? `<p class="m-0 mt-[24px] text-body text-ink">${strong(f.description)}</p>` : ""}</div>
 ${topics}</div>`);
   },

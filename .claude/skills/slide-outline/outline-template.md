@@ -50,6 +50,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | `claims` | このスライドの主張の ID。`[C-001, C-002]` の形（`research.md`・`factcheck.md` と同じ ID） |
 | `html` | 独自の表現。部品で表しにくいときだけ使う（`html-build/components.md` 4.1） |
 | `breadcrumb` | タイトルの上の章の名前。**書かなければ、前の `section` の title が自動で入る** |
+| `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（下の表で「本文」と書いた型）では必須**。要らないスライドだけ `lead: false` と書く。3行まで（長いときはビルドが幅を広げて3行に収める。全角およそ210字を超えるとエラー） |
 
 ## 3. 型ごとの項目
 
@@ -64,12 +65,14 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | `text-diagram` | title, body ＋ 図 | breadcrumb, caption, source | body は 1〜4項目（各 68字）。図は右に置く |
 | `title-diagram` | title ＋ 図 | breadcrumb, caption, source | 図は `diagram`（1つ）か `diagrams`（左右に2つ） |
 | `two-column` | title, left, right | breadcrumb, source | left・right は `{heading: 小見出し, items: [箇条書き 1〜4項目]}` |
-| `do-dont` | title, do, dont | breadcrumb, body | do・dont は two-column と同じ形 |
+| `do-dont` | title, do, dont | breadcrumb | do・dont は two-column と同じ形 |
 | `grid-4` | title, items | breadcrumb | items はちょうど4つ。各 `{heading: 15字まで, text: 3行まで, icon: 任意}` |
 | `checklist` | title, items | breadcrumb | items は 1〜8項目。各 `{text: 項目, done: true か false}` |
 | `closing` | — | contact, email | 問い合わせ先とメール。構成のときに人間に聞き、なければ書かない |
 
 「図」は `diagram`・`diagrams`・`html` のどれか1つ。
+
+「本文」の型（`lead` が必須）：title-body・text-diagram・title-diagram・two-column・do-dont・grid-4・checklist。
 
 ## 4. 図（diagram）
 
@@ -90,3 +93,4 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 
 - 特に伝えたい語句は `**語句**` で太字にする。1項目に1か所、1枚に3か所まで（`components.md` 4.2）。
 - タイトルは結論を1文で書く（`design-reference`）。
+- 説明文（`lead`）は、タイトルを補う2〜3行の平文。図や箇条書きの内容を繰り返さず、何を見てほしいかを書く。

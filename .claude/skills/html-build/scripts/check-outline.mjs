@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from "path";
 import { fileURLToPath } from "url";
-import { readOutline } from "./outline.mjs";
+import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する（要求文書 7.2・11章）。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -14,10 +14,6 @@ import { readOutline } from "./outline.mjs";
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
 export const KINDS = ["kpi", "bar", "hbar", "table", "stacked-bar", "line", "area", "combo", "donut", "scatter", "steps", "flowchart", "timeline", "roadmap", "matrix", "pyramid", "tree", "compare", "heatmap", "venn", "sequence", "er", "map", "math"];
 
-// 全角を1、半角を0.5として数える（layout-catalog の「文字数の数え方」）
-export const width = (s) => [...String(s)].reduce((a, c) => a + (c.charCodeAt(0) < 0x80 || (c >= "｡" && c <= "ﾟ") ? 0.5 : 1), 0);
-const plain = (s) => String(s).replace(/\*\*(.+?)\*\*/g, "$1");
-
 // 型ごとの項目。text：1行の文字数の目安。list：箇条書きの数の上限と、1項目の文字数の目安（推測。5-4 のブラウザの検査で見直す）
 const BODY = ["breadcrumb", "source"];
 export const LAYOUTS = {
@@ -28,12 +24,14 @@ export const LAYOUTS = {
   "text-diagram": { required: ["title", "body"], visual: true, optional: [...BODY, "caption"], text: { title: 30 }, list: { body: [1, 4, 68] } },
   "title-diagram": { required: ["title"], visual: true, optional: [...BODY, "caption"], text: { title: 30 } },
   "two-column": { required: ["title", "left", "right"], optional: BODY, text: { title: 30 }, columns: ["left", "right"] },
-  "do-dont": { required: ["title", "do", "dont"], optional: ["breadcrumb", "body"], text: { title: 30, body: 60 }, columns: ["do", "dont"] },
+  "do-dont": { required: ["title", "do", "dont"], optional: ["breadcrumb"], text: { title: 30 }, columns: ["do", "dont"] },
   "grid-4": { required: ["title", "items"], optional: ["breadcrumb"], text: { title: 30 } },
   checklist: { required: ["title", "items"], optional: ["breadcrumb"], text: { title: 30 } },
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
 const COMMON = ["layout", "notes", "claims", "html"];
+// 説明文（lead）が必須の型（本文のある型）。要らないスライドだけ lead: false
+export const WITH_LEAD = ["title-body", "text-diagram", "title-diagram", "two-column", "do-dont", "grid-4", "checklist"];
 const VISUAL = ["diagram", "diagrams"]; // 図の型を使う項目。html: と合わせて、図のある型ではどれか1つが必須
 
 export async function checkOutline(file) {
@@ -70,7 +68,8 @@ export async function checkOutline(file) {
     if (i === 0 && f.layout !== "title") warn(s, "1枚目が表紙（title）ではない");
 
     // 項目の有無
-    const allowed = new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : [])]);
+    const lead = WITH_LEAD.includes(f.layout);
+    const allowed = new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(lead ? ["lead"] : [])]);
     for (const k of Object.keys(f)) if (!allowed.has(k)) err(s, `${f.layout} に項目「${k}」は書けない（書けるもの：${[...allowed].filter((x) => x !== "layout").join("・")}）`);
     for (const k of L.required) if (f[k] === undefined || f[k] === null || f[k] === "") err(s, `${f.layout} に必須の項目「${k}」がない`);
     if (L.visual && !f.diagram && !f.diagrams && !f.html) err(s, `${f.layout} には diagram・diagrams・html のどれかが必要`);
@@ -91,8 +90,17 @@ export async function checkOutline(file) {
       else for (const k of Object.keys(f.author)) if (!["org", "name"].includes(k)) err(s, `author に知らない項目「${k}」がある（org・name）`);
     }
 
-    // 箇条書き
+    // 箇条書き（太字を数えるため、説明文もここに入れる）
     const bullets = [];
+    if (lead) {
+      if (f.lead === undefined || f.lead === null || f.lead === "") err(s, "説明文（lead）がない。要らないスライドは lead: false と書く");
+      else if (f.lead !== false && typeof f.lead !== "string") err(s, "lead は文章か false にする");
+      else if (typeof f.lead === "string") {
+        bullets.push(f.lead);
+        if (f.lead.trim().includes("\n")) err(s, "lead は改行せずに1つの文章で書く（行の折り返しはビルドが決める）");
+        if (width(plain(f.lead)) > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${width(plain(f.lead))}字。${LEAD_LIMIT}字まで）`);
+      }
+    }
     const list = (k, [min, max, each], arr = f[k]) => {
       if (arr == null) return;
       if (!Array.isArray(arr)) return err(s, `${k} は箇条書き（- で始まる行の並び）にする`);

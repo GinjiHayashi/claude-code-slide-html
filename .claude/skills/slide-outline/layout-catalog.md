@@ -13,7 +13,8 @@
 | 余白 | 左右 `slide-x`（54）、タイトルの上端 `slide-top`（63）、下端 `slide-bottom`（27） |
 | タイトル | 左上。`text-title`（36px）・太字・`primary`。前に縦長の帯（幅 8px、高さは文字の 1.25 倍、タイトルとの間 24px、帯と文字の中心を揃える）。**1行のみ、全角30字まで** |
 | パンくず（任意） | タイトルの上に、所属する章の名前を `text-breadcrumb`（16px）・太字・`primary` で書く |
-| 本文の開始位置 | タイトルの下 `title-gap`（50） |
+| 説明文（lead） | 本文のある型（表紙・目次・章の扉・締め以外）では、タイトルの下 32 の位置に固定で置く（ユーザーが決定）。`text-body`（16px）・`ink`。幅は 640 を基本にし、3行を超える長さなら、3行に収まるまで幅を広げる（最大 1172＝本文の幅いっぱい）。それでも3行を超える長さ（全角およそ210字）は書式チェックのエラー。**必須**で、説明文の要らないスライドだけ `lead: false` と書いて外す |
+| 本文の開始位置 | 説明文の下 32。説明文がないときはタイトルの下 `title-gap`（50） |
 | 出典・図の番号 | 左下に `text-caption`（12px）・`label` の色で書く |
 | ページ番号 | 右下に「n / N」。base.html が自動で付ける。表紙（`title`）には付けないが、数えるときは表紙も1枚と数える |
 | 発表者ノート | `notes:` に書く。スライドには出ない |
@@ -31,7 +32,7 @@
 | `text-diagram` | 左に文章・右に図 | title, body, diagram | breadcrumb, caption, source | 文章の列は幅 `column`（560）。箇条書きは4項目まで |
 | `title-diagram` | 図が中心 | title, diagram | breadcrumb, caption, source | 図は高さ 500 まで（画面の約 70%） |
 | `two-column` | 2つを比べる | title, left, right | breadcrumb, source | 左右とも、小見出し1つと箇条書き4項目まで |
-| `do-dont` | 良い例と悪い例 | title, do, dont | breadcrumb, body | `do` は上端に `success` の帯、`dont` は上端に `error` の帯。緑と赤はこの型だけで使う |
+| `do-dont` | 良い例と悪い例 | title, do, dont | breadcrumb | `do` は上端に `success` の帯、`dont` は上端に `error` の帯。緑と赤はこの型だけで使う |
 | `grid-4` | 原則や要点を4つ並べる | title, items（4つ） | breadcrumb | 2×2。各項目は小見出し（全角15字まで）と説明（3行まで）。アイコンは任意 |
 | `checklist` | 確認する項目の一覧 | title, items（text, done） | breadcrumb | 2列。済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）。8項目まで |
 | `closing` | 締め | — | contact, email | 表紙と同じく白地＋下端の横の帯（表紙に合わせる）。「ありがとうございました」。問い合わせ先とメールは構成を決めるときに人間に聞く。なければ書かず、お礼だけを縦の中央に置く |

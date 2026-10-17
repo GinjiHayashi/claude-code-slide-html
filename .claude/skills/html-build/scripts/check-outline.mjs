@@ -10,6 +10,7 @@ import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
 //   図が3つ以上、太字の数、独自の表現（html:）を使った。
+// html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // 型の決まりは slide-outline/layout-catalog.md、図は diagram-catalog.md と html-build/components.md。
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
@@ -165,6 +166,7 @@ export async function checkOutline(file) {
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
     if (f.html) warn(s, "独自の表現（html:）を使っている。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る");
+    if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html))) err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");
   }
   return { errors, warnings, slides: o.slides.length };

@@ -48,7 +48,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | `layout` | **必須**。型の名前（`layout-catalog.md`） |
 | `notes` | 発表者ノート。スライドには出ない |
 | `claims` | このスライドの主張の ID。`[C-001, C-002]` の形（`research.md`・`factcheck.md` と同じ ID） |
-| `html` | 独自の表現。部品で表しにくいときだけ使う（`html-build/components.md` 4.1） |
+| `html` | 独自の表現。部品で表しにくいときだけ使う（`html-build/components.md` 4.1）。スクリプト（script タグ・on〜 属性・javascript:）は書けない（エラー） |
 | `breadcrumb` | タイトルの上の章の名前。**書かなければ「CHAPTER 01: 章の名前」（前の `section`）が自動で入る** |
 | `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（下の表で「本文」と書いた型）では必須**。要らないスライドだけ `lead: false` と書く。3行まで（長いときはビルドが幅を広げて3行に収める。全角およそ210字を超えるとエラー） |
 

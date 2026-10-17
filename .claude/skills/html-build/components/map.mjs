@@ -1,12 +1,16 @@
+import fs from "fs";
+import { fileURLToPath } from "url";
 import { esc, need, num, unitLabel, seqStep } from "./_util.mjs";
 
+// 都道府県の境界（Natural Earth v5.1.2 を scripts/make-japan-map.mjs で加工したもの。registry.yaml の natural-earth）
+const SHAPES = fileURLToPath(new URL("../../license-notice/assets/natural-earth/japan-prefectures.json", import.meta.url));
+
 // map：都道府県ごとの値を青の濃淡で示す（コロプレス。試作）。
-// data: { data: [{ pref, value }], unit, style?: "tile" | "shape", steps?: 3〜5, highlight?: [pref] }
-// opt:  { width, height, shapes? }
-// - tile（既定）：47都道府県を同じ大きさの正方形で並べる（タイルグリッド地図）。外部の地図データを使わない。
-//   小さい県も同じ大きさで読め、マスに名前を書ける。
-// - shape：実際の形で描く。opt.shapes に、都道府県名 → SVG の path を渡す（地図データから別のスクリプトで作る）。
-//   地図データはライセンスを確かめ、registry.yaml に登録してから使う。
+// data: { data: [{ pref, value }], unit, style?: "shape" | "tile", steps?: 3〜5, highlight?: [pref] }
+// opt:  { width, height, shapes?（境界を差し替えるとき） }
+// - shape（既定）：実際の形で描く。境界は Natural Earth（ユーザーが決定）。沖縄は左上の枠に描く。
+//   小さい都府県（東京・香川など）は色が読みにくいので、強調や数値は本文や callout で補う。
+// - tile：47都道府県を同じ大きさの正方形で並べる（タイルグリッド地図）。小さい県も読め、マスに名前を書ける。
 // - pref は「東京都」「東京」のどちらでもよい。値のない都道府県は灰色。
 // - 濃淡の段階と凡例は heatmap と同じ。
 
@@ -35,7 +39,7 @@ export default function map(data, opt = {}) {
   const hi = new Set((data.highlight ?? []).map(short));
   const look = (k) => (val.has(k) ? shades[step(val.get(k))] : { bg: "bg-gray-200", fill: "fill-gray-200", text: "text-label", onFill: "fill-label" });
   let body;
-  if ((data.style ?? "tile") === "tile") {
+  if (data.style === "tile") {
     const s = Math.floor(Math.min((H - 8) / 11, 600 / 14)), g = 3;
     const tiles = Object.entries(TILE).map(([k, [c, r]]) => {
       const L = look(k);
@@ -43,8 +47,7 @@ export default function map(data, opt = {}) {
     }).join("");
     body = `<div class="relative shrink-0" style="width:${14 * s}px;height:${11 * s}px">${tiles}</div>`;
   } else {
-    if (!opt.shapes) throw new Error("map: style shape には opt.shapes（都道府県の path）が要る");
-    const S = opt.shapes;
+    const S = opt.shapes ?? JSON.parse(fs.readFileSync(SHAPES, "utf8"));
     const paths = Object.entries(S.paths).map(([p, d]) => {
       const k = short(p), L = look(k);
       return `<path class="${L.fill} ${hi.has(k) ? "stroke-ink" : "stroke-canvas"}" stroke-width="${hi.has(k) ? 2.5 : 0.8}" stroke-linejoin="round" d="${d}"><title>${esc(k)} ${val.has(k) ? num(val.get(k)) : "値なし"}</title></path>`;

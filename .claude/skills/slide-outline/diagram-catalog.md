@@ -50,7 +50,7 @@
 
 | 型（kind） | 用途 | 必須の項目 | 任意の項目 | 制約 | 描き方 |
 |---|---|---|---|---|---|
-| `matrix` | 2つの軸で4つに分ける | x_axis（low, high）, y_axis（low, high）, cells（4つ: title, items?） | highlight（どのマス） | 各マスの項目は3つまで | CSS |
+| `matrix` | 2つの軸で4つに分ける | x_axis（name, low, high）, y_axis（name, low, high）, cells（4つ: title, text?, items?） | highlight（どのマス） | 各マスは短い文（text）と箇条書き（items、3つまで）のどちらか、または両方。軸は両矢印で、中央に軸の名前 | CSS |
 | `pyramid` | 土台から上へ積み上がる関係 | levels（label, text?） | highlight | 3〜5段。上が頂点 | CSS |
 | `tree` | 階層（組織、分類） | root, children（label, children?） | highlight | 3階層まで。1つの親の子は5まで | CSS |
 | `compare` | 選択肢を観点ごとに比べる | options（2〜3）, criteria（観点）, values（◯・△・× または短い文） | recommend（推奨する選択肢） | 観点は6まで。推奨の列を淡い青で塗る | CSS |

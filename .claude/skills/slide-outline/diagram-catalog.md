@@ -52,8 +52,8 @@
 |---|---|---|---|---|---|
 | `matrix` | 2つの軸で4つに分ける | x_axis（name, low, high）, y_axis（name, low, high）, cells（4つ: title, text?, items?） | highlight（どのマス） | 各マスは短い文（text）と箇条書き（items、3つまで）のどちらか、または両方。軸は両矢印。軸の名前は矢印に重ねず、横軸は下・縦軸は左の中央に置く | CSS |
 | `pyramid` | 土台から上へ積み上がる関係 | levels（label, text?） | highlight | 3〜5段。上が頂点 | CSS |
-| `tree` | 階層（組織、分類） | root, children（label, children?） | highlight, direction（down・right。既定は down） | 3階層まで。1つの親の子は5まで。down は孫を子の下に縦に積む。線は矢印にせず、角の丸い（半径 8）折れ線 | SVG/CSS |
-| `compare` | 選択肢を観点ごとに比べる | options（2〜3）, criteria（観点）, values（◯・△・×、短い文、または { mark, note }） | recommend（推奨する選択肢） | 観点は6まで。推奨の列を淡い青で塗り、見出しの上に「推奨」と書く | CSS |
+| `tree` | 階層（組織、分類） | root, children（label, children?） | highlight, direction（down・right。既定は down） | 3階層まで。1つの親の子は5まで。down は孫を子の下に縦に積む。線は矢印にせず、直角に折れる線（tree だけの例外） | SVG/CSS |
+| `compare` | 選択肢を観点ごとに比べる | options（2〜3）, criteria（観点）, values（◯・△・×、短い文、または { mark, note }） | recommend（推奨する選択肢） | 観点は6まで。推奨の列を淡い青で塗り、見出しの上に「推奨」と書く。記号は小見出しの大きさ、文を添えるときは記号の下に書く | CSS |
 
 ## 3. 図の中で使える補助
 

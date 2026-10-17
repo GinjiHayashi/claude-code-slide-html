@@ -7,7 +7,8 @@ import { esc, need } from "./_util.mjs";
 //   recommend?: 推奨する選択肢の名前
 // }
 // - 推奨の列は淡い青で塗り、見出しの上に「推奨」と書く（色だけに頼らない）。
-// - 記号は大きく書き、意味は形で区別する。◯ は primary、△ は ink、× は label の色。
+// - 記号は小見出しの大きさで書き、意味は形で区別する。文を添えるときは記号の下に書き、記号の位置を列の中央に揃える。
+//  ◯ は primary、△ は ink、× は label の色。
 
 const MARK = {
   "◯": "text-primary", "○": "text-primary", "◎": "text-primary",
@@ -17,7 +18,7 @@ const MARK = {
 
 const cell = (v) => {
   const o = typeof v === "object" && v !== null ? v : MARK[v] ? { mark: v } : { note: v };
-  const mark = o.mark ? `<span class="text-kpi font-bold leading-none ${MARK[o.mark] ?? "text-ink"}">${esc(o.mark)}</span>` : "";
+  const mark = o.mark ? `<span class="text-heading font-bold ${MARK[o.mark] ?? "text-ink"}">${esc(o.mark)}</span>` : "";
   const note = o.note ? `<span class="text-body text-ink">${esc(o.note)}</span>` : "";
   return `${mark}${note}`;
 };
@@ -37,7 +38,7 @@ export default function compare(data) {
 </div>`).join("");
   const rows = Cr.map((c, i) => {
     const last = i === Cr.length - 1;
-    const vals = data.values[i].map((v, j) => `<div class="flex items-center justify-center gap-[12px] border-t border-line px-[12px] py-[8px] text-center ${tint(j)} ${last && j === rec ? "rounded-b-panel" : ""}">${cell(v)}</div>`).join("");
+    const vals = data.values[i].map((v, j) => `<div class="flex flex-col items-center justify-center gap-[2px] border-t border-line px-[12px] py-[8px] text-center ${tint(j)} ${last && j === rec ? "rounded-b-panel" : ""}">${cell(v)}</div>`).join("");
     return `<div class="flex items-center border-t border-line pr-[12px] text-body font-bold text-ink">${esc(c)}</div>${vals}`;
   }).join("");
   return `<div class="grid h-full w-full" style="grid-template-columns: minmax(160px, 0.8fr) repeat(${O.length}, 1fr); grid-template-rows: auto repeat(${Cr.length}, 1fr)" data-kind="compare">

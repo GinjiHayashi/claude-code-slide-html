@@ -9,7 +9,7 @@ import { esc, need, lineOf, rounded } from "./_util.mjs";
 // opt: { width, height }（既定は 1172×440）
 // - down（既定）：上に root、その下に子を横に並べ、孫は子の下に縦に積む（横幅を使い切らないため）。
 // - right：左に root、右へ子・孫と広げる。孫が多い分類の木に向く。
-// - 線は矢印にせず、縦横の線を角の丸い（半径 8）折れ線でつなぐ。箱は白地に枠、highlight の箱は primary の塗りに白文字。
+// - 線は矢印にせず、縦横の線を直角に折れる線でつなぐ（tree だけの例外。ほかの図は半径 8 で丸める。ユーザーが決定）。箱は白地に枠、highlight の箱は primary の塗りに白文字。
 
 export default function tree(data, opt = {}) {
   need("tree", data, ["root", "children"]);
@@ -29,7 +29,7 @@ export default function tree(data, opt = {}) {
     const look = hi.has(n.label) ? "bg-primary text-on-primary border-primary" : `bg-canvas text-ink ${LN.border}`;
     return `<div class="absolute flex items-center justify-center rounded-panel border-2 px-[8px] text-center font-bold ${small ? "text-body" : "text-heading"} ${look}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${esc(n.label)}</div>`;
   };
-  const line = (pts) => `<path class="fill-none ${LN.stroke}" stroke-width="2" stroke-linejoin="round" d="${rounded(pts, 8)}"/>`;
+  const line = (pts) => `<path class="fill-none ${LN.stroke}" stroke-width="2" stroke-linejoin="round" d="${rounded(pts, 0)}"/>`;
   const boxes = [], lines = [];
 
   if (data.direction === "right") {

@@ -5,13 +5,13 @@
 ## 原則
 
 1. 内容と見た目を分ける。中身は `outline.md` で確定させ、HTML への変換は決まった手順で行う。
-2. 見た目のルール（色・フォント・余白・図のスタイル）は `design-tokens.css` だけで定義する。
-3. スライドの型は `layout-catalog.md`、図の型は `diagram-catalog.md` から選ぶ。新しい型を作らない。
+2. 見た目のルール（色・フォント・余白・図のスタイル）は `theme.css`（Tailwind の `@theme`）だけで定義する。それ以外の色や値を書かない。
+3. スライドの型は `layout-catalog.md`、図の型は `diagram-catalog.md` から選ぶ。新しい型を作らない。図表は HTML/CSS の部品で作り、Mermaid は複雑な関係図だけに使う。
 4. 固定ファイル（下記）はスライド作成中に変更しない。合う型がなければ既存の型で代替し、`build-log.md` に記録して人間に報告する。
 5. 人間の承認が必要な工程では、承認されるまで次へ進まない。
 6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。
 7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。
-8. HTML が読み込む外部リソースは `base.html` に固定したものだけにする。
+8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・アイコン・フォント・画像は `registry.yaml` に登録済みのものだけを使う。ライセンス表記は書かない（スクリプトが生成する）。
 
 ## 工程
@@ -23,13 +23,21 @@
 | 1b. ヒアリング | `slide-hearing` | `brief.md` | 必要 |
 | 2. 構成の検討と調査 | `slide-outline`（調査は `researcher`） | `outline.md`、`research.md` | 必要 |
 | 3. ファクトチェック | `slide-factcheck`（`fact-checker`） | `factcheck.md` | P0 をすべて処理するまで進まない |
-| 4. HTML 作成 | `html-build` | `deck.html` | — |
+| 4. HTML 作成 | `html-build` | `slides/`（1枚1ファイル）→ ビルドで `deck.html` | — |
 | 5. ライセンス処理 | `license-notice`（スクリプト） | `assets-manifest.yaml`、`build-log.md` | 不合格なら停止して報告 |
 | 6. 最終確認 | 人間 | — | 必要 |
 
 - 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間だけが書く。承認済みかどうかは自分で判断せず、スクリプトで確認する。
 - 承認後に内容を変えた場合は、変えたスライドについて工程3からやり直す。
 - 主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
+
+## HTML 作成のルール
+
+- 部品にはデータだけを渡す。棒の長さや座標などの寸法は部品とビルドスクリプトが計算し、AI は書かない。
+- 強調する数値（「約1/7」など）も `outline.md` に書き、承認とファクトチェックの対象にする。部品に計算で増やさせない。
+- 出典はスライドごとに、そのスライドの下部に書く。発表者ノートは `notes` に書く。
+- 修正するときは、対象のスライドのファイル（`slides/S01.html` など）だけを読む。
+- ビルド後の検査（書式、はみ出し・重なり・余白、`theme.css` 以外の色、外部通信）で不合格なら、文字サイズや改行位置の範囲で直す。内容を変える修正は人間に報告する。
 
 ## 命名とフォルダ
 
@@ -39,7 +47,7 @@
 
 ## 固定ファイル（変更しない）
 
-- `.claude/skills/html-build/` の `base.html`、`design-tokens.css`
+- `.claude/skills/html-build/` の `base.html`、`theme.css`、`components/`
 - `.claude/skills/slide-outline/` の `layout-catalog.md`、`diagram-catalog.md`
 - `.claude/skills/license-notice/` の `policy.md`、`registry.yaml`、`templates/`、`assets/`
 

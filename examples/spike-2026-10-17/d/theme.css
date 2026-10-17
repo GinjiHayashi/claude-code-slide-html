@@ -1,0 +1,30 @@
+/* デザイントークン（D2）。@theme に書いた値が Tailwind のクラスと CSS 変数の両方になる */
+@import "tailwindcss";
+@source "./src.html";
+
+@theme {
+  --font-sans: "Noto Sans JP", sans-serif;
+  --color-ink: #0f172a;
+  --color-sub: #475569;
+  --color-muted: #94a3b8;
+  --color-line: #e2e8f0;
+  --color-surface: #f8fafc;
+  --color-accent: #2563eb;
+  --color-accent-soft: #dbeafe;
+  --color-accent-ink: #1e3a8a;
+}
+
+/* スライドの土台（base.html 相当） */
+@layer base {
+  html, body { background: #334155; }
+  .slide { width: 1280px; height: 720px; margin: 24px auto; overflow: hidden; position: relative; }
+  body.present { background: #000; overflow: hidden; }
+  body.present .slide { display: none; position: absolute; top: 50%; left: 50%; margin: 0;
+    transform: translate(-50%, -50%) scale(var(--scale, 1)); }
+  body.present .slide.active { display: flex; }
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { background: none; }
+    .slide { margin: 0; break-after: page; display: flex !important; position: static !important; transform: none !important; }
+  }
+}

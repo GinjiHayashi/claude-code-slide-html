@@ -18,8 +18,8 @@ const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし�
 // ---- 文字 ----
 const strong = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>'); // **語句** → 太字（components.md 4.2）
 const TITLE = `m-0 flex items-center gap-[24px] text-title font-bold text-primary before:block before:h-[1.25em] before:w-[8px] before:shrink-0 before:translate-y-[0.06em] before:bg-primary before:content-['']`;
-const STRIP_LEFT = `<div class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
-const STRIP_BOTTOM = `<div class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;
+const STRIP_LEFT = `<div data-deco class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
+const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;
 const bullets = (items, size = "text-heading") =>
   `<ul class="m-0 flex list-none flex-col gap-[16px] p-0 ${size} text-ink">${items.map((t) => `<li class="flex gap-[12px]"><span class="mt-[0.7em] h-[6px] w-[6px] shrink-0 rounded-full bg-primary"></span><span>${strong(t)}</span></li>`).join("")}</ul>`;
 

@@ -1,0 +1,10 @@
+{
+  "name": "html-build",
+  "private": true,
+  "type": "module",
+  "description": "outline.md から deck.html を作るための部品とスクリプト。使うライブラリは license-notice/registry.yaml に登録済みのものだけ",
+  "dependencies": {
+    "d3-scale": "4.0.2",
+    "d3-shape": "3.2.0"
+  }
+}

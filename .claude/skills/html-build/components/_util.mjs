@@ -27,3 +27,30 @@ export const callout = (c) =>
 
 /** 単位の表示（図の左上） */
 export const unitLabel = (unit) => (unit ? `<div class="text-caption text-label">単位：${esc(unit)}</div>` : "");
+
+// ---- 複数の系列の色（多くて5つ。charts.md 4章）----
+// 1つの色相（青）の濃淡を基本にし、5つ目は灰色。クラス名は Tailwind が拾えるよう完全な形で書く。
+// on は、その色の面の上に数値を書くときの文字色（白地との差が小さい淡い色には黒い文字）。
+export const SERIES = [
+  { bg: "bg-blue-900", fill: "fill-blue-900", stroke: "stroke-blue-900", text: "text-blue-900", on: "text-on-primary", onFill: "fill-on-primary" },
+  { bg: "bg-blue-600", fill: "fill-blue-600", stroke: "stroke-blue-600", text: "text-blue-600", on: "text-on-primary", onFill: "fill-on-primary" },
+  { bg: "bg-blue-400", fill: "fill-blue-400", stroke: "stroke-blue-400", text: "text-blue-900", on: "text-ink", onFill: "fill-ink" },
+  { bg: "bg-blue-200", fill: "fill-blue-200", stroke: "stroke-blue-200", text: "text-blue-900", on: "text-ink", onFill: "fill-ink" },
+  { bg: "bg-gray-400", fill: "fill-gray-400", stroke: "stroke-gray-400", text: "text-gray-800", on: "text-ink", onFill: "fill-ink" },
+];
+
+// 折れ線の印の形（色だけで区別しないため。colors.md 4章）
+export const marker = (shape, x, y, cls) => {
+  const r = 5;
+  if (shape === 1) return `<rect class="${cls}" x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}"/>`;
+  if (shape === 2) return `<path class="${cls}" d="M${x},${y - r - 1}L${x + r + 1},${y + r}L${x - r - 1},${y + r}Z"/>`;
+  if (shape === 3) return `<path class="${cls}" d="M${x},${y - r - 1}L${x + r + 1},${y}L${x},${y + r + 1}L${x - r - 1},${y}Z"/>`;
+  return `<circle class="${cls}" cx="${x}" cy="${y}" r="${r}"/>`;
+};
+
+/** SVG の大きさ。置く枠の大きさを親（スライドの型）から受け取る。callout があればその分だけ狭くする */
+export const svgSize = (data, opt = {}) => {
+  const w = (opt.width ?? 1172) - (data.callout ? 272 : 0);
+  const h = opt.height ?? 440;
+  return { w, h };
+};

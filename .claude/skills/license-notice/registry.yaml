@@ -1,0 +1,164 @@
+# 使ってよい素材と道具の一覧（registry.yaml）
+# - 基準は policy.md。登録と確認は人間が行う（AI は下調べまで）。運用時は固定ファイル。
+# - verified_by / verified_at が空の項目は「未確認」。照合スクリプトは未確認の項目を不合格にする。
+# - verification：何をもって確認したか（公式の LICENSE と照合 / AI の転記を承認）
+# - scope: distributed（deck.html に埋め込まれる。クレジットに載せる）| build-only（ビルド時だけ使う。クレジットに載せない）
+# - files: distributed の素材の実体（assets/ からの相対パス）と sha256。外部からは読み込まない。
+
+# ---- 配布物に入る素材 ----
+
+- id: noto-sans-jp
+  name: Noto Sans JP
+  type: font
+  scope: distributed
+  version: "5.3.1"                  # npm パッケージ @fontsource/noto-sans-jp の版（フォント自体は Version 2.004）
+  license: OFL-1.1
+  copyright: "(c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'."
+  source: https://github.com/notofonts/noto-cjk
+  package: "npm:@fontsource/noto-sans-jp@5.3.1"
+  files: []                         # 使う文字だけにサブセット化してビルド時に埋め込むため、実体は npm から取得する
+  commercial_use: true
+  notice_required: true             # OFL 条件2：著作権表示とライセンス全文を配布物に含める
+  conditions:
+    - 著作権表示と OFL-1.1 の全文を deck.html に含める
+    - サブセット化は改変にあたるため、予約フォント名「Source」を含む名前を付けない（「Noto Sans JP」は含まない）
+  notes:
+    - 著作権表示はフォントファイルの name テーブル（ID 0）から取った。Fontsource の LICENSE ファイルの1行目は「Google Inc.」で、フォント本体の表記と食い違う
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
+
+- id: lucide
+  name: Lucide
+  type: icon
+  scope: distributed
+  version: "1.59.0"
+  license: ISC
+  copyright: "Copyright (c) 2026 Lucide Icons and Contributors"
+  additional_licenses:
+    - license: MIT
+      copyright: "Copyright (c) 2013-present Cole Bemis"
+      applies_to: Feather 由来のアイコン（lucide-static の LICENSE に一覧がある。例：database、check、arrow-right）
+  source: https://github.com/lucide-icons/lucide
+  package: "npm:lucide-static@1.59.0"
+  files: []                         # 構築順序4で、使うアイコンだけを assets/lucide/ に追加し sha256 を書く
+  commercial_use: true
+  notice_required: true             # ISC・MIT とも、著作権表示と許諾文を含める
+  conditions:
+    - アイコンを1つでも使ったら、ISC と MIT（Feather）の両方の表記を載せる（どのアイコンが Feather 由来かを判定しなくて済むようにする）
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
+
+# ---- ビルド時だけ使う道具（クレジットに載せない） ----
+
+- id: tailwindcss
+  name: Tailwind CSS（tailwindcss、@tailwindcss/cli）
+  type: library
+  scope: build-only
+  version: "4.3.3"
+  license: MIT
+  copyright: "Copyright (c) Tailwind Labs, Inc."
+  source: https://github.com/tailwindlabs/tailwindcss
+  package: "npm:tailwindcss@4.3.3, npm:@tailwindcss/cli@4.3.3"
+  commercial_use: true
+  notice_required: false
+  conditions:
+    - 生成した CSS の先頭の「/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */」を消さない
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: mermaid
+  name: Mermaid
+  type: library
+  scope: build-only
+  version: "12.2.0"
+  license: MIT
+  copyright: "Copyright (c) 2014 - 2022 Knut Sveidqvist"
+  source: https://github.com/mermaid-js/mermaid
+  package: "npm:mermaid@12.2.0"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-scale
+  name: d3-scale
+  type: library
+  scope: build-only
+  version: "4.0.2"
+  license: ISC
+  copyright: "Copyright 2010-2021 Mike Bostock"
+  source: https://github.com/d3/d3-scale
+  package: "npm:d3-scale@4.0.2"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-shape
+  name: d3-shape
+  type: library
+  scope: build-only
+  version: "3.2.0"
+  license: ISC
+  copyright: "Copyright 2010-2022 Mike Bostock"
+  source: https://github.com/d3/d3-shape
+  package: "npm:d3-shape@3.2.0"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: playwright
+  name: Playwright
+  type: library
+  scope: build-only
+  version: "1.64.1"
+  license: Apache-2.0
+  copyright: "Copyright (c) Microsoft Corporation"
+  source: https://github.com/microsoft/playwright
+  package: "npm:playwright@1.64.1"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - 検査と PDF 化だけに使う。ブラウザ本体（Chromium）は配布物に入らない
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: fonttools
+  name: fontTools（フォントのサブセット化）
+  type: library
+  scope: build-only
+  version: "4.67.0"
+  license: MIT
+  copyright: "Copyright (c) 2017 Just van Rossum"
+  source: https://github.com/fonttools/fonttools
+  package: "pypi:fonttools==4.67.0"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - スクリプトを Node.js に統一する場合（レビュー R13）は差し替えを検討する
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: brotli
+  name: Brotli（woff2 の圧縮）
+  type: library
+  scope: build-only
+  version: "1.2.0"
+  license: MIT
+  copyright: "Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors."
+  source: https://github.com/google/brotli
+  package: "pypi:brotli==1.2.0"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）

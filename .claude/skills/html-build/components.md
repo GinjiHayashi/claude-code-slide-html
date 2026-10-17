@@ -4,7 +4,8 @@
 
 - どの図の型を使うかは `slide-outline/diagram-catalog.md` で決める。このファイルは、決めた型を**どう呼び出すか、どう組み合わせるか**を書く。
 - 寸法・座標・色は部品が決める。AI が `outline.md` やスライドの HTML に寸法や座標、色を手で書かない（要求文書 5章）。
-- 部品は運用時は固定。足りない表現があっても部品を書き換えず、近い型で代替して `build-log.md` に記録する（diagram-catalog の冒頭）。
+- 部品は運用時は固定。運用中に部品を書き換えない。
+- **部品は道具であり、必ずどれかを使わなければならないわけではない（ユーザーが決定）**。目的に合う部品があれば必ずそれを使い、似たものを独自に作らない（`flowchart` があるのに、流れの図を独自に書かない）。一方で、部品では表しにくいものを無理に当てはめない。そのときは 4.1 の決まりで独自の表現を書き、`build-log.md` に記録する。
 
 ## 1. 呼び出し方
 
@@ -35,7 +36,7 @@ const html = bar(data, { width: 1172, height: 440 });
 
 ## 3. 部品ごとのデータ
 
-「既定」はユーザーが見本で決めたもの。「試作」は 4-5 の見本で正式に入れるかを決める型。
+「既定」はユーザーが見本で決めたもの。24の部品はすべて 4-5 の見本で採用が決まった（ユーザーが決定）。
 
 ### 3.1 データ
 
@@ -51,8 +52,8 @@ const html = bar(data, { width: 1172, height: 440 });
 | `donut` | items（label, value）, unit | legend（**direct**・compact・table）, total, callout | 5項目 |
 | `scatter` | points（x, y, label?）, x_label, x_unit, y_label, y_unit | highlight, callout | 点50 |
 | `table` | columns, rows | style（**zebra**・panel・lines・light・light-zebra）, highlight（行）, align | 8行×6列 |
-| `heatmap`（試作） | rows, columns, values, unit | steps（3〜**5**） | 12行×12列 |
-| `map`（試作） | data（pref, value）, unit | style（**shape**・tile）, steps, highlight | 47都道府県 |
+| `heatmap` | rows, columns, values, unit | steps（3〜**5**） | 12行×12列 |
+| `map` | data（pref, value）, unit | style（**shape**・tile）, steps, highlight | 47都道府県 |
 
 ### 3.2 構造・時間
 
@@ -62,8 +63,8 @@ const html = bar(data, { width: 1172, height: 440 });
 | `steps` | items（title, text?） | direction（**right**・down）, highlight（段の番号） | 横5段・縦6段 |
 | `timeline` | items（date, label, text?） | highlight（番号） | 3〜6個 |
 | `roadmap` | periods, lanes（name, items: start, end, label, highlight?） | — | 期間8・レーン4 |
-| `sequence`（試作） | actors, messages（from, to, label, reply?） | highlight（番号） | 登場5・やりとり10 |
-| `er`（試作） | entities（name, fields: name, key?）, relations（from, to, card?, label?） | highlight, col・row | 表6 |
+| `sequence` | actors, messages（from, to, label, reply?） | highlight（番号） | 登場5・やりとり10 |
+| `er` | entities（name, fields: name, key?）, relations（from, to, card?, label?） | highlight, col・row | 表6 |
 
 ### 3.3 概念
 
@@ -73,8 +74,8 @@ const html = bar(data, { width: 1172, height: 440 });
 | `pyramid` | levels（label, text?）。上から書く | highlight（段の番号） | 3〜5段 |
 | `tree` | root, children（label, children?） | direction（**down**・right）, highlight | 3階層・子5 |
 | `compare` | options, criteria, values（◯・△・×、短い文、{ mark, note }） | recommend | 選択肢2〜3・観点6 |
-| `venn`（試作） | sets（label, items?）, overlaps（sets, items） | highlight（true：全部の重なりを塗る） | 集合3 |
-| `math`（試作） | tex | size（**large**・body）, caption, output（**html**・mathml） | — |
+| `venn` | sets（label, items?）, overlaps（sets, items） | highlight（true：全部の重なりを塗る） | 集合3 |
+| `math` | tex | size（**large**・body）, caption, output（**html**・mathml） | — |
 
 ## 4. 組み合わせ方
 
@@ -95,7 +96,7 @@ const html = bar(data, { width: 1172, height: 440 });
 
 - 文章（タイトル・本文・箇条書き・説明）は、スライドの型が決めた枠（`layout-catalog.md` の「枠」）に入れる。文字数の上限は型ごとに決めてあり、最後はブラウザで実際の行数と大きさを測って判定する。
 - はみ出しの検査は、部品ごとではなく**枠ごと**に行う。枠の中のすべての要素が枠の内側に収まっているかを測るので、文章でも、部品でも、AI がその場で書いた HTML でも同じように検査できる。
-- AI が一覧にない表現をその場で作ること（独自の部品）は原則しない。どうしても必要なときは、枠の中に入れる HTML として書き、次を守る。
+- 目的に合う部品があるときは、独自の表現を作らない。部品では表しにくいときだけ、枠の中に入れる HTML として書き、次を守る。
   - 色・文字の大きさ・余白は `theme.css` のトークンだけを使う（トークン外の色の検査で止まる）。
   - 枠の大きさを超えない（はみ出しの検査で止まる）。
   - `build-log.md` に「独自の表現」と記録し、人間の確認で見てもらう。よく使うものは、あとで正式な部品にするかを人間が決める。

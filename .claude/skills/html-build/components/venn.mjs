@@ -2,7 +2,7 @@ import { esc, need, lineOf } from "./_util.mjs";
 
 let seq = 0; // 1つのデッキに venn が複数あっても clipPath の id が重ならないようにする
 
-// venn：2〜3つの集合の重なり（試作）。
+// venn：2〜3つの集合の重なり。
 // data: {
 //   sets: [{ label, items? }]（items はその集合だけに入るもの）,
 //   overlaps?: [{ sets: [集合の番号（0から）], items }]（重なりに入るもの）,

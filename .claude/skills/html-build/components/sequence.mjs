@@ -1,6 +1,6 @@
 import { esc, need, lineOf } from "./_util.mjs";
 
-// sequence：やりとりの順番（シーケンス図。試作）。登場するものは5まで、やりとりは10まで。
+// sequence：やりとりの順番（シーケンス図）。登場するものは5まで、やりとりは10まで。
 // data: {
 //   actors: [名前],
 //   messages: [{ from, to, label, reply?: true（応答。点線） }],

@@ -5,7 +5,7 @@ import { esc, need, num, unitLabel, seqStep } from "./_util.mjs";
 // 都道府県の境界（Natural Earth v5.1.2 を scripts/make-japan-map.mjs で加工したもの。registry.yaml の natural-earth）
 const SHAPES = fileURLToPath(new URL("../../license-notice/assets/natural-earth/japan-prefectures.json", import.meta.url));
 
-// map：都道府県ごとの値を青の濃淡で示す（コロプレス。試作）。
+// map：都道府県ごとの値を青の濃淡で示す（コロプレス）。
 // data: { data: [{ pref, value }], unit, style?: "shape" | "tile", steps?: 3〜5, highlight?: [pref] }
 // opt:  { width, height, shapes?（境界を差し替えるとき） }
 // - shape（既定）：実際の形で描く。境界は Natural Earth（ユーザーが決定）。沖縄は左上の枠に描く。

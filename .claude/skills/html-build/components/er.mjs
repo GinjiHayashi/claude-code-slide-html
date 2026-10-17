@@ -1,6 +1,6 @@
 import { esc, need, lineOf, rounded } from "./_util.mjs";
 
-// er：データの項目と関係（ER 図。試作）。表は6まで。
+// er：データの項目と関係（ER 図）。表は6まで。
 // data: {
 //   entities: [{ name, fields: [{ name, key?: "PK" | "FK" }], col?, row? }],
 //   relations: [{ from, to, card?: "1:N" など（両端に書く）, label? }],

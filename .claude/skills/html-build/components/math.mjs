@@ -4,7 +4,7 @@ import { createRequire } from "module";
 import katex from "katex";
 import { esc, need } from "./_util.mjs";
 
-// math：数式（試作）。TeX の記法で書いた式を、ビルド時に KaTeX で HTML に変える。表示するときに何も読み込まない（D8）。
+// math：数式。TeX の記法で書いた式を、ビルド時に KaTeX で HTML に変える。表示するときに何も読み込まない（D8）。
 // data: { tex, output?: "html" | "mathml", size?: "large" | "body", caption? }
 // - output: html（既定。ユーザーが決定。KaTeX の CSS とフォントを deck.html に埋め込む。どの環境でも同じ見た目）
 //           mathml（ブラウザが自分で描く。KaTeX はビルド時だけ使う。見た目は環境のフォントで変わる）

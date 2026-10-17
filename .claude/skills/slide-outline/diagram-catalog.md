@@ -20,7 +20,7 @@
 
 ## 2. 型の一覧
 
-描き方の欄：**CSS** は HTML/CSS（Tailwind）の部品、**SVG** は HTML/SVG の部品（座標はビルド時に d3-scale・d3-shape で計算）、**Mermaid** はビルド時に SVG に変換。
+描き方の欄：**CSS** は HTML/CSS（Tailwind）の部品、**SVG** は HTML/SVG の部品（座標はビルド時に d3-scale・d3-shape で計算）、**SVG/CSS** は箱を HTML、矢印を SVG で描く部品。外部の作図ツール（Mermaid など）は使わない（配置を指定できず、レイアウトが崩れる元になるため。ユーザーが決定）。
 
 ### 2.1 データ
 
@@ -33,19 +33,18 @@
 | `line` | 時間の変化と傾向 | x（時点の並び）, series（name, values）, unit | highlight, target（目標値。点線）, callout | 系列は4まで、時点は24まで。系列名は線の右端に直接書く | SVG |
 | `area` | 量と構成比の時間の変化 | x, series（name, values）, unit | percent, callout | 系列は5まで。系列名は面の右端に書く | SVG |
 | `combo` | 量（棒）と推移（線）を同時に | x, bar（name, values, unit）, line（name, values, unit） | callout | 棒と線を1系列ずつ。軸は左右に分ける | SVG |
-| `donut` | 全体が明らかなときの構成比 | items（label, value）, unit | total（中央に書く値）, callout | 5項目まで（超える分は「その他」）。12時から時計回りに大きい順。多くの場合は `hbar` の方が正確に伝わる | SVG |
+| `donut` | 全体が明らかなときの構成比 | items（label, value）, unit | total（中央に書く値）, legend（direct・compact・table。既定は direct）, callout | 5項目まで（超える分は「その他」）。12時から時計回りに大きい順。多くの場合は `hbar` の方が正確に伝わる | SVG |
 | `scatter` | 2つの量の関係 | points（x, y, label?）, x_unit, y_unit | highlight | 点は50まで。ラベルは注目する点だけ | SVG |
-| `table` | 正確な値を一覧で読ませる | columns, rows | highlight（行の番号）, align（列ごと） | 8行×6列まで。数値は右寄せ。見出し行は `primary` の塗りに白文字 | CSS |
+| `table` | 正確な値を一覧で読ませる | columns, rows | highlight（行の番号）, align（列ごと）, style（既定は zebra） | 8行×6列まで。数値は右寄せし、小数の桁を列で揃える。見出し行は `primary` の塗りに白文字 | CSS |
 
 ### 2.2 構造・時間
 
 | 型（kind） | 用途 | 必須の項目 | 任意の項目 | 制約 | 描き方 |
 |---|---|---|---|---|---|
-| `flow` | 物やデータの流れ（一列） | nodes（label, type?） | caption（各箱の下の説明） | 2〜6個を左から右へ。分岐・合流があるなら `mermaid` | CSS |
-| `steps` | 順番に行う手順 | items（title, text?） | highlight（今いる段） | 3〜5段。番号を付ける | CSS |
+| `flowchart` | 流れ図。一列の流れから、枝分かれ・合流・戻りまで | nodes（label。枝分かれがあるときは id, col, row も） | caption, type（process・store・decision）, edges（from, to, label?）, direction（right・down）, wrap, highlight | 箱は12まで。一列なら nodes を並べるだけで順につなぐ。矢印は縦横の線を角の丸い（半径 8）折れ線でつなぐ | SVG/CSS |
+| `steps` | 順番に行う手順 | items（title, text?） | highlight（今いる段）, direction（right・down） | 横は3〜5段、縦は3〜6段。番号を付けて線でつなぐ | CSS |
 | `timeline` | 出来事を時間順に | items（date, label, text?） | highlight | 3〜6個 | CSS |
 | `roadmap` | 期間のある計画 | periods（列の見出し）, lanes（name, items: start, end, label） | highlight | 期間は8列まで、レーンは4まで | CSS |
-| `mermaid` | 分岐・合流の多いフロー、ER 図、シーケンス図、状態遷移図 | source（Mermaid の記法） | — | ノードは15まで（超えるならスライドを分ける）。色はトークンに合わせたテーマで描く | Mermaid |
 
 ### 2.3 概念
 
@@ -60,10 +59,10 @@
 
 | 補助 | 使い方 | 描き方 |
 |---|---|---|
-| アイコン | `icon: 名前` で Lucide のアイコンを置く。`grid-4` の項目、`steps` や `flow` の箱に使う | SVG をそのまま埋め込む |
+| アイコン | `icon: 名前` で Lucide のアイコンを置く。`grid-4` の項目、`steps` や `flowchart` の箱に使う | SVG をそのまま埋め込む |
 | 数式 | `math: 式`（TeX の記法）。必要な場合だけ | KaTeX でビルド時に変換 |
 
-アイコン・Mermaid・d3・KaTeX は、license-notice の許可済み一覧に載っているものだけを使う（D9）。
+アイコン・d3・KaTeX は、license-notice の許可済み一覧に載っているものだけを使う（D9）。
 
 ## 4. 型を選ぶ目安
 
@@ -72,7 +71,7 @@
 - 時間で変化する → `line`。構成比の変化も見せる → `area`。件数と率のように単位が違う2つ → `combo`
 - 正確な値を読ませる → `table`
 - 選択肢の比較 → `compare`。2つの軸で整理 → `matrix`
-- 流れ → `flow`（一列）か `mermaid`（分岐あり）。手順 → `steps`。日付がある → `timeline`、期間がある → `roadmap`
+- 流れ → `flowchart`（一列でも、枝分かれ・合流・戻りがあっても）。手順 → `steps`。日付がある → `timeline`、期間がある → `roadmap`
 
 ## 5. 試作して入れるか決めるもの
 
@@ -82,6 +81,8 @@
 |---|---|---|---|---|---|
 | `map` | 都道府県ごとの値を色の濃さで示す（コロプレス） | data（pref, value）, unit | 色は青の濃淡5段階まで | SVG | 地図データのライセンス（許可済み一覧への登録）と、HTML の容量 |
 | `heatmap` | 2つの分類の組み合わせごとの値を色の濃さで示す | rows, columns, values, unit | 12行×12列まで。値も数字で併記する | CSS | `table` の塗りとの違いが十分か |
+| `sequence` | やりとりの順番（シーケンス図）。Mermaid をやめたため、必要になったら部品で作る | actors, messages（from, to, label） | 登場する人やシステムは5まで、やりとりは10まで | SVG/CSS | 使う場面があるか |
+| `er` | データの項目と関係（ER 図）。同上 | entities（name, fields）, relations | 表は6まで | SVG/CSS | 使う場面があるか。`flowchart` で足りないか |
 | `venn` | 2〜3つの集合の重なり | sets（label, items?）, overlaps | 集合は3つまで | SVG | `matrix` や `compare` で足りないか |
 
 数式（`math:`、KaTeX）も同じく試作の対象にする。使うと決めたら、license-notice の許可済み一覧に登録してから使う（D9）。

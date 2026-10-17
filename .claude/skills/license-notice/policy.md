@@ -42,7 +42,7 @@ deny:
 | scope | 意味 | クレジット |
 |---|---|---|
 | `distributed` | `deck.html` に埋め込まれる（フォント、アイコンの SVG、画像） | 載せる。著作権表示とライセンス全文を HTML 内に含める |
-| `build-only` | ビルド時だけ使い、生成物（CSS、SVG）だけが配布物に入る（Tailwind、Mermaid、d3、Playwright） | 載せない。ただし Tailwind が出力する CSS の先頭の `/*! tailwindcss … MIT License … */` は消さない |
+| `build-only` | ビルド時だけ使い、生成物（CSS、SVG）だけが配布物に入る（Tailwind、d3、Playwright） | 載せない。ただし Tailwind が出力する CSS の先頭の `/*! tailwindcss … MIT License … */` は消さない |
 
 - 生成物がライブラリのライセンスの対象にならないという整理は、法的に確認したものではない（推測）。
 

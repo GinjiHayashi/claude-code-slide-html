@@ -69,21 +69,6 @@
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
-- id: mermaid
-  name: Mermaid
-  type: library
-  scope: build-only
-  version: "12.2.0"
-  license: MIT
-  copyright: "Copyright (c) 2014 - 2022 Knut Sveidqvist"
-  source: https://github.com/mermaid-js/mermaid
-  package: "npm:mermaid@12.2.0"
-  commercial_use: true
-  notice_required: false
-  verified_by: GinjiHayashi
-  verified_at: 2026-10-17
-  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
-
 - id: d3-scale
   name: d3-scale
   type: library

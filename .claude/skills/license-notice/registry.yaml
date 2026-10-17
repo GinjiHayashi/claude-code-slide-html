@@ -227,6 +227,6 @@
   notice_required: false
   notes:
     - html-build/scripts で outline.md・approvals.yaml・registry.yaml を読む。依存なし
-  verified_by:
-  verified_at:
-  verification:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した

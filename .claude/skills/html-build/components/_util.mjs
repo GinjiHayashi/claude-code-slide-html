@@ -56,12 +56,12 @@ export const svgSize = (data, opt = {}) => {
 };
 
 // ---- 箱の枠と矢印の色（flow・steps・flowchart で共通）----
-// 試作中：ユーザーが見比べて1つに決める。決まったら DEFAULT_LINE だけを変える。
+// 既定は deepnavy（Light Blue 1200 #00234B。灰色・紺・青の4案を見比べてユーザーが決定）。ほかは比較のために残している。
 export const LINES = {
   gray: { border: "border-gray-600", stroke: "stroke-gray-600", fill: "fill-gray-600", bg: "bg-gray-600" },
   navy: { border: "border-blue-1200", stroke: "stroke-blue-1200", fill: "fill-blue-1200", bg: "bg-blue-1200" },
   deepnavy: { border: "border-lightblue-1200", stroke: "stroke-lightblue-1200", fill: "fill-lightblue-1200", bg: "bg-lightblue-1200" },
   primary: { border: "border-primary", stroke: "stroke-primary", fill: "fill-primary", bg: "bg-primary" },
 };
-export const DEFAULT_LINE = "navy";
+export const DEFAULT_LINE = "deepnavy";
 export const lineOf = (data) => LINES[data.line ?? DEFAULT_LINE];

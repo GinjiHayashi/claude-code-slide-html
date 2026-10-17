@@ -28,7 +28,7 @@
 
   /* ---- グラフ：主（Blue の段階。面に使えるのは 600 以上） ---- */
   --color-blue-1200: #000060;
-  --color-lightblue-1200: #00234b; /* 試作：箱の枠と矢印の色の候補（palette.md の Light Blue 1200） */
+  --color-lightblue-1200: #00234b; /* 箱の枠と矢印の色（palette.md の Light Blue 1200。ユーザーが決定） */
   --color-blue-900: #0017c1;
   --color-blue-600: #3460fb;
   --color-blue-400: #7096f8;

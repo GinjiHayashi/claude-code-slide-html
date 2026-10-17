@@ -25,7 +25,7 @@
 | 型の名前 | 用途 | 枠（必須） | 枠（任意） | 制約 |
 |---|---|---|---|---|
 | `title` | 表紙 | title | subtitle, date, author | 下の 3.1 |
-| `toc` | 目次 | items | — | 章の数は8まで |
+| `toc` | 目次 | — | title | 項目は書かない。後ろの `section` の title から自動で作る。章の数は8まで |
 | `section` | 章の扉 | title | description, topics | 下の 3.2 |
 | `title-body` | 文章中心 | title, body | breadcrumb, source | 箇条書きは5項目まで、各項目は2行まで |
 | `text-diagram` | 左に文章・右に図 | title, body, diagram | breadcrumb, caption, source | 文章の列は幅 `column`（560）。箇条書きは4項目まで |

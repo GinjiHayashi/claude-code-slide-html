@@ -1,0 +1,131 @@
+---
+deck_id: 2026-10-17-report-automation
+title: 月次レポート作成の自動化
+pdf: true
+---
+
+## S01
+- layout: title
+- title: |
+    月次レポート作成の自動化
+    試行の結果と全体展開の提案
+- subtitle: 2部門での3か月の試行をもとに、全部門への展開を提案します
+- date: 2026年10月17日
+- author: {org: データ活用推進本部　データ管理部, name: 山田 太郎}
+
+## S02
+- layout: toc
+
+## S03
+- layout: section
+- title: 現状と課題
+- description: 今の月次レポートの作り方と、そこにかかる時間、問い合わせと手戻りの状況を説明します。
+- topics: [月次レポートの作り方, 作成にかかる時間, 問い合わせと手戻り]
+
+## S04
+- layout: title-body
+- title: 月次レポートの作成に時間がかかっている
+- body:
+    - 各部門が毎月の実績を表にまとめ、本部が手で貼り合わせて1つのレポートにしている
+    - 作成には毎月 **約40時間** かかり、締め日の前後に作業が集中する
+    - 部門ごとに表の形が違うため、貼り合わせのたびに確認と手直しが必要になる
+    - 数字の誤りに気づくのが配布の後になり、問い合わせと差し替えが毎月発生している
+
+## S05
+- layout: text-diagram
+- title: 作成時間の内訳
+- body:
+    - 6つの部署で合計 **40時間／月** かかっている
+    - 最も長いのは窓口サービスで、扱う手続きの種類が多いため
+    - 本部の貼り合わせだけでも6時間かかっている
+- diagram:
+    kind: hbar
+    unit: 時間／月
+    data:
+      - {label: 総務, value: 6}
+      - {label: 企画, value: 5}
+      - {label: 窓口サービス, value: 12, highlight: true}
+      - {label: 情報システム, value: 4}
+      - {label: 地域連携, value: 7}
+      - {label: 本部（貼り合わせ）, value: 6}
+- source: 出典：架空のデータ（見本用）。2026年9月時点
+
+## S06
+- layout: title-diagram
+- title: 今の作成手順
+- diagram:
+    kind: flowchart
+    highlight: [手で貼り合わせる]
+    nodes:
+      - {label: 各部門の表, type: store, caption: 部門ごとに形が違う}
+      - {label: メールで集める, caption: 締め日に本部へ送る}
+      - {label: 手で貼り合わせる, caption: 形をそろえて1つにする}
+      - {label: 確認, caption: 前月と比べて誤りを探す}
+      - {label: 配布, caption: PDF にして全部門へ}
+
+## S07
+- layout: section
+- title: 試行の結果
+- description: 2部門で3か月、新しい手順を試しました。作成時間の変化と、利用者の声を説明します。
+- topics: [試行した部門と期間, 作成時間の変化, 利用者の声]
+
+## S08
+- layout: title-diagram
+- title: 作成時間は現状の 1/7 になる見込み
+- claims: [C-001]
+- diagrams:
+    - kind: kpi
+      items:
+        - {label: 作成時間, value: "6", unit: 時間／月, compare: 現状の 1/7, highlight: true}
+    - kind: bar
+      unit: 時間／月
+      data:
+        - {label: 現状, value: 40}
+        - {label: 導入後（試行）, value: 12}
+        - {label: 導入後, value: 6, highlight: true}
+- source: 出典：架空のデータ（見本用）。2026年9月時点
+
+## S09
+- layout: two-column
+- title: 試行の前と後
+- left:
+    heading: 試行の前
+    items: [部門ごとに表の形が違う, 本部が手で貼り合わせる, 作成に **40時間／月**]
+- right:
+    heading: 試行の後
+    items: [全部門が同じ入力の画面を使う, 集計とグラフは自動で作られる, 作成に **6時間／月**]
+
+## S10
+- layout: grid-4
+- title: 展開の4つの原則
+- items:
+    - {heading: 入力は1回だけ, text: 同じ数字を2回入力しない。部門の表をそのまま取り込む}
+    - {heading: 定義をそろえる, text: 指標の名前と計算のしかたを、全部門で同じにする}
+    - {heading: 自動で確かめる, text: 前月との差が大きい数字は、入力のときに知らせる}
+    - {heading: 小さく始める, text: 部門ごとに順に広げ、問題があれば手順を直す}
+
+## S11
+- layout: do-dont
+- title: レポートの書き方
+- do:
+    heading: 良い例
+    items: [結論を **タイトルに1文で** 書く, 強調する数字は1つに絞る, グラフに出典と時点を書く]
+- dont:
+    heading: 悪い例
+    items: [タイトルが「月次の実績」だけ, すべての棒を色分けしている, 出典と時点がない]
+
+## S12
+- layout: checklist
+- title: 公開前の確認
+- items:
+    - {text: 出典と時点をすべてのグラフに書いた, done: true}
+    - {text: 数値を元の表と照らし合わせた, done: true}
+    - {text: 強調する値は1つに絞った, done: true}
+    - {text: 色だけで区別していない, done: false}
+    - {text: 文字は 12px 以上にした, done: false}
+    - {text: 発表者ノートを書いた, done: false}
+
+## S13
+- layout: closing
+- contact: 問い合わせ先：データ活用推進本部　データ管理部
+- email: data@example.jp

@@ -1,0 +1,39 @@
+import { esc, need } from "./_util.mjs";
+
+// kpi：結論の数字を大きく見せる。1〜4個を横に並べる。
+// data: { items: [{ label, value, unit?, compare?, trend?: number[], highlight? }] }
+
+const spark = (values) => {
+  if (!Array.isArray(values) || values.length < 2) return "";
+  const w = 160, h = 32, min = Math.min(...values), max = Math.max(...values);
+  const y = (v) => (max === min ? h / 2 : h - ((v - min) / (max - min)) * (h - 4) - 2);
+  const pts = values.map((v, i) => `${((i / (values.length - 1)) * (w - 4) + 2).toFixed(1)},${y(v).toFixed(1)}`);
+  const last = pts.at(-1).split(",");
+  return `<svg class="mt-[12px] block" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+  <polyline class="fill-none stroke-blue-600" stroke-width="2" points="${pts.join(" ")}"/>
+  <circle class="fill-blue-600" cx="${last[0]}" cy="${last[1]}" r="3"/>
+</svg>`;
+};
+
+export default function kpi(data) {
+  need("kpi", data, ["items"]);
+  const items = data.items;
+  if (items.length < 1 || items.length > 4) throw new Error("kpi: items は1〜4個");
+  const cards = items
+    .map((it) => {
+      need("kpi", it, ["label", "value"]);
+      const box = it.highlight ? "bg-highlight" : "bg-panel";
+      const val = it.highlight ? "text-primary" : "text-ink";
+      return `<div class="flex flex-1 flex-col rounded-panel ${box} p-[24px]">
+  <div class="text-body font-bold text-label">${esc(it.label)}</div>
+  <div class="mt-[12px] flex items-baseline gap-[6px]">
+    <span class="text-kpi font-bold ${val}">${esc(it.value)}</span>
+    ${it.unit ? `<span class="text-heading text-label">${esc(it.unit)}</span>` : ""}
+  </div>
+  ${it.compare ? `<div class="mt-[8px] text-body text-ink">${esc(it.compare)}</div>` : ""}
+  ${spark(it.trend)}
+</div>`;
+    })
+    .join("\n");
+  return `<div class="flex w-full gap-[24px]" data-kind="kpi">\n${cards}\n</div>`;
+}

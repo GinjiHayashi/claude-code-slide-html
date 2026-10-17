@@ -71,9 +71,9 @@
     - フォントを改変（サブセット化など）するなら、予約フォント名（KaTeX_*）を含む名前を付けない。今は改変せずに埋め込む
   notes:
     - MIT の文面は npm の katex@0.19.0 同梱の LICENSE、OFL の著作権表示は dist/fonts/KaTeX_Main-Regular.ttf の name テーブル（ID 0・13）と src/stretchy.ts の注記から取った
-  verified_by:
-  verified_at:
-  verification:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
 
 - id: natural-earth
   name: Natural Earth（都道府県の境界）
@@ -95,9 +95,9 @@
   notes:
     - 加工：日本の47都道府県だけを取り出して投影し、伊豆諸島・小笠原諸島と鹿児島県の北緯30度より南の島を除き、沖縄県は本島の周りを別の枠に描く
     - 境界は Natural Earth が描いたもので、国の公式の境界ではない。発表で境界の正確さが問われる場合は、国土数値情報（CC BY 4.0）を検討する
-  verified_by:
-  verified_at:
-  verification:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
 
 # ---- ビルド時だけ使う道具（クレジットに載せない） ----
 
@@ -210,6 +210,6 @@
   notice_required: false
   notes:
     - html-build/scripts/make-japan-map.mjs だけで使う。依存の d3-array・internmap も ISC（d3-scale と同じ）
-  verified_by:
-  verified_at:
-  verification:
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した

@@ -8,6 +8,7 @@ import { esc, need } from "./_util.mjs";
 //   lines  白地＋横線だけ
 //   zebra  白と薄いグレーを1行おきに。線なし
 //   light  見出しを淡い青の地に青い文字、白地＋横線。最も軽い
+//   light-zebra  light の見出し＋白と薄いグレーを1行おきに。線なし
 // 数値の列は既定で右寄せし、列の中で小数の桁数を揃える（3 と 2.6 が並ぶなら 3.0 と書く）。見出し行は primary の塗りに白文字。
 
 export default function table(data) {
@@ -22,8 +23,9 @@ export default function table(data) {
     lines: { th: "bg-primary text-on-primary", row: () => "bg-canvas", td: "border-b border-line" },
     zebra: { th: "bg-primary text-on-primary", row: (i) => (i % 2 ? "bg-panel" : "bg-canvas"), td: "" },
     light: { th: "bg-highlight text-primary border-b-2 border-primary", row: () => "bg-canvas", td: "border-b border-line" },
+    "light-zebra": { th: "bg-highlight text-primary border-b-2 border-primary", row: (i) => (i % 2 ? "bg-panel" : "bg-canvas"), td: "" },
   }[style];
-  if (!ST) throw new Error(`table: style は panel・lines・zebra・light のどれか`);
+  if (!ST) throw new Error(`table: style は panel・lines・zebra・light・light-zebra のどれか`);
   const align = columns.map((_, j) => data.align?.[j] ?? (rows.every((r) => typeof r[j] === "number") ? "right" : "left"));
   const digits = columns.map((_, j) =>
     Math.max(0, ...rows.map((r) => (typeof r[j] === "number" ? (String(r[j]).split(".")[1] ?? "").length : 0))));

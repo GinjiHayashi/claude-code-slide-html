@@ -8,7 +8,8 @@
     SLIDES の印      main の中。スライド（1枚＝1つの section.slide）
     LICENSES の印    #licenses の中。ライセンスの全文（license-notice のスクリプトが生成。画面には出さない）
   スライドの書き方：
-    section 要素に class="slide" と data-id="S01" を付け、中に本文を書く。
+    section 要素に class="slide" と data-id="S01"、data-layout="型の名前" を付け、中に本文を書く。
+    ページ番号は表紙（data-layout="title"）には付けない。数えるときは表紙も1枚と数える。
     発表者ノートは、その中の aside 要素（class="notes"）に書く。
   操作：
     → ↓ Space PageDown：次へ　← ↑ PageUp：前へ　Home / End：最初・最後
@@ -84,9 +85,9 @@ body.present .slide.active { display: block; }
   let presenter = null;   // 発表者ビューのウィンドウ
   let startedAt = null;   // 発表者ビューを開いた時刻
 
-  // ページ番号（スライドの右下）
+  // ページ番号（スライドの右下。表紙には付けない）
   slides.forEach((s, i) => {
-    if (!s.querySelector(".slide-no")) {
+    if (s.dataset.layout !== "title" && !s.querySelector(".slide-no")) {
       const n = document.createElement("div");
       n.className = "slide-no";
       n.textContent = `${i + 1} / ${slides.length}`;

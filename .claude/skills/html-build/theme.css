@@ -17,7 +17,7 @@
   /* ---- 文字と背景（役割） ---- */
   --color-ink: #1a1a1a;          /* 本文。SolidGray 900 */
   --color-label: #626264;        /* 補足、ラベル、軸の文字 */
-  --color-primary: #0017c1;      /* タイトル、強調の文字、表紙・扉の背景。Blue 900 */
+  --color-primary: #0017c1;      /* タイトル、強調の文字、表紙・扉の左端の帯。Blue 900 */
   --color-on-primary: #ffffff;   /* 濃い背景の上の文字 */
   --color-canvas: #ffffff;       /* スライドの背景 */
   --color-panel: #f8f8fb;        /* カード・パネルの背景。Standard */
@@ -78,6 +78,7 @@
   --spacing-slide-bottom: 27px;  /* フッターの下端 */
   --spacing-title-gap: 50px;     /* タイトルから本文まで */
   --spacing-column: 560px;       /* 左文・右図のときの文章の列幅 */
+  --spacing-strip: 20px;         /* 表紙・章の扉の左端の青い帯の幅（背景は白。ユーザー決定：案C） */
 
   /* ---- 角の丸み ---- */
   --radius-panel: 8px;

@@ -23,11 +23,13 @@
 | 1b. ヒアリング | `slide-hearing` | `brief.md` | 必要 |
 | 2. 構成の検討と調査 | `slide-outline`（調査は `researcher`） | `outline.md`、`research.md` | 必要 |
 | 3. ファクトチェック | `slide-factcheck`（`fact-checker`） | `factcheck.md` | P0 をすべて処理するまで進まない |
-| 4. HTML 作成 | `html-build` | `slides/`（1枚1ファイル）→ ビルドで `deck.html` | — |
-| 5. ライセンス処理 | `license-notice`（スクリプト） | `assets-manifest.yaml`、`build-log.md` | 不合格なら停止して報告 |
+| 4. HTML 作成 | `html-build` | `outline.md` からビルドで `deck.html`（必要なら `deck.pdf`） | — |
+| 5. ライセンス処理 | `license-notice`（ビルドの中でスクリプトが行う） | `assets-manifest.yaml`、`build-log.md` | 不合格なら停止して報告 |
 | 6. 最終確認 | 人間 | — | 必要 |
 
-- 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間だけが書く。承認済みかどうかは自分で判断せず、スクリプトで確認する。
+- 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間の答えを受けた hook だけが書く。AI は書かない（`.claude/settings.json` で禁止）。
+- 承認を求めるときは、先に `node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <outline.md など>` を実行してから「outline.md を承認しますか？」と聞く。人間は自由な言葉で答えてよい。記録の結果は hook から伝わる。
+- 承認済みかどうかは自分で判断せず、`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>` で確認する。
 - 承認後に内容を変えた場合は、変えたスライドについて工程3からやり直す。
 - 主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
 
@@ -36,8 +38,8 @@
 - 部品にはデータだけを渡す。棒の長さや座標などの寸法は部品とビルドスクリプトが計算し、AI は書かない。
 - 強調する数値（「約1/7」など）も `outline.md` に書き、承認とファクトチェックの対象にする。部品に計算で増やさせない。
 - 出典はスライドごとに、そのスライドの下部に書く。発表者ノートは `notes` に書く。
-- 修正するときは、対象のスライドのファイル（`slides/S01.html` など）だけを読む。
-- ビルド後の検査（書式、はみ出し・重なり・余白、`theme.css` 以外の色、外部通信）で不合格なら、文字サイズや改行位置の範囲で直す。内容を変える修正は人間に報告する。
+- ソースは `outline.md` だけ。修正するときは、`outline.md` の対象のスライドの節（`## S05` から次の見出しまで）だけを読んで直し、ビルドし直す。`deck.html` は読まない。結果は `build-log.md` で見る。
+- ビルド後の検査（書式、はみ出し・重なり・余白、`theme.css` 以外の色、外部通信、ライセンス）で不合格なら、`html-build/SKILL.md` の「不合格のとき」に従う。内容を変える修正は人間に報告する。
 
 ## 命名とフォルダ
 

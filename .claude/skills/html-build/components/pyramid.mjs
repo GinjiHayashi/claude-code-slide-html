@@ -24,7 +24,7 @@ export default function pyramid(data, opt = {}) {
   });
   const texts = Lv.map((lv, i) => `<div class="flex items-center border-b border-line text-body ${data.highlight === i + 1 ? "font-bold text-primary" : "text-ink"}" style="height:${lh}px; margin-top:${i ? gap : 0}px">${esc(lv.text ?? "")}</div>`);
   return `<div class="flex h-full w-full items-center gap-[48px]" data-kind="pyramid">
-<svg class="block shrink-0 overflow-visible" width="${PW}" height="${H}" viewBox="0 0 ${PW} ${H}" role="img" aria-label="ピラミッド">${shapes.join("")}</svg>
+<svg data-origin="generated" class="block shrink-0 overflow-visible" width="${PW}" height="${H}" viewBox="0 0 ${PW} ${H}" role="img" aria-label="ピラミッド">${shapes.join("")}</svg>
 <div class="min-w-0 flex-1">${texts.join("")}</div>
 </div>`;
 }

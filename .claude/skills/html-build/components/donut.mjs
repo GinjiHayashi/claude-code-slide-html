@@ -49,7 +49,7 @@ export default function donut(data, opt = {}) {
   </div>`)
       .join("\n");
     return wrap(`<div class="mt-[8px] flex min-h-0 flex-1 items-center gap-[48px]">
-    <svg class="block shrink-0" width="${2 * r + 16}" height="${h}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${center}</svg>
+    <svg data-origin="generated" class="block shrink-0" width="${2 * r + 16}" height="${h}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${center}</svg>
     <div class="min-w-0 max-w-[480px] flex-1">${rows}</div>
   </div>`);
   }
@@ -65,7 +65,7 @@ export default function donut(data, opt = {}) {
       .map((d, k) => `<span class="inline-flex items-center gap-[6px] text-body text-ink"><span class="inline-block h-[14px] w-[14px] ${color(d, k).bg}"></span>${esc(d.label)}${d.value / sum < 0.08 ? ` ${pct(d)}` : ""}</span>`)
       .join("");
     return wrap(`<div class="mt-[8px] flex min-h-0 flex-1 flex-col items-center">
-    <svg class="block min-h-0 flex-1" width="${2 * r + 16}" height="${h - 48}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${onRing}${center}</svg>
+    <svg data-origin="generated" class="block min-h-0 flex-1" width="${2 * r + 16}" height="${h - 48}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${onRing}${center}</svg>
     <div class="flex flex-wrap justify-center gap-x-[20px] gap-y-[4px] pt-[8px]">${names}</div>
   </div>`);
   }
@@ -92,7 +92,7 @@ export default function donut(data, opt = {}) {
   const moved = slices.replaceAll(`translate(${cx},${cy})`, `translate(${dcx},${cy})`);
   const c2 = center.replaceAll(`x="${cx}"`, `x="${dcx}"`);
   return wrap(`<div class="mt-[8px] flex min-h-0 flex-1 items-center justify-center">
-    <svg class="block max-w-full" width="${cw}" height="${h}" viewBox="0 0 ${cw} ${h}" role="img" aria-label="ドーナツグラフ">${moved}${c2}${tags}</svg>
+    <svg data-origin="generated" class="block max-w-full" width="${cw}" height="${h}" viewBox="0 0 ${cw} ${h}" role="img" aria-label="ドーナツグラフ">${moved}${c2}${tags}</svg>
   </div>`);
 
   function wrap(inner) {

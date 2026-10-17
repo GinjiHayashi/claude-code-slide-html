@@ -72,6 +72,6 @@ export default function venn(data, opt = {}) {
   const texts = S.map((s, i) => block(String(i), s.items)).join("") +
     Object.keys(at).filter((k) => k.includes("-") && k.split("-").length <= n).map((k) => block(k, ov[k], k === all && data.highlight)).join("");
   return `<div class="mx-auto" style="width:${W}px;height:${H}px" data-kind="venn">
-<svg class="block overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="ベン図"><defs>${clips}</defs>${hiShape}${circles}${labels}${texts}</svg>
+<svg data-origin="generated" class="block overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="ベン図"><defs>${clips}</defs>${hiShape}${circles}${labels}${texts}</svg>
 </div>`;
 }

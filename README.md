@@ -52,9 +52,34 @@ git merge harness/main
 
 > この手順は、構築の後半で実際に動くことを確認します。
 
-### 3. スライドを作る
+### 3. セットアップ（初回だけ）
 
-（構築後に記載します）
+必要なもの：Node.js 22 以上、Python 3、git。
+
+```sh
+# ビルドに使う npm パッケージ（版は package-lock.json で固定）
+cd .claude/skills/html-build
+npm ci
+# 検査と PDF に使うブラウザ（Chromium）
+node node_modules/playwright/cli.js install chromium
+cd ../../..
+
+# フォントのサブセット化に使う Python のパッケージ
+python3 -m pip install fonttools==4.67.0 brotli==1.2.0
+```
+
+- 使っているパッケージとその版は、すべて `.claude/skills/license-notice/registry.yaml` に登録しています。版を変えるとビルドの照合で止まります。
+- 確認：見本をビルドして、終了コードが 0 なら準備完了です。
+
+  ```sh
+  node .claude/skills/html-build/scripts/build.mjs examples/sample-deck
+  ```
+
+  `examples/sample-deck/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
+
+### 4. スライドを作る
+
+（構築後に記載します。いまは `decks/<deck-id>/outline.md` を `examples/sample-deck/outline.md` にならって書き、上のコマンドの `examples/sample-deck` を `decks/<deck-id>` に変えてビルドできます）
 
 ## git の運用ルール（簡易 GitFlow）
 

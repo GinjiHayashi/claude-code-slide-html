@@ -14,3 +14,9 @@ Thumbs.db
 
 # デザインの見本の元資料（公開リポジトリには入れない。取得手順は各見本の README.md）
 .claude/skills/design-reference/reference/source.*
+
+# ビルドで作るファイル（outline.md から作り直せる。フォントを埋め込むので、ライセンス表記の仕組みを通したものだけを配る）
+examples/*/deck.html
+examples/*/deck.pdf
+examples/*/build-log.md
+examples/*/assets-manifest.yaml

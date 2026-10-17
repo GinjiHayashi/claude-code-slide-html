@@ -30,7 +30,7 @@ export default function scatter(data, opt = {}) {
   const xt = x.ticks(6).map((t) => `<line class="stroke-line" x1="${x(t)}" x2="${x(t)}" y1="${m.t}" y2="${h - m.b}"/><text class="fill-label text-caption" x="${x(t)}" y="${h - m.b + 20}" text-anchor="middle">${t.toLocaleString("ja-JP")}</text>`).join("");
   return `<div class="flex h-full w-full gap-[32px]" data-kind="scatter">
 <div class="flex min-w-0 flex-1 flex-col">
-  <svg class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="散布図">
+  <svg data-origin="generated" class="block overflow-visible" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="散布図">
   <text class="fill-label text-caption" x="${m.l - 64}" y="14">縦：${esc(data.y_label ?? "")}（${esc(data.y_unit)}）</text>
   ${yGrid(y, m.l, w - m.r)}
   ${xt}

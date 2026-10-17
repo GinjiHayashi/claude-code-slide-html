@@ -118,7 +118,7 @@ export default function flowchart(data, opt = {}) {
   }).join("");
 
   return `<div class="relative mx-auto" style="width:${W}px;height:${H}px" data-kind="flowchart">
-<svg class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${edges}</svg>
+<svg data-origin="generated" class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${edges}</svg>
 ${boxes}
 </div>`;
 }

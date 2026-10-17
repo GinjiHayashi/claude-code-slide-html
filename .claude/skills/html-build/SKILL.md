@@ -1,0 +1,60 @@
+---
+name: html-build
+description: 承認済みの outline.md から、1ファイルで完結する deck.html（と、必要なら deck.pdf）をビルドし、機械的な検査とライセンスの照合を通すためのスキル。HTML 作成の工程と、スライドを直したあとの再ビルドで使う。
+---
+
+# HTML 作成（html-build）
+
+`decks/<deck-id>/outline.md` から `deck.html` を作る。HTML は手で書かず、ビルドのスクリプトが部品（`components/`）とスライドの型（`layouts.mjs`）で組み立てる。
+
+## ビルドする
+
+```
+CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/scripts/build.mjs decks/<deck-id>
+```
+
+- 終了コードが 0 なら合格。1 なら不合格で、理由は `decks/<deck-id>/build-log.md` に書かれている。
+- 書き出すもの：`deck.html`、`assets-manifest.yaml`、`build-log.md`。`outline.md` が `pdf: true` で合格したときは `deck.pdf` も。
+- 初めて使う環境では、README の「セットアップ」を先に行う。
+
+ビルドの中でやること（順番どおり）：
+
+1. 書式チェック（`scripts/check-outline.mjs`）。エラーがあれば止める。承認ゲートが通らなければ注意として記録する（単独で呼んだとき）
+2. スライドを組み立て、Tailwind の CSS、使う文字だけのフォント、数式があれば KaTeX を埋め込む
+3. 使った素材を走査し、`registry.yaml` と照合する（license-notice）。不合格なら `deck.html` を書かずに止める
+4. 最後に「ライセンス表記」のスライドとライセンスの全文を入れて、`deck.html` を書き出す
+5. ブラウザで開いて検査する（`scripts/inspect.mjs`）
+6. `pdf: true` なら PDF を作る
+
+## 守ること
+
+- **ソースは `outline.md` だけ。** `deck.html` は直さない。直すときは `outline.md` の該当スライドの節（`## S05` から次の見出しまで）だけを読んで書き換え、ビルドし直す。`deck.html` は読まない（大きく、読む量が無駄になる）。結果は `build-log.md` で見る。
+- 書き方は `slide-outline/outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md` と `components.md`。
+- 目的に合う部品があれば必ず使う。部品で表しにくいときだけ `html:` に独自の表現を書く（`components.md` 4.1：トークンだけ、枠に収める、画像やスクリプトを入れない）。
+- 承認済みかどうかは自分で判断しない。`make-slides/scripts/gate.mjs` で確かめる。
+
+## 不合格のとき
+
+| 記録の見出し | 直し方 |
+|---|---|
+| 書式チェックのエラー | 行番号の場所を `outline-template.md` に合わせて直す |
+| はみ出し・余白不足・文字の重なり | 文字数を減らす、改行の位置を変える、図のデータの数を減らす。内容を変える直しは人間に報告して判断を仰ぐ |
+| 文字が小さすぎる・トークン外の色 | 多くは `html:` の独自の表現が原因。トークンのクラスに直す |
+| 説明文が3行を超えた | 説明文（lead）を短くする |
+| 外部への通信・スクリプトのエラー | `html:` から外部の読み込みやスクリプトを外す |
+| ライセンスの照合のエラー | 素材を外す。使う必要があるなら、license-notice の手順で人間に登録の承認を求める。`registry.yaml` を自分で承認済みにしない |
+| 注意（人が確認する） | 直さなくてよい。人間に一覧を伝える（図が3つ以上、`html:` を使った、識別子のない SVG など） |
+
+## ファイル
+
+| ファイル | 中身 |
+|---|---|
+| `base.html` | スライドの土台（ページ送り、発表者ビュー、印刷）。固定 |
+| `theme.css` | 色・文字・余白のトークン。固定 |
+| `layouts.mjs` | スライドの型を HTML にする。credits スライドもここ |
+| `components/`、`components.md` | 図の部品と、その使い方 |
+| `scripts/outline.mjs`・`check-outline.mjs` | outline.md の読み込みと書式チェック |
+| `scripts/build.mjs` | ビルドの入口 |
+| `scripts/font-subset.py` | フォントのサブセット化（Python の fontTools と Brotli） |
+| `scripts/inspect.mjs` | ブラウザでの検査 |
+| `scripts/pdf.mjs` | PDF の書き出し |

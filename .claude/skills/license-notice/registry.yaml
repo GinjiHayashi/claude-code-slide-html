@@ -1,7 +1,7 @@
 # 使ってよい素材と道具の一覧（registry.yaml）
-# - 基準は policy.md。登録と確認は人間が行う（AI は下調べまで）。運用時は固定ファイル。
+# - 基準は policy.md。項目は AI が書き、人間が承認する（policy.md 4章）。運用時は固定ファイル。
 # - verified_by / verified_at が空の項目は「未確認」。照合スクリプトは未確認の項目を不合格にする。
-# - verification：何をもって確認したか（公式の LICENSE と照合 / AI の転記を承認）
+# - verification：何をもって確認したか（公式の LICENSE と照合 / AI の転記を承認）。人間の承認があるまで AI は verified_by・verified_at・verification を書かない。
 # - scope: distributed（deck.html に埋め込まれる。クレジットに載せる）| build-only（ビルド時だけ使う。クレジットに載せない）
 # - files: distributed の素材の実体（assets/ からの相対パス）と sha256。外部からは読み込まない。
 
@@ -50,6 +50,55 @@
   verified_at: 2026-10-17
   verification: 公式の LICENSE と照合した
 
+- id: katex
+  name: KaTeX（数式の組版。CSS とフォントを埋め込む）
+  type: library
+  scope: distributed                # 数式のあるデッキだけ、CSS とフォント（woff2）を deck.html に埋め込む
+  version: "0.19.0"
+  license: MIT
+  copyright: "Copyright (c) 2013-2020 Khan Academy and other contributors"
+  additional_licenses:
+    - license: OFL-1.1
+      copyright: "Copyright (c) 2009-2010, Design Science, Inc. (<www.mathjax.org>) Copyright (c) 2014-2018 Khan Academy (<www.khanacademy.org>)"
+      applies_to: KaTeX のフォント（dist/fonts の KaTeX_*。予約フォント名 KaTeX_Main など）
+  source: https://github.com/KaTeX/KaTeX
+  package: "npm:katex@0.19.0"
+  files: []                         # CSS とフォントは npm から取得し、改変せずに埋め込む
+  commercial_use: true
+  notice_required: true             # MIT・OFL とも、著作権表示とライセンス全文を含める
+  conditions:
+    - 数式を1つでも使ったデッキには、MIT（KaTeX）と OFL-1.1（KaTeX のフォント）の両方の表記を載せる
+    - フォントを改変（サブセット化など）するなら、予約フォント名（KaTeX_*）を含む名前を付けない。今は改変せずに埋め込む
+  notes:
+    - MIT の文面は npm の katex@0.19.0 同梱の LICENSE、OFL の著作権表示は dist/fonts/KaTeX_Main-Regular.ttf の name テーブル（ID 0・13）と src/stretchy.ts の注記から取った
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
+- id: natural-earth
+  name: Natural Earth（都道府県の境界）
+  type: map-data
+  scope: distributed                # 加工した境界を SVG の path として deck.html に埋め込む
+  version: "5.1.2"
+  license: LicenseRef-PublicDomain
+  copyright: "Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com."
+  source: https://www.naturalearthdata.com/about/terms-of-use/
+  package: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson"
+  source_sha256: 22d0e3ad85eb3e27f17cabf8ba2d50e554fbc27a87796ff891d958185da62fb5
+  files:
+    - path: natural-earth/japan-prefectures.json   # html-build/scripts/make-japan-map.mjs で加工したもの
+      sha256: 66fa4b3fef2fd89fc83491a436adfc466d67c5f1778aa00a6cc3466bf1318b94
+  commercial_use: true
+  notice_required: false            # 利用条件に「Crediting the authors is unnecessary.」とある
+  conditions:
+    - 表記は不要だが、クレジットに「Made with Natural Earth.」を載せる（利用条件が示す書き方。任意）
+  notes:
+    - 加工：日本の47都道府県だけを取り出して投影し、伊豆諸島・小笠原諸島と鹿児島県の北緯30度より南の島を除き、沖縄県は本島の周りを別の枠に描く
+    - 境界は Natural Earth が描いたもので、国の公式の境界ではない。発表で境界の正確さが問われる場合は、国土数値情報（CC BY 4.0）を検討する
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
 # ---- ビルド時だけ使う道具（クレジットに載せない） ----
 
 - id: tailwindcss
@@ -65,21 +114,6 @@
   notice_required: false
   conditions:
     - 生成した CSS の先頭の「/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */」を消さない
-  verified_by: GinjiHayashi
-  verified_at: 2026-10-17
-  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
-
-- id: mermaid
-  name: Mermaid
-  type: library
-  scope: build-only
-  version: "12.2.0"
-  license: MIT
-  copyright: "Copyright (c) 2014 - 2022 Knut Sveidqvist"
-  source: https://github.com/mermaid-js/mermaid
-  package: "npm:mermaid@12.2.0"
-  commercial_use: true
-  notice_required: false
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
@@ -162,3 +196,20 @@
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-geo
+  name: d3-geo（地図の投影）
+  type: library
+  scope: build-only
+  version: "3.1.1"
+  license: ISC
+  copyright: "Copyright 2010-2024 Mike Bostock"
+  source: https://github.com/d3/d3-geo
+  package: "npm:d3-geo@3.1.1"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - html-build/scripts/make-japan-map.mjs だけで使う。依存の d3-array・internmap も ISC（d3-scale と同じ）
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した

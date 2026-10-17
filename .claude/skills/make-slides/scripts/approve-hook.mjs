@@ -1,52 +1,46 @@
 #!/usr/bin/env node
-// 承認の hook（UserPromptSubmit）：人間がプロンプトに次の1行だけを打つと、approvals.yaml に承認を記録する（要求文書 4章）。
-//   承認 outline.md
-//   承認 2026-10-17-report outline.md factcheck.md   ← デッキが複数あるときは deck-id を付ける
-// - 対象：brief.md、outline.md、factcheck.md、deck.html。記録するのは、その時点のファイルの sha256
-// - AI の自己申告ではなく、Claude Code が渡すプロンプトの文字だけを見て記録する。プロンプト全体がこの形のときだけ反応する
-// - 記録したら、その内容を AI に伝える（additionalContext）。うまくいかないときはプロンプトを止めて、理由を人間に見せる
-// - 承認者は git config user.name
+// 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する（要求文書 4章）。
+// - 答えは自由な言葉でよい（「OK」「問題ないです」「承認します」など）。判定は approvals.mjs の judge()（決まった語で判定。AI は使わない）
+//   - 承認：依頼のときから変わっていない対象を approvals.yaml に、答えの原文ごと記録する。依頼は消す
+//   - 承認ではない（直す・待つ・疑問など）：記録せず、依頼を消す
+//   - 判断できない：記録せず、依頼を残す（AI がもう一度聞く）
+// - 結果は AI に伝える（additionalContext）。承認者は git config user.name
+// - 予約したタスクやサブエージェントの報告など、Claude Code が自分で始めるターンにも hook は動く。それらは「<」で始まる
+//   タグに包まれて届くので、「<」で始まるプロンプトは見ない（推測。公式ドキュメントに形の記載はない）
 // 設定は .claude/settings.json の hooks.UserPromptSubmit。
 import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
-import { TARGETS, recordApproval } from "./approvals.mjs";
+import { REQUEST, readRequest, recordApproval, judge, sha256 } from "./approvals.mjs";
 
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const prompt = String(input.prompt ?? "").trim();
-const m = prompt.match(/^承認[ 　]+(.+)$/);
-if (!m) process.exit(0); // 承認のプロンプトでなければ何もしない
+if (!prompt || prompt.startsWith("<")) process.exit(0);
 
-const block = (reason) => { console.log(JSON.stringify({ decision: "block", reason })); process.exit(0); };
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const decks = path.join(root, "decks");
-const words = m[1].split(/[ 　]+/);
-let deckId = null;
-if (!TARGETS.includes(words[0])) deckId = words.shift();
-const targets = words;
-if (!targets.length || targets.some((t) => !TARGETS.includes(t))) block(`承認できるのは ${TARGETS.join("、")} です。例：承認 outline.md`);
-
-const has = (id) => targets.every((t) => fs.existsSync(path.join(decks, id, t)));
-if (!deckId) {
-  const cands = fs.existsSync(decks) ? fs.readdirSync(decks).filter((d) => fs.statSync(path.join(decks, d)).isDirectory() && has(d)) : [];
-  if (cands.length !== 1) block(cands.length ? `どのデッキかわかりません。deck-id を付けてください（例：承認 ${cands[0]} ${targets.join(" ")}）。候補：${cands.join("、")}` : `decks/ に ${targets.join("・")} のあるデッキがありません`);
-  deckId = cands[0];
-}
-if (!has(deckId)) block(`decks/${deckId}/ に ${targets.join("・")} がありません`);
+if (!fs.existsSync(decks)) process.exit(0);
+const pending = fs.readdirSync(decks).map((d) => path.join(decks, d)).filter((d) => fs.existsSync(path.join(d, REQUEST)));
+if (!pending.length) process.exit(0);
 
 let by = "";
 try { by = execFileSync("git", ["-C", root, "config", "user.name"], { encoding: "utf8" }).trim(); } catch {}
-if (!by) block("承認者がわかりません。git config user.name を設定してください");
-
-const lines = targets.map((t) => {
-  const { entry, changed } = recordApproval(path.join(decks, deckId), t, {
-    approved_by: by, approved_at: new Date().toISOString(), via: "prompt", session_id: input.session_id ?? null, prompt_id: input.prompt_id ?? null,
-  });
-  return `- decks/${deckId}/${t}（sha256 ${entry.sha256.slice(0, 12)}…、承認者 ${by}）：${changed}`;
-});
-console.log(JSON.stringify({
-  hookSpecificOutput: {
-    hookEventName: "UserPromptSubmit",
-    additionalContext: `承認の hook が approvals.yaml に記録した（人間のプロンプトによる承認）：\n${lines.join("\n")}\n記録した内容を人間に一言で伝え、次の工程に進むかを確かめる。`,
-  },
-}));
+const verdict = judge(prompt);
+const lines = [];
+for (const dir of pending) {
+  const id = path.basename(dir);
+  const req = readRequest(dir);
+  if (verdict === "unclear") { lines.push(`decks/${id}：答えが承認かどうか判断できないので記録しなかった。依頼は残した。もう一度、承認するかを聞く`); continue; }
+  fs.rmSync(path.join(dir, REQUEST));
+  if (verdict === "reject") { lines.push(`decks/${id}：答えは承認ではないと判定した（直す・待つ・疑問の言葉がある）。記録せず、依頼を消した`); continue; }
+  if (!by) { lines.push(`decks/${id}：承認者がわからない（git config user.name が空）。記録しなかった`); continue; }
+  for (const t of req.targets) {
+    const f = path.join(dir, t.target);
+    if (!fs.existsSync(f) || sha256(fs.readFileSync(f)) !== t.sha256) { lines.push(`decks/${id}/${t.target}：依頼のあとに変わったので記録しなかった。依頼し直す`); continue; }
+    const { entry, changed } = recordApproval(dir, t.target, {
+      approved_by: by, approved_at: new Date().toISOString(), answer: prompt.slice(0, 200), session_id: input.session_id ?? null, prompt_id: input.prompt_id ?? null,
+    });
+    lines.push(`decks/${id}/${t.target}：承認を記録した（sha256 ${entry.sha256.slice(0, 12)}…、承認者 ${by}、${changed}）`);
+  }
+}
+console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: `承認の hook の結果：\n${lines.join("\n")}` } }));

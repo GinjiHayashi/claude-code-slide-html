@@ -50,13 +50,42 @@ gh auth login   # GitHub にログイン（表示に従ってブラウザで認�
 ```sh
 git clone https://github.com/GinjiHayashi/claude-code-slide-html.git
 cd claude-code-slide-html
-cp .env.sample .env        # .env を開き、SLIDE_REPO=自分のアカウント/my-slides のように書く
+cp .env.sample .env        # .env を開いて書く（下の「.env の書き方」）
 npm run create-slide-repo
+```
+
+#### .env の書き方
+
+書く項目は3つです。ふつうは `SLIDE_REPO` の1行だけを書きます。
+
+| 項目 | 必須か | 書くもの |
+|---|---|---|
+| `SLIDE_REPO` | 必須 | 作るスライド用リポジトリ（`持ち主/リポジトリ名`） |
+| `SLIDE_REPO_DIR` | 任意 | 手元に clone する場所。空なら、このリポジトリの隣（`../<リポジトリ名>`） |
+| `HARNESS_REPO` | 任意 | 複製元のハーネス。空なら `GinjiHayashi/claude-code-slide-html` |
+
+状況ごとの書き方：
+
+| こんなとき | 書くこと |
+|---|---|
+| 自分のアカウントに作る（ふつうはこれ） | `SLIDE_REPO=your-name/my-slides` |
+| 組織（Organization）に作る | `SLIDE_REPO=your-org/my-slides`（その組織でリポジトリを作る権限が要る） |
+| GitHub に空のリポジトリをもう作ってある | 同じく `SLIDE_REPO=持ち主/名前`。private で空なら、そのまま使う（中身があれば止まる） |
+| SSH で push したい | `SLIDE_REPO=git@github.com:your-name/my-slides.git`。URL で書くと gh を使わないので、空のリポジトリを先に作り、既定ブランチも手で `develop` にする |
+| clone する場所を決めたい | `SLIDE_REPO_DIR=~/work/my-slides`（`~/` はホームのフォルダ） |
+| ハーネスを自分のリポジトリに複製して直している | `HARNESS_REPO=your-name/claude-code-slide-html` |
+
+例（自分のアカウント `taro` に `slides-2026` を作り、`~/work` の下に置く）：
+
+```sh
+SLIDE_REPO=taro/slides-2026
+SLIDE_REPO_DIR=~/work/slides-2026
+HARNESS_REPO=
 ```
 
 先に中身だけ確かめたいときは、`npm run create-slide-repo -- --dry-run` を実行します（何も作らず、することを表示するだけ）。
 
-これで GitHub に private リポジトリができ、このリポジトリの隣（`../my-slides`）に clone されます。このあとの作業はすべてそちらで行います。最初に clone したこのリポジトリは消してかまいません。
+これで GitHub に private リポジトリができ、`SLIDE_REPO_DIR` の場所（既定はこのリポジトリの隣の `../my-slides`）に clone されます。このあとの作業はすべてそちらで行います。最初に clone したこのリポジトリは消してかまいません。
 
 <details>
 <summary>スクリプトがしていること・gh がないとき</summary>
@@ -74,7 +103,7 @@ gh がないときは、GitHub で private の空リポジトリ（README やラ
 ### 2. セットアップ
 
 ```sh
-cd ../my-slides
+cd ../my-slides                        # SLIDE_REPO_DIR を書いたときは、その場所
 npm run setup                          # npm のパッケージ、Chromium、Python とそのパッケージ（uv）を入れる
 npm run build -- examples/sample-deck  # 見本をビルドして確かめる
 ```

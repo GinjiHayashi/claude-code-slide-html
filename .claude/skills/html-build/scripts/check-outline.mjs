@@ -14,6 +14,7 @@ import { checkResearch } from "../../research-standards/scripts/check-research.m
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
 // 型の決まりは slide-outline/layout-catalog.md、図は diagram-catalog.md と html-build/components.md。
+// 終了コード：0＝エラーなし（注意はあってもよい）、2＝エラーあり（ほかのチェックと同じ）
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
 export const KINDS = ["kpi", "bar", "hbar", "table", "stacked-bar", "line", "area", "combo", "donut", "scatter", "steps", "flowchart", "timeline", "roadmap", "matrix", "pyramid", "tree", "compare", "heatmap", "venn", "sequence", "er", "map", "math"];
@@ -202,5 +203,5 @@ if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.re
   for (const e of r.errors) console.log(`エラー  ${e}`);
   for (const w of r.warnings) console.log(`注意    ${w}`);
   console.log(`${r.slides}枚：エラー ${r.errors.length}件、注意 ${r.warnings.length}件`);
-  process.exit(r.errors.length ? 1 : 0);
+  process.exit(r.errors.length ? 2 : 0);
 }

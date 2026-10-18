@@ -2,7 +2,7 @@
 // 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する（要求文書 4章・11章）。
 // AI の自己申告では判定しない。
 // 使い方：node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>
-// - outline：brief.md が承認済み
+// - outline：brief.md が承認済み。outline-draft.md（人間の構成の草案）があれば、それも承認済み
 // - factcheck：brief.md と outline.md が承認済み
 // - build：outline.md と factcheck.md が承認済みで、factcheck.md の書式にエラーがなく、P0 にすべて人間の判断（decision）が書かれている。
 //   さらに、factcheck.md を承認したときから outline.md のスライドが変わっていない（変わったスライドはファクトチェックし直す）
@@ -18,6 +18,8 @@ const NEEDS = {
   factcheck: ["brief.md", "outline.md"],
   build: ["outline.md", "factcheck.md"],
 };
+// あるときだけ承認が要るもの（草案を渡さないデッキもあるため）
+const IF_EXISTS = { outline: ["outline-draft.md"] };
 
 // factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
 export function factcheckedChanges(approval, outlineText) {
@@ -29,7 +31,8 @@ export function factcheckedChanges(approval, outlineText) {
 export function checkGate(deckDir, stage) {
   const errors = [];
   const approvals = readApprovals(deckDir);
-  for (const target of NEEDS[stage]) {
+  const optional = (IF_EXISTS[stage] ?? []).filter((t) => fs.existsSync(path.join(deckDir, t)));
+  for (const target of [...NEEDS[stage], ...optional]) {
     const file = path.join(deckDir, target);
     if (!fs.existsSync(file)) { errors.push(`${target} がない`); continue; }
     const a = latest(approvals, target);

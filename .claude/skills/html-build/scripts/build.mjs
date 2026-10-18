@@ -31,6 +31,8 @@ import { checkGate } from "../../make-slides/scripts/gate.mjs";
 
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const YAML = createRequire(import.meta.url)("yaml");
+// build/ に書き出すもの（build-log.md は毎回書き直す）
+const OUTPUTS = ["deck.html", "deck.pdf", "assets-manifest.yaml"];
 
 export async function build(deckDir) {
   const outlineFile = path.join(deckDir, "outline.md");
@@ -41,6 +43,8 @@ export async function build(deckDir) {
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
   const outDir = path.join(deckDir, "build");
   fs.mkdirSync(outDir, { recursive: true });
+  // 前回の成果物を消してから作る（失敗したときに、古い deck.html・deck.pdf が今回のものに見えないようにするため）
+  for (const f of OUTPUTS) fs.rmSync(path.join(outDir, f), { force: true });
   if (chk.errors.length) {
     const r = { ok: false, check: chk, custom: customs(outline) };
     fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
@@ -151,6 +155,11 @@ function customs(outline) {
 function buildLog(outline, r) {
   const list = (a) => (a.length ? a.map((x) => `- ${x}`).join("\n") : "なし");
   const L = [
+    // 先頭の設定は status.mjs が読む（下の文は人が読むためのもの。文面を変えても判定は変わらない）
+    "---",
+    `ok: ${!!r.ok}`,
+    "---",
+    "",
     `# ビルドの記録：${outline.meta.deck_id}`,
     "",
     `- 日時：${new Date().toISOString()}`,

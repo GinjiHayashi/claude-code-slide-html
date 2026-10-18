@@ -93,3 +93,10 @@ test("factcheck.md：「引用しない」のドメインを根拠にすると�
     "    - {url: https://ja.wikipedia.org/wiki/a, title: a, publisher: p, published: 不明, accessed: 2026-10-18, tier: 二次, locator: x}", "- suggestion: s"]));
   assert.ok(r.errors.some((e) => e.includes("wikipedia.org")));
 });
+
+test("brief のチェック：空の項目を questions.md の表の順に出す（deck_id は最後）", () => {
+  const text = "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\n---\n\n" +
+    ["目的・この資料で決めたいこと", "聞き手と前提知識", "伝えたい結論（1文）", "発表時間・枚数の目安", "調査が必要な項目", "必ず入れる要素・入れない要素", "構成の進め方"].map((h) => `## ${h}\n`).join("\n");
+  const rows = fs.readFileSync(path.join(SKILLS, "slide-hearing/questions.md"), "utf8").match(/^\| \d+ \| [^|]+/gm).map((r) => r.split("|")[2].trim());
+  assert.deepEqual(checkBrief(text).missing, rows);
+});

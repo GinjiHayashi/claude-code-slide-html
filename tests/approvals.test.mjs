@@ -3,6 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { SKILLS, tempDeck } from "./helpers.mjs";
 
 const { judge, recordApproval, slideHashes, readApprovals } = await import(path.join(SKILLS, "make-slides/scripts/approvals.mjs"));
@@ -40,6 +41,15 @@ test("ゲート：承認がなければ止め、承認すれば通し、承認�
   assert.equal(readApprovals(dir).length, 1);
 });
 
+test("ゲート（outline）：構成の草案があれば、その承認も要る", () => {
+  const dir = tempDeck();
+  approve(dir, "brief.md");
+  fs.writeFileSync(path.join(dir, "outline-draft.md"), "## S01\n- title: 草案\n");
+  assert.ok(checkGate(dir, "outline").errors[0].includes("outline-draft.md"));
+  approve(dir, "outline-draft.md");
+  assert.equal(checkGate(dir, "outline").ok, true);
+});
+
 test("ゲート（build）：factcheck.md の承認のあとに変わったスライドを示す", () => {
   const dir = tempDeck();
   fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
@@ -61,4 +71,20 @@ test("現在地：承認の進み具合で工程が進み、依頼中は答え�
   assert.equal(deckStatus(dir).stage, "3 ファクトチェック");
   fs.writeFileSync(path.join(dir, "approval-request.yaml"), "requested_at: x\ntargets:\n  - {target: brief.md, sha256: x}\n");
   assert.equal(deckStatus(dir).stage, "承認の確認");
+});
+
+test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）で見る", () => {
+  const dir = tempDeck();
+  fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
+  for (const t of ["brief.md", "outline.md", "factcheck.md"]) approve(dir, t);
+  const out = path.join(dir, "build");
+  fs.mkdirSync(out);
+  fs.writeFileSync(path.join(out, "deck.html"), "<html></html>");
+  const sha = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  fs.writeFileSync(path.join(out, "assets-manifest.yaml"), `outline_sha256: ${sha(path.join(dir, "outline.md"))}\ndeck_sha256: ${sha(path.join(out, "deck.html"))}\n`);
+  const log = (ok) => fs.writeFileSync(path.join(out, "build-log.md"), `---\nok: ${ok}\n---\n\n- 結果：合格\n`);
+  log(false);
+  assert.equal(deckStatus(dir).stage, "4 HTML 作成");
+  log(true);
+  assert.equal(deckStatus(dir).stage, "6 最終確認");
 });

@@ -76,7 +76,8 @@ export function deckStatus(deckDir) {
   if (!fs.existsSync(deckFile) || !manifest) return at("4 HTML 作成", "まだビルドしていない", "html-build");
   if (manifest.outline_sha256 !== outlineSha) return at("4 HTML 作成", "いまの outline.md でビルドしていない", "html-build");
   if (manifest.deck_sha256 !== sha256(fs.readFileSync(deckFile))) return at("4 HTML 作成", "deck.html がビルドのあとに変わった（手で直さない）", "html-build（ビルドし直す）");
-  if (!/^- 結果：合格/m.test(log)) return at("4 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
+  const logMeta = log.match(/^---\n([\s\S]*?)\n---\n/);
+  if ((logMeta ? YAMLlib.parse(logMeta[1]) : {})?.ok !== true) return at("4 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
 
   // 6 最終確認
   const fin = approved(deckDir, approvals, "build/deck.html");

@@ -14,6 +14,7 @@ const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "
 const YAML = createRequire(path.join(HB, "package.json"))("yaml");
 
 export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf"];
+// 並びは questions.md の表の順・brief-template.md の見出しの順
 export const SECTIONS = ["目的・この資料で決めたいこと", "聞き手と前提知識", "伝えたい結論（1文）", "発表時間・枚数の目安", "調査が必要な項目", "必ず入れる要素・入れない要素", "構成の進め方"];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
 const NONE = "なし";
@@ -53,7 +54,8 @@ export function checkBrief(text) {
     if (!(s in sections)) errors.push(`見出し「## ${s}」がない`);
     else if (!sections[s]) missing.push(s);
   }
-  missing.push(...META.filter((k) => missingMeta.includes(k)));
+  // deck_id は聞かずに AI が付けるので最後（questions.md の表の順）
+  missing.push(...[...META.slice(1), META[0]].filter((k) => missingMeta.includes(k)));
   const plan = sections["構成の進め方"];
   if (plan && !PLAN.some((p) => plan.replace(/^[-*]\s*/, "").startsWith(p))) errors.push(`「構成の進め方」の1行目は ${PLAN.join("・")} のどれかで始める`);
   const questions = (sections["確認したいこと"] ?? "").split("\n").map((l) => l.replace(/^[-*]\s*/, "").trim()).filter(Boolean);

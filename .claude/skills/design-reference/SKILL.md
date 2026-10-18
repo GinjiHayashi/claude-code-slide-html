@@ -22,7 +22,7 @@ description: スライドの構成・レイアウト・グラフ・色・アク�
 |---|---|
 | 骨子を作る（どのスライドを何枚、どの順で） | `principles.md`、`layout.md`、見本の `slide-style.md` の「スライドの種類」 |
 | 図表を作る | `charts.md`、`colors.md`、見本の `palette.md` |
-| 仕上げの確認 | `checklist.md`、`accessibility.md` |
+| 最終確認（人間が見る） | `checklist.md`（人間に渡す確認表。AI はこれでレビューしない）、`accessibility.md` |
 
 - 基本方針と見本が食い違うときは、基本方針を優先する。見本の値は、基本方針の範囲内で使う。
 - 見本の元資料に載っている図・文章・ロゴは、スライドに転載しない。参考にするのは考え方と作り。

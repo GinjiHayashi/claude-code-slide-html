@@ -30,6 +30,18 @@ test("protect-bash：普段のコマンドは通す", () => {
   assert.equal(bash("git add decks/a && git commit -m 'feat: outline.md を承認'"), "allow");
 });
 
+test("protect-bash：パスが文として出てくるだけのヒアドキュメントや読むだけのスクリプトは通す", () => {
+  assert.equal(bash(`git commit -q -F - <<'EOF'\ndocs: CLAUDE.md と .claude/skills を直す（${RECORD} の説明も）\nEOF`), "allow");
+  assert.equal(bash(`python3 - <<'EOF'\nprint(open('${RECORD}').read())\nEOF`), "allow");
+  assert.equal(bash(`node -e "console.log(require('fs').readFileSync('CLAUDE.md','utf8'))"`), "allow");
+});
+
+test("protect-bash：インタプリタに渡すヒアドキュメントが書き込むなら止める・確認する", () => {
+  assert.equal(bash(`python3 - <<'EOF'\nopen('${RECORD}','w').write('x')\nEOF`), "deny");
+  assert.equal(bash(`python3 - <<'EOF'\np='CLAUDE.md'\nopen(p,'w').write('x')\nEOF`), "ask");
+  assert.equal(bash(`bash <<'EOF'\necho x > .claude/x\nEOF`), "ask");
+});
+
 // 承認の依頼を出し、git の user.name を設定した一時のリポジトリを作る
 function requested() {
   const dir = tempDeck();

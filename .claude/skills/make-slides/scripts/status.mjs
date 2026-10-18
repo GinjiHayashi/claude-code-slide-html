@@ -4,6 +4,7 @@
 // 使い方：node .claude/skills/make-slides/scripts/status.mjs decks/<deck-id>
 // - 出力：工程、状態、次にすること（使うスキル）と、その理由の行。--json で JSON
 // - 工程：1 事前情報とヒアリング → 2 構成 → 3 ファクトチェック → 4・5 ビルド → 6 最終確認 → 完成
+//   構成（outline.md）は単独では承認しない。ファクトチェックのあとに factcheck.md と一緒に承認する
 // - 承認の依頼が出ていれば、何より先に「人間の答え待ち」を返す
 import fs from "fs";
 import path from "path";
@@ -50,21 +51,19 @@ export function deckStatus(deckDir) {
   // 2 構成
   const outlineFile = path.join(deckDir, "outline.md");
   if (!fs.existsSync(outlineFile)) return at("2 構成", "outline.md がない", "slide-outline");
-  const os_ = approved(deckDir, approvals, "outline.md");
-  if (os_ !== "承認済み") {
-    const reasons = [`outline.md：${os_}`];
-    if (draft) { const st = checkStructure(deckDir); reasons.push(...st.errors, ...st.changed.map((c) => `草案から変えた：${c}`)); }
-    return at("2 構成", os_ === "未承認" ? "outline.md の承認待ち" : "承認のあとに outline.md が変わった", "slide-outline（見せて承認を頼む）", reasons);
-  }
 
-  // 3 ファクトチェック
+  // 3 ファクトチェック（構成と一緒に承認する）
   const fcFile = path.join(deckDir, "factcheck.md");
-  if (!fs.existsSync(fcFile)) return at("3 ファクトチェック", "factcheck.md がない", "slide-factcheck");
+  if (!fs.existsSync(fcFile)) return at("2 構成", "factcheck.md がない", "slide-outline（構成ができたら、承認は頼まずに slide-factcheck へ進む）");
   const fc = checkFactcheck(read(fcFile));
   if (fc.errors.length) return at("3 ファクトチェック", "factcheck.md に書式の誤り", "slide-factcheck（手順 5）", fc.errors);
   if (fc.waiting.length) return at("3 ファクトチェック", "P0 の人間の判断待ち", "slide-factcheck（手順 6・7）", [`判断待ち：${fc.waiting.join("、")}`]);
   const g = checkGate(deckDir, "build");
-  if (!g.ok) return at("3 ファクトチェック", "HTML 作成に進めない", "slide-factcheck（直したスライドの確かめ直しと承認）", g.errors);
+  if (!g.ok) {
+    const reasons = [...g.errors];
+    if (draft) { const st = checkStructure(deckDir); reasons.push(...st.errors, ...st.changed.map((c) => `草案から変えた：${c}`)); }
+    return at("3 ファクトチェック", "構成とファクトチェックの承認待ち", "slide-factcheck の手順 9（直したスライドを確かめ直し、outline.md と factcheck.md を一緒に承認してもらう）", reasons);
+  }
 
   // 4・5 ビルド（ライセンス処理を含む）
   const manifestFile = path.join(deckDir, "build", "assets-manifest.yaml");

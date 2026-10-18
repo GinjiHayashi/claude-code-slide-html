@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ハーネスの更新を取り込む（README「2. ハーネスの更新を取り込む」）。スライド用リポジトリの直下で `npm run update-harness`
+// ハーネスの更新を取り込む（README「ハーネスの更新を取り込む」）。スライド用リポジトリの直下で `npm run update-harness`
 // 1. remote harness がなければ足す（.env の HARNESS_REPO。空なら GinjiHayashi/claude-code-slide-html）
 // 2. develop から feature/harness-update を作り、harness/main を merge する。衝突したら止め、直し方を表示する
 // 3. push して、develop への PR を作る（gh にログインしているとき。なければ作り方を表示する）
@@ -54,7 +54,7 @@ export function updateHarness({ cwd = ROOT, harnessUrl = toUrl(DEFAULT_HARNESS) 
       [
         `衝突したので止めた（ブランチ ${BRANCH} で merge の途中）。衝突したファイル：`,
         files,
-        "ハーネスのファイルは、ハーネスの側に合わせて直す（README「2. ハーネスの更新を取り込む」）。直したら：",
+        "ハーネスのファイルは、ハーネスの側に合わせて直す（README「ハーネスの更新を取り込む」）。直したら：",
         `  git add <ファイル> && git commit --no-edit && git push -u origin ${BRANCH}`,
         "やめるときは：git merge --abort && git switch develop && git branch -D " + BRANCH,
       ].join("\n"),

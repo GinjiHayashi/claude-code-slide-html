@@ -18,24 +18,21 @@ Claude Code に、構成の検討から HTML スライド（`deck.html`）の作
 | Claude Code | — | スライドを作る AI | `claude --version` |
 | GitHub CLI（推奨） | — | リポジトリと PR の作成 | `gh auth status` |
 
-**macOS**（[Homebrew](https://brew.sh) を使う）
+macOS と Linux（Windows は WSL の Ubuntu）で同じ手順です。[Homebrew](https://brew.sh) は Linux でも使えるので、ツールはまとめて Homebrew で入れます。
 
 ```sh
+# 1. Homebrew（入っていなければ）。終わりに表示される「Next steps」のコマンドも実行して、brew を使えるようにする
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. ツール
 brew install node git gh uv
-curl -fsSL https://claude.ai/install.sh | bash   # Claude Code
-gh auth login                                    # GitHub にログイン（ブラウザが開く）
+curl -fsSL https://claude.ai/install.sh | bash   # Claude Code（公式のインストーラー）
+
+# 3. GitHub にログイン（ブラウザが開く）
+gh auth login
 ```
 
-**Linux（Ubuntu）・Windows（WSL の Ubuntu）**
-
-```sh
-sudo apt update && sudo apt install -y git curl
-curl -LsSf https://astral.sh/uv/install.sh | sh   # uv
-curl -fsSL https://claude.ai/install.sh | bash    # Claude Code
-```
-
-- Node.js は、[公式のダウンロードページ](https://nodejs.org/ja/download) の手順（nvm など）で 22 以上を入れます。apt の Node.js は古いことがあります。
-- GitHub CLI は、[公式の手順](https://github.com/cli/cli/blob/trunk/docs/install_linux.md) で入れてから `gh auth login` でログインします。
+- Linux では、Homebrew の前に `sudo apt-get install build-essential procps curl file git` が要ります（Homebrew の公式の前提）。
 - Windows では WSL の中で使ってください（Windows のまま動かすことは試していません）。
 
 入れたら、新しいターミナルを開き、表の「確かめ方」のコマンドで版が出ることを確かめます。GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。

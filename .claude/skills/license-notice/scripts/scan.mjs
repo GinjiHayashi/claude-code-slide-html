@@ -10,6 +10,7 @@
 // フォント名 → registry.yaml の id
 const FONT_FAMILIES = [
   [/^Noto Sans JP$/, "noto-sans-jp"],
+  [/^Roboto Mono$/, "roboto-mono"],
   [/^KaTeX_/, "katex"],
 ];
 

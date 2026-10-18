@@ -17,7 +17,12 @@ const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01�
 const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む // text-body（16px）の1行の高さ（行の高さ 1.7）
 
 // ---- 文字 ----
-const strong = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>'); // **語句** → 太字（components.md 4.2）
+// **語句** → 太字（components.md 4.2）、`コード` → 文中のコード（4.3）。コードの中の ** は太字にしない
+const strong = (s) =>
+  String(s ?? "")
+    .split(/(`[^`]+`)/)
+    .map((p, i) => (i % 2 ? `<code>${esc(p.slice(1, -1))}</code>` : esc(p).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')))
+    .join("");
 const TITLE = `m-0 flex items-center gap-[24px] text-title font-bold text-primary before:block before:h-[1.25em] before:w-[8px] before:shrink-0 before:translate-y-[0.06em] before:bg-primary before:content-['']`;
 const STRIP_LEFT = `<div data-deco class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
 const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;

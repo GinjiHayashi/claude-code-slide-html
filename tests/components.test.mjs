@@ -53,3 +53,20 @@ test("見本の outline.md の全スライドを組み立てられる", async ()
   assert.equal(html.length, o.slides.length);
   for (const [i, h] of html.entries()) assert.ok(h.includes(`data-id="${o.slides[i].id}"`));
 });
+
+test("code：色は theme.css のトークンのクラスで出し、使えない言語は止まる", async () => {
+  const code = (await import(path.join(COMP, "code.mjs"))).default;
+  const html = code({ lang: "python", code: "def f():\n    return 'a' # c\n" });
+  assert.ok(html.includes('<span class="text-code-keyword">def</span>'));
+  assert.ok(html.includes("text-code-comment"));
+  assert.ok(!/#[0-9a-f]{6}|style=/i.test(html));
+  assert.throws(() => code({ lang: "cobol", code: "x" }), /lang に cobol は使えない/);
+});
+
+test("文中のコード：`…` を <code> にし、中の ** は太字にしない", async () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("本部が手で貼り合わせて", "本部が `a**b**` で **手で**貼り合わせて"));
+  const html = (await renderDeck(readOutline(f))).join("\n");
+  assert.ok(html.includes("<code>a**b**</code> で <strong"));
+});

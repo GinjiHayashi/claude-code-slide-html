@@ -71,12 +71,27 @@ const html = bar(data, { width: 1172, height: 440 });
 - 目安：1つの箇条書きに1か所まで、1枚のスライドに3か所まで。数字や結論の語句を優先する。太字ばかりにすると強調にならないため。
 - 太字にした語句は、構成の確認（承認ゲート）で人間が見られるよう、`outline.md` にそのまま残る。
 
+## 4.3 コード
+
+コードの見た目は1つに決めてあり、どこに書いても同じになる。
+
+| 書く場所 | 書き方 | 見た目 |
+|---|---|---|
+| 複数行のコード | `code` の部品（`diagram: {kind: code, lang, code, file?}`）。`code: \|` に続けて字下げして書く | 角の丸い（`rounded-panel`、8）枠。GitHub Light Default の色、Roboto Mono の `text-code`（14px） |
+| 文中の短いコード（関数名、コマンド、ファイル名） | 本文・箇条書き・説明文で `` `…` `` で囲む | Roboto Mono。背景は `code-bg`、角は `radius-inline`（4）。字の大きさは周りの文と同じ |
+| 独自の表現（`html:`）の中 | `<code>…</code>` と書くだけ。クラスで色や字を指定しない | 文中のコードと同じ（`base.html` がすべての `<code>` に当てる） |
+
+- コードの色・字・背景は `theme.css` の `--font-mono`・`--color-code-*`・`--text-code`・`--radius-inline` だけで決める。値を変えるときは `theme.css` を直す（部品と `base.html` はトークンを参照するだけ）。
+- コードの中の `**` は太字にしない。コードブロックの中で強調したい行があっても、色や太字を手で付けない。
+- Roboto Mono にない文字（日本語のコメントなど）は Noto Sans JP で出る。
+
 ## 5. 部品が使う素材
 
 | 部品 | 素材 | 扱い |
 |---|---|---|
 | `math` | KaTeX の CSS とフォント | 数式のあるデッキだけ、`katexCss()` の CSS を `deck.html` に入れる。クレジットに MIT と OFL-1.1 を載せる |
 | `map`（shape） | `license-notice/assets/natural-earth/japan-prefectures.json` | 部品が読み込む。作り直すときは `scripts/make-japan-map.mjs`。クレジットに「Made with Natural Earth.」 |
+| `code`・文中のコード | Roboto Mono。shiki（ビルド時だけ） | `<code>` の中の文字だけにサブセット化して埋め込む。コードのないデッキには入らない。クレジットに OFL-1.1 |
 | すべて | Noto Sans JP | 使う文字だけにサブセット化して埋め込む |
 
 素材はすべて `license-notice/registry.yaml` に登録済みのものだけを使う。

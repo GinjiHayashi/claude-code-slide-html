@@ -61,13 +61,11 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 スライド用リポジトリ（README「1. スライド用リポジトリを作る」）では、デッキも git で管理する。ブランチとマージのきまりは README「git の運用ルール」。
 
-まず、`git check-ignore -q decks/<deck-id>/brief.md` で確かめる。終了コードが 0（管理外。ハーネスのリポジトリ）か、git のリポジトリでないときは、この節は行わない。
-
-1. **ブランチ**：1つのデッキ（発表1回分のスライド一式）につき1本。
-   - 新しいデッキ：`git switch -c feature/<deck-id> develop`。
-   - 続き：`git switch feature/<deck-id>`（なければ、まだ develop にマージされていないか人間に聞く）。
-   - 完成したあとの直し：develop にマージ済みなら `git switch -c feature/<deck-id>-fix develop`（2回目からは `-fix2`、`-fix3`）。
-   - 作業中のほかの変更（コミットしていないファイル）があれば、切り替える前に人間に伝える。消さない。
+1. **ブランチ**：1つのデッキ（発表1回分のスライド一式）につき1本。どのブランチで作業するかは自分で判断せず、`node .claude/skills/make-slides/scripts/branch.mjs decks/<deck-id>` で決める。
+   - 「すること」が「使わない」なら、この節はすべて行わない（ハーネスのリポジトリなど、`decks/` が git の管理外のとき）。
+   - 「新規」「続き」「直し」なら、「コマンド」があれば実行する。新規は `feature/<deck-id>`、完成後の直しは `feature/<deck-id>-fix`（2回目からは `-fix2`…）になる。
+   - 「人間に聞く」なら、理由を伝えて答えを待つ。コミットしていない変更は消さない。
+   - squash マージのあとは、元のブランチも残っている。そこで直しを始めない（マージ済みの古い中身のため）。
 2. **コミット**：承認が記録されるたびに、そのデッキのフォルダだけをコミットする（承認の記録 `approvals.yaml` と、承認された内容が同じコミットに入るように）。
    - `git add decks/<deck-id> && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md を承認`、`factcheck.md を承認`、`build/deck.html を承認（最終確認）`）。
    - ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）は、最終確認のコミットに入れる（承認した成果物そのものを残すため）。
@@ -92,6 +90,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 |---|---|
 | `scripts/status.mjs` | デッキの現在地（工程・状態・次に使うスキル・理由）を、ファイルと承認の記録とゲートから判定する |
 | `scripts/gate.mjs` | 工程に進めるか（outline・factcheck・build）を承認の記録で判定する |
+| `scripts/branch.mjs` | スライド用リポジトリで、デッキの作業をどのブランチで行うか（新規・続き・直し）を決める |
 | `scripts/request.mjs` | 承認の依頼を出す（approval-request.yaml を書く） |
 | `scripts/approve-hook.mjs` | 人間の答えを判定して approvals.yaml に記録する hook（AI は実行しない） |
 | `scripts/approvals.mjs` | 承認の記録の読み書きと sha256 |

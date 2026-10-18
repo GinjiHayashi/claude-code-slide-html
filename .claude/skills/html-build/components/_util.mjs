@@ -1,20 +1,62 @@
 // 部品で共通に使う小さな関数。
-// 部品は「データを受け取り HTML の文字列を返す」関数にする（要求文書 11章）。
+// 部品は「データを受け取り HTML の文字列を返す」関数にする。
 // Tailwind はソースの文字列からクラス名を拾うため、クラス名は組み立てずに完全な形で書く。
 
 /** HTML に埋め込む文字を安全にする */
-export const esc = (v) =>
-  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+export const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 /** 数値を3桁区切りにする。数値でなければそのまま返す */
 export const num = (v) => (typeof v === "number" ? v.toLocaleString("ja-JP") : esc(v));
 
-/** 必須の項目がなければ止める（書式チェックの前の最後の守り） */
-export const need = (kind, data, keys) => {
-  for (const k of keys) {
-    if (data?.[k] === undefined || data?.[k] === null) throw new Error(`${kind}: 必須の項目 ${k} がない`);
-  }
+// ---- data の決まり（各部品の schema）----
+// 項目の名前に、決まりを書く。R：必須、O：任意（中身は部品が確かめる）。
+// [決まり]：並び（各要素をその決まりで確かめる）。{ … }：まとまり。どちらも optional(…) で任意にする。
+// 書式チェックは部品を呼んで確かめるので、ここで知らない項目（書き間違い）もエラーにする。
+export const R = { req: true },
+  O = { req: false };
+export const optional = (spec) => ({ req: false, spec });
+const norm = (spec) => {
+  if (spec === R || spec === O) return spec;
+  if (spec.spec !== undefined) return { ...norm(spec.spec), req: false };
+  if (Array.isArray(spec)) return { req: true, list: norm(spec[0]) };
+  return { req: true, keys: spec };
 };
+const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+/** data が schema に合うかを確かめ、合わなければ止める（必須の項目がない、知らない項目がある、形が違う） */
+export function check(kind, data, schema, where = "") {
+  if (!isObj(data)) throw new Error(`${kind}: ${where || "data"} は { 項目: 値 } の形にする`);
+  for (const k of Object.keys(data)) if (!(k in schema)) throw new Error(`${kind}: 知らない項目 ${where}${k}（書けるもの：${Object.keys(schema).join("・")}）`);
+  for (const [k, spec] of Object.entries(schema)) {
+    const v = data[k],
+      n = norm(spec),
+      at = `${where}${k}`;
+    if (v === undefined || v === null) {
+      if (n.req) throw new Error(`${kind}: 必須の項目 ${at} がない`);
+      continue;
+    }
+    if (n.keys) {
+      if (!isObj(v)) throw new Error(`${kind}: ${at} は { ${Object.keys(n.keys).join(", ")} } の形にする`);
+      check(kind, v, n.keys, `${at}.`);
+    }
+    if (n.list) {
+      if (!Array.isArray(v)) throw new Error(`${kind}: ${at} は並び（- で始まる行）にする`);
+      if (n.list.keys) v.forEach((x, i) => check(kind, x, n.list.keys, `${at}[${i + 1}].`));
+    }
+  }
+}
+
+/** schema を人が読める1行にする（schema.mjs と書式チェックの説明に使う） */
+export function describe(schema) {
+  const one = (n) => (n.keys ? `{ ${describe(n.keys)} }` : n.list ? `[${one(n.list)}]` : "");
+  return Object.entries(schema)
+    .map(([k, spec]) => {
+      const n = norm(spec),
+        d = one(n);
+      return `${k}${n.req ? "" : "?"}${d ? `: ${d}` : ""}`;
+    })
+    .join(", ");
+}
 
 /** 強調表示（outline.md に書いた値をそのまま出す。部品は計算しない） */
 export const callout = (c) =>
@@ -55,28 +97,28 @@ export const svgSize = (data, opt = {}) => {
   return { w, h };
 };
 
-// ---- 箱の枠と矢印の色（flow・steps・flowchart で共通）----
-// 既定は deepnavy（Light Blue 1200 #00234B。灰色・紺・青の4案を見比べてユーザーが決定）。ほかは比較のために残している。
-export const LINES = {
-  gray: { border: "border-gray-600", stroke: "stroke-gray-600", fill: "fill-gray-600", bg: "bg-gray-600" },
-  navy: { border: "border-blue-1200", stroke: "stroke-blue-1200", fill: "fill-blue-1200", bg: "bg-blue-1200" },
-  deepnavy: { border: "border-lightblue-1200", stroke: "stroke-lightblue-1200", fill: "fill-lightblue-1200", bg: "bg-lightblue-1200" },
-  primary: { border: "border-primary", stroke: "stroke-primary", fill: "fill-primary", bg: "bg-primary" },
-};
-export const DEFAULT_LINE = "deepnavy";
-export const lineOf = (data) => LINES[data.line ?? DEFAULT_LINE];
+// ---- 箱の枠と矢印の色（構造・概念の図で共通）。Light Blue 1200 #00234B ----
+export const LINE = { border: "border-lightblue-1200", stroke: "stroke-lightblue-1200", fill: "fill-lightblue-1200", bg: "bg-lightblue-1200" };
 
 /** 折れ線（点の並び）を SVG の path にする。角は半径 r で丸める（前後の線の半分より大きくはしない）。flowchart・tree で共通 */
 export function rounded(p, r = 8) {
   const f = (n) => n.toFixed(1);
   let d = `M${f(p[0][0])},${f(p[0][1])}`;
   for (let i = 1; i < p.length - 1; i++) {
-    const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1];
-    const l1 = Math.hypot(x1 - x0, y1 - y0), l2 = Math.hypot(x2 - x1, y2 - y1);
+    const [x0, y0] = p[i - 1],
+      [x1, y1] = p[i],
+      [x2, y2] = p[i + 1];
+    const l1 = Math.hypot(x1 - x0, y1 - y0),
+      l2 = Math.hypot(x2 - x1, y2 - y1);
     const k = Math.min(r, l1 / 2, l2 / 2);
-    if (k <= 0) { d += `L${f(x1)},${f(y1)}`; continue; }
-    const ax = x1 - ((x1 - x0) / l1) * k, ay = y1 - ((y1 - y0) / l1) * k;
-    const bx = x1 + ((x2 - x1) / l2) * k, by = y1 + ((y2 - y1) / l2) * k;
+    if (k <= 0) {
+      d += `L${f(x1)},${f(y1)}`;
+      continue;
+    }
+    const ax = x1 - ((x1 - x0) / l1) * k,
+      ay = y1 - ((y1 - y0) / l1) * k;
+    const bx = x1 + ((x2 - x1) / l2) * k,
+      by = y1 + ((y2 - y1) / l2) * k;
     d += `L${f(ax)},${f(ay)}Q${f(x1)},${f(y1)} ${f(bx)},${f(by)}`;
   }
   const [lx, ly] = p.at(-1);
@@ -98,12 +140,16 @@ const PICK = { 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4] };
 export function seqStep(values, n = 5) {
   if (!PICK[n]) throw new Error("steps は3〜5");
   const shades = PICK[n].map((i) => SEQ[i]);
-  const lo = Math.min(...values), hi = Math.max(...values);
+  const lo = Math.min(...values),
+    hi = Math.max(...values);
   const w = (hi - lo) / n || 1;
   const step = (v) => Math.min(n - 1, Math.floor((v - lo) / w));
-  const legend = shades.map((s, k) => {
-    const a = lo + w * k, b = k === n - 1 ? hi : lo + w * (k + 1);
-    return `<div class="flex items-center gap-[6px]"><span class="inline-block h-[16px] w-[24px] border border-line ${s.bg}"></span><span class="text-caption text-label">${num(Math.round(a))}〜${num(Math.round(b))}</span></div>`;
-  }).join("");
+  const legend = shades
+    .map((s, k) => {
+      const a = lo + w * k,
+        b = k === n - 1 ? hi : lo + w * (k + 1);
+      return `<div class="flex items-center gap-[6px]"><span class="inline-block h-[16px] w-[24px] border border-line ${s.bg}"></span><span class="text-caption text-label">${num(Math.round(a))}〜${num(Math.round(b))}</span></div>`;
+    })
+    .join("");
   return { shades, step, legend };
 }

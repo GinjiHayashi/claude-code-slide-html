@@ -28,28 +28,6 @@
   verified_at: 2026-10-17
   verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
 
-- id: lucide
-  name: Lucide
-  type: icon
-  scope: distributed
-  version: "1.59.0"
-  license: ISC
-  copyright: "Copyright (c) 2026 Lucide Icons and Contributors"
-  additional_licenses:
-    - license: MIT
-      copyright: "Copyright (c) 2013-present Cole Bemis"
-      applies_to: Feather 由来のアイコン（lucide-static の LICENSE に一覧がある。例：database、check、arrow-right）
-  source: https://github.com/lucide-icons/lucide
-  package: "npm:lucide-static@1.59.0"
-  files: []                         # 構築順序4で、使うアイコンだけを assets/lucide/ に追加し sha256 を書く
-  commercial_use: true
-  notice_required: true             # ISC・MIT とも、著作権表示と許諾文を含める
-  conditions:
-    - アイコンを1つでも使ったら、ISC と MIT（Feather）の両方の表記を載せる（どのアイコンが Feather 由来かを判定しなくて済むようにする）
-  verified_by: GinjiHayashi
-  verified_at: 2026-10-17
-  verification: 公式の LICENSE と照合した
-
 - id: katex
   name: KaTeX（数式の組版。CSS とフォントを埋め込む）
   type: library
@@ -177,7 +155,7 @@
   commercial_use: true
   notice_required: false
   notes:
-    - スクリプトを Node.js に統一する場合（レビュー R13）は差し替えを検討する
+    - スクリプトを Node.js に統一する場合は差し替えを検討する
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）

@@ -1,6 +1,6 @@
 import { esc } from "./_util.mjs";
 
-// SVG のグラフで共通に使う目盛と軸。座標の計算は d3-scale に任せる（要求文書 10.1）。
+// SVG のグラフで共通に使う目盛と軸。座標の計算は d3-scale に任せる。
 
 /** 横の目盛線と左の数値。目盛線は最小限の薄い線にする（charts.md 4章） */
 export const yGrid = (y, x0, x1, fmt = (v) => v.toLocaleString("ja-JP"), side = "left") =>

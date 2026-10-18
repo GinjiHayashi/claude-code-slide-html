@@ -1,11 +1,11 @@
 ---
 name: slide-outline
-description: 承認済みの brief.md をもとに、人間の構成の草案と調査を行き来しながら outline.md（スライドの元ファイル）を作り、承認してもらうまでを受け持つスキル。brief.md の「構成の進め方」（決まっている・たたき台がある・相談して決めたい）で動き方を変える。
+description: 承認済みの brief.md をもとに、人間の構成の草案と調査を行き来しながら outline.md（スライドの元ファイル）を作り、ファクトチェックに渡すまでを受け持つスキル。brief.md の「構成の進め方」（決まっている・たたき台がある・相談して決めたい）で動き方を変える。
 ---
 
 # 構成の検討（slide-outline）
 
-`decks/<deck-id>/brief.md` をもとに `decks/<deck-id>/outline.md` を作る（要求文書 7章）。`outline.md` はスライドの元ファイルで、ここに書いた文と数値がそのままスライドに載り、ファクトチェックの対象になる。書き方は `outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md`。
+`decks/<deck-id>/brief.md` をもとに `decks/<deck-id>/outline.md` を作る。`outline.md` はスライドの元ファイルで、ここに書いた文と数値がそのままスライドに載り、ファクトチェックの対象になる。書き方は `outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md`。
 
 ## 手順
 
@@ -23,7 +23,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 検索語に機密の情報を入れない（CLAUDE.md）。
 5. **outline.md を書く**：
    - 先頭の設定と表紙（S01）・締めは、`brief.md` の先頭の設定から写す（`brief-template.md` の対応表）。
-   - 型は `layout-catalog.md` から、図は `diagram-catalog.md` から選ぶ。目的に合う部品があれば必ず使い、似たものを独自に作らない。表しにくいものだけ独自の表現（`html-build/components.md` 4.1）。
+   - 型は `layout-catalog.md` から、図は `diagram-catalog.md` から選ぶ。書ける項目は `node .claude/skills/html-build/scripts/schema.mjs <型の名前>` で確かめる。目的に合う部品があれば必ず使い、似たものを独自に作らない。表しにくいものだけ独自の表現（`html-build/components.md` 4.1）。
    - 目次（`toc`）と章の扉（`section`）を入れるか、どこに入れるかは、枚数ではなく内容で決める。
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。
    - 出典は、そのスライドの `source` に書く。
@@ -39,7 +39,8 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    4. 調査の要点と、確度が「未確認」「矛盾あり」の主張、調べきれなかったこと。
    5. チェックの注意。
    - 直してほしいと言われたら直し、4〜7 をやり直す。
-8. **承認を頼む**：`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> outline.md` で依頼する。人間の答えは hook が記録する。承認されたかは `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> factcheck` で確かめ、通ったら `slide-factcheck` に進む。
+8. **ファクトチェックに進む**：outline.md だけの承認は頼まない。見せたら、答えを待たずに `slide-factcheck` に進む（構成への直しの指示は、ファクトチェックの途中でも受けて直す）。構成とファクトチェックの結果は、`slide-factcheck` の手順 9 で一緒に承認してもらう。
+   - モードごとの相談（章立ての案を選ぶ、修正案を採用するか）の答えは、進む前にもらう。
 
 承認のあとに outline.md を変えたときは、変えたスライドについてファクトチェックからやり直す（CLAUDE.md）。
 
@@ -49,7 +50,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 
 ### 決まっている
 
-人間の構成を崩さない（ユーザーの要望）。
+人間の構成を崩さない。
 
 - スライドの並び、枚数、タイトル、各スライドの文は、人間が書いたとおりにする。言い換え、まとめ、分割、並べ替え、削除をしない。
 - AI が埋めてよいのは、人間が書いていない項目だけ：型（`layout`）、図の型と、人間が渡したデータの写し、空の必須項目（説明文 `lead` など）、`claims`、`source`、`notes`。足したものは手順 7 の 2 で一覧にして見せる。
@@ -59,12 +60,12 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 
 ### たたき台がある
 
-人間のたたき台を土台にし、修正案を出す（要求文書 7.1）。
+人間のたたき台を土台にし、修正案を出す。
 
 - まず、草案（`outline-draft.md`）を outline.md に写す。
 - 調査と `design-reference` の基本方針をもとに、修正案を出す。1つの案ごとに、どのスライドを・どう変えるか・なぜか（調査の主張の ID や、基本方針の該当箇所）を書く。
 - 採用するかは人間が決める。採用された案だけ outline.md に反映する。採用されなかった案は、もう一度は出さない。
-- 承認を頼むときに `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
+- 手順 7 と、承認を頼むとき（`slide-factcheck` の手順 9）に `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
 
 ### 相談して決めたい
 

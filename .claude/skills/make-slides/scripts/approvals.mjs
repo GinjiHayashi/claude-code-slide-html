@@ -1,4 +1,4 @@
-// 承認の記録（decks/<deck-id>/approvals.yaml）を読む・書く共通の処理（要求文書 4章）。
+// 承認の記録（decks/<deck-id>/approvals.yaml）を読む・書く共通の処理。
 // - 1件の承認＝対象のファイル、その時点の sha256、承認者、承認日時。outline.md はスライドごとの sha256 も残す
 //   （承認後にどのスライドが変わったかを示し、ファクトチェックをそのスライドだけやり直せるようにするため）
 // - 記録は追記だけ。同じ対象の承認が複数あれば、最後のものを使う
@@ -9,22 +9,20 @@
 // - approvals.yaml を書くのは hook だけ。AI は書かない（.claude/settings.json で禁止）
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
-import { createRequire } from "module";
-import { fileURLToPath } from "url";
+import YAML from "yaml";
+import { frontMatter, sha256 } from "../../../lib/common.mjs";
 
-const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "html-build");
-export const YAML = createRequire(path.join(HB, "package.json"))("yaml");
+export { YAML };
 
 // 承認できるもの（工程の順）
 export const TARGETS = ["brief.md", "outline-draft.md", "outline.md", "factcheck.md", "build/deck.html"]; // デッキのフォルダからの相対パス
 
-export const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
+export { sha256 };
 
 // outline.md をスライドの見出し（## S01）ごとに分けて sha256 を取る。先頭の設定は「meta」
 export function slideHashes(text) {
   const out = {};
-  const m = text.match(/^---\n[\s\S]*?\n---\n/);
+  const m = frontMatter(text);
   out.meta = sha256(m ? m[0] : "");
   const body = m ? text.slice(m[0].length) : text;
   for (const part of body.split(/^(?=##\s+\S+\s*$)/m)) {
@@ -60,7 +58,9 @@ export function recordApproval(deckDir, target, info) {
     changed = `前回の承認から変わったところ：${[...ids].filter((k) => prev.slides[k] !== entry.slides[k]).join("、")}`;
   }
   const f = path.join(deckDir, "approvals.yaml");
-  const head = fs.existsSync(f) ? "" : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない（要求文書 4章）\n";
+  const head = fs.existsSync(f)
+    ? ""
+    : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない\n";
   fs.appendFileSync(f, head + YAML.stringify([entry]));
   return { entry, changed };
 }
@@ -74,8 +74,12 @@ export function readRequest(deckDir) {
 
 // 人間の答えを判定する（AI ではなく、決まった語で判定する）
 // - 直す・待つ・否定の語や疑問符があれば「承認ではない」。なければ、同意の語があるときだけ「承認」。どちらもなければ「判断できない」
-const NO = /直し|直して|修正|変更|変えて|だめ|ダメ|駄目|NG|待って|まって|やめ|違う|ちがう|保留|却下|いいえ|ではな|じゃな|[?？]/i;
-const YES = /承認|OK|オーケー|はい|いいです|いいよ|良いです|よいです|大丈夫|問題な|了解|進めて|進めましょう|お願いします|LGTM|👍/i;
+// - 否定の言い方（「承認しません」「まだ承認しないで」「あとで」）は、同意の語を含んでいても承認ではない。
+//   迷う言い方は承認ではない側に倒す（承認されないだけなら、AI がもう一度聞けば済むため）。「問題ありません」は否定の語に当たらない
+const NO =
+  /直し|直して|修正|変更|変えて|だめ|ダメ|駄目|NG|待って|まって|やめ|違う|ちがう|保留|却下|いいえ|ではな|じゃな|しない|しません|できな|できません|ないで(?!す)|まだ|あとで|後で|[?？]/i;
+const YES =
+  /承認|OK|オーケー|はい|いいです|いいよ|良いです|よいです|大丈夫|問題な|問題ありません|かまいません|構いません|了解|進めて|進めましょう|お願いします|LGTM|👍/i;
 export function judge(text) {
   if (NO.test(text)) return "reject";
   if (YES.test(text)) return "approve";

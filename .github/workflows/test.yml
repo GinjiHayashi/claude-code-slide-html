@@ -1,0 +1,32 @@
+# テストと見本のビルド：PR ごとに、ハーネスが壊れていないかを確かめる
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # README「3. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
+      - name: セットアップ
+        run: npm run setup -- --with-deps
+
+      - name: テスト
+        run: npm test
+      - name: 見本のビルド（検査と PDF まで）
+        run: npm run build -- examples/sample-deck
+      - name: ビルドの記録
+        if: always()
+        run: cat examples/sample-deck/build/build-log.md || true

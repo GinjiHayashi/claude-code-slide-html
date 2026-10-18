@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 変更の検出の hook（SessionStart・Stop）：会話の中でハーネスのファイル（.claude/、CLAUDE.md）が変わったら、AI に人間へ報告させる（要求文書 9.1、Q6。構築順序10）。
+// 変更の検出の hook（SessionStart・Stop）：会話の中でハーネスのファイル（.claude/、CLAUDE.md）が変わったら、AI に人間へ報告させる。
 // settings.json のルールと protect-bash.mjs をすり抜けた変更（スクリプトの中の書き込み、確認を飛ばすモードなど）も、
 // ファイルの中身を比べるので見つけられる。最後の守り。
 // 使い方（settings.json から呼ぶ）：protect-check.mjs start ／ protect-check.mjs stop
@@ -15,7 +15,11 @@ import crypto from "crypto";
 const mode = process.argv[2];
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-const id = crypto.createHash("sha256").update(`${root}\n${input.session_id ?? ""}`).digest("hex").slice(0, 16);
+const id = crypto
+  .createHash("sha256")
+  .update(`${root}\n${input.session_id ?? ""}`)
+  .digest("hex")
+  .slice(0, 16);
 const stateFile = path.join(os.tmpdir(), "slide-harness-protect", `${id}.json`);
 const SKIP = new Set(["node_modules", "settings.local.json", ".DS_Store"]);
 
@@ -34,7 +38,10 @@ function snapshot() {
   if (fs.existsSync(md)) out["CLAUDE.md"] = crypto.createHash("sha256").update(fs.readFileSync(md)).digest("hex");
   return out;
 }
-const save = (s) => { fs.mkdirSync(path.dirname(stateFile), { recursive: true }); fs.writeFileSync(stateFile, JSON.stringify(s)); };
+const save = (s) => {
+  fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+  fs.writeFileSync(stateFile, JSON.stringify(s));
+};
 
 if (mode === "start" || !fs.existsSync(stateFile)) {
   save({ base: snapshot(), told: {} });
@@ -51,7 +58,9 @@ if (!changed.length) process.exit(0);
 for (const f of changed) state.told[f] = now[f] ?? "deleted";
 save(state);
 const list = changed.map((f) => `${f}（${!state.base[f] ? "増えた" : !now[f] ? "消えた" : "変わった"}）`).join("、");
-console.log(JSON.stringify({
-  decision: "block",
-  reason: `この会話の中で、ハーネスのファイルが変わった：${list}。スライド作成中は固定ファイルを変えない（CLAUDE.md）。人間が許可したハーネスの修正でなければ、変えたことと理由を人間に伝え、元に戻すかを聞く。許可された修正なら、そのまま答えを終えてよい。`,
-}));
+console.log(
+  JSON.stringify({
+    decision: "block",
+    reason: `この会話の中で、ハーネスのファイルが変わった：${list}。スライド作成中は固定ファイルを変えない（CLAUDE.md）。人間が許可したハーネスの修正でなければ、変えたことと理由を人間に伝え、元に戻すかを聞く。許可された修正なら、そのまま答えを終えてよい。`,
+  }),
+);

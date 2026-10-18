@@ -1,39 +1,52 @@
 #!/usr/bin/env node
-// 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する（要求文書 4章・11章）。
+// 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する。
 // AI の自己申告では判定しない。
 // 使い方：node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>
-// - outline：brief.md が承認済み
-// - factcheck：brief.md と outline.md が承認済み
+// - outline：brief.md が承認済み。outline-draft.md（人間の構成の草案）があれば、それも承認済み
+// - factcheck：brief.md（と草案）が承認済みで、outline.md がある。outline.md は単独では承認せず、factcheck.md と一緒に承認する
 // - build：outline.md と factcheck.md が承認済みで、factcheck.md の書式にエラーがなく、P0 にすべて人間の判断（decision）が書かれている。
 //   さらに、factcheck.md を承認したときから outline.md のスライドが変わっていない（変わったスライドはファクトチェックし直す）
 // 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { sha256, slideHashes, readApprovals, latest } from "./approvals.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
+import { isMain } from "../../../lib/common.mjs";
 
 const NEEDS = {
   outline: ["brief.md"],
-  factcheck: ["brief.md", "outline.md"],
+  factcheck: ["brief.md"],
   build: ["outline.md", "factcheck.md"],
 };
+// あるときだけ承認が要るもの（草案を渡さないデッキもあるため）
+const IF_EXISTS = { outline: ["outline-draft.md"], factcheck: ["outline-draft.md"] };
+// 承認は要らないが、ないと進めないもの
+const EXISTS = { factcheck: ["outline.md"] };
 
 // factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
 export function factcheckedChanges(approval, outlineText) {
   if (!approval?.outline_slides) return null;
-  const now = slideHashes(outlineText), then = approval.outline_slides;
+  const now = slideHashes(outlineText),
+    then = approval.outline_slides;
   return [...new Set([...Object.keys(then), ...Object.keys(now)])].filter((k) => k !== "meta" && then[k] !== now[k]);
 }
 
 export function checkGate(deckDir, stage) {
   const errors = [];
   const approvals = readApprovals(deckDir);
-  for (const target of NEEDS[stage]) {
+  for (const t of EXISTS[stage] ?? []) if (!fs.existsSync(path.join(deckDir, t))) errors.push(`${t} がない`);
+  const optional = (IF_EXISTS[stage] ?? []).filter((t) => fs.existsSync(path.join(deckDir, t)));
+  for (const target of [...NEEDS[stage], ...optional]) {
     const file = path.join(deckDir, target);
-    if (!fs.existsSync(file)) { errors.push(`${target} がない`); continue; }
+    if (!fs.existsSync(file)) {
+      errors.push(`${target} がない`);
+      continue;
+    }
     const a = latest(approvals, target);
-    if (!a) { errors.push(`${target} が承認されていない（request.mjs で承認を依頼し、人間が答える）`); continue; }
+    if (!a) {
+      errors.push(`${target} が承認されていない（request.mjs で承認を依頼し、人間が答える）`);
+      continue;
+    }
     const text = fs.readFileSync(file);
     if (a.sha256 === sha256(text)) continue;
     let where = "";
@@ -53,16 +66,22 @@ export function checkGate(deckDir, stage) {
     if (a && fs.existsSync(of)) {
       const changed = factcheckedChanges(a, fs.readFileSync(of, "utf8"));
       if (changed === null) errors.push("factcheck.md の承認に、そのときの outline.md の記録がない。factcheck.md を承認し直す");
-      else if (changed.length) errors.push(`ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`);
+      else if (changed.length)
+        errors.push(
+          `ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`,
+        );
     }
   }
   return { ok: !errors.length, errors };
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const [deckDir, stage] = process.argv.slice(2);
-  if (!deckDir || !NEEDS[stage]) { console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`); process.exit(2); }
+  if (!deckDir || !NEEDS[stage]) {
+    console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`);
+    process.exit(2);
+  }
   const r = checkGate(deckDir, stage);
   for (const e of r.errors) console.log(`止める  ${e}`);
   console.log(r.ok ? `${stage} に進んでよい` : `${stage} に進めない`);

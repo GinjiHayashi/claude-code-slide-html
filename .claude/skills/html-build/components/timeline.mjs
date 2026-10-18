@@ -1,16 +1,19 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // timeline：出来事を時間順に、横一本の線の上に並べる。3〜6個。
-// data: { items: [{ date, label, text? }], highlight?: 番号（1から）, line? }
+// data: { items: [{ date, label, text? }], highlight?: 番号（1から） }
 // - 日付は線の上、出来事の名前と説明は線の下に書く。間隔は等しくする（日付の間の長さには合わせない）。
 // - 印は白地の丸に枠。highlight の出来事は primary で塗り、名前も primary にする。
-// - 線と枠の色は _util.mjs の LINES（既定は Light Blue 1200）。
+// - 線と枠の色は _util.mjs の LINE（Light Blue 1200）。
+
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { items: [{ date: R, label: R, text: O }], highlight: O };
 
 export default function timeline(data) {
-  need("timeline", data, ["items"]);
+  check("timeline", data, schema);
   const I = data.items;
   if (I.length < 3 || I.length > 6) throw new Error("timeline: items は3〜6");
-  const LN = lineOf(data);
+  const LN = LINE;
   const cols = I.map((it, i) => {
     const on = data.highlight === i + 1;
     const dot = on ? "h-[24px] w-[24px] bg-primary border-primary" : `h-[18px] w-[18px] bg-canvas ${LN.border}`;

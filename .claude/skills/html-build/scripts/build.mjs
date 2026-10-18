@@ -11,13 +11,14 @@ import { katexCss } from "../components/math.mjs";
 import { inspect } from "./inspect.mjs";
 import { toPdf } from "./pdf.mjs";
 import crypto from "crypto";
-import { createRequire } from "module";
+import YAML from "yaml";
 import { scanDeck } from "../../license-notice/scripts/scan.mjs";
 import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
+import { isMain } from "../../../lib/common.mjs";
 
-// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る（要求文書 11章）。書き出すものはすべて decks/<deck-id>/build/ に置く。
+// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
 // 使い方：node build.mjs decks/<deck-id>
 // 1. 書式チェック（check-outline.mjs）。エラーがあれば止める。承認ゲート（gate.mjs）が通らなければ注意として記録する
 // 2. スライドを組み立てる（layouts.mjs と components/）
@@ -25,22 +26,26 @@ import { checkGate } from "../../make-slides/scripts/gate.mjs";
 // 4. Noto Sans JP を使っている文字だけにサブセット化して埋め込む（font-subset.py）
 // 5. 数式があれば KaTeX の CSS とフォントを埋め込む
 // 6. 組み立てたものを走査し、registry.yaml・policy.md と照合する（license-notice）。不合格なら止める
-// 7. 合格した素材の credits スライドとライセンスの全文を入れて組み立て直し、deck.html と assets-manifest.yaml を書き出す。外部から何も読み込まない（D8）
+// 7. 合格した素材の credits スライドとライセンスの全文を入れて組み立て直し、deck.html と assets-manifest.yaml を書き出す。外部から何も読み込まない
 // 8. ブラウザで開いて機械的に検査し（inspect.mjs）、結果を build-log.md に書く。問題があれば失敗として返す
 // 9. 合格し、outline.md が pdf: true なら deck.pdf も作る（pdf.mjs）
 
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const YAML = createRequire(import.meta.url)("yaml");
+const MODULES = path.join(HB, "..", "..", "..", "node_modules"); // リポジトリの直下
+// build/ に書き出すもの（build-log.md は毎回書き直す）
+const OUTPUTS = ["deck.html", "deck.pdf", "assets-manifest.yaml"];
 
 export async function build(deckDir) {
   const outlineFile = path.join(deckDir, "outline.md");
   const chk = await checkOutline(outlineFile);
-  // 承認ゲート：単独で呼んだときは止めずに注意として記録する（要求文書 11章。止めるのは make-slides が gate.mjs で行う）
+  // 承認ゲート：単独で呼んだときは止めずに注意として記録する
   chk.warnings.unshift(...checkGate(deckDir, "build").errors.map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
   const outDir = path.join(deckDir, "build");
   fs.mkdirSync(outDir, { recursive: true });
+  // 前回の成果物を消してから作る（失敗したときに、古い deck.html・deck.pdf が今回のものに見えないようにするため）
+  for (const f of OUTPUTS) fs.rmSync(path.join(outDir, f), { force: true });
   if (chk.errors.length) {
     const r = { ok: false, check: chk, custom: customs(outline) };
     fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
@@ -54,7 +59,10 @@ export async function build(deckDir) {
     const first = assemble(work, outline, slides, "");
     const scan1 = scanDeck(first.html);
     const lic = verify(scan1);
-    const cr = credits(scan1.assets.map((a) => a.id), lic.registry);
+    const cr = credits(
+      scan1.assets.map((a) => a.id),
+      lic.registry,
+    );
     lic.errors.push(...cr.errors);
     if (lic.errors.length) {
       const r = { ok: false, check: chk, custom: customs(outline), license: { ...lic, assets: scan1.assets, rows: [] } };
@@ -85,7 +93,17 @@ export async function build(deckDir) {
 
     const count = outline.slides.length + 1; // credits を含む
     const insp = await inspect(out, count);
-    const r = { check: chk, out, slides: count, bytes: Buffer.byteLength(html), math, fontLog, inspect: insp, custom: customs(outline), license: { ...lic, assets: scan.assets, rows: cr.rows } };
+    const r = {
+      check: chk,
+      out,
+      slides: count,
+      bytes: Buffer.byteLength(html),
+      math,
+      fontLog,
+      inspect: insp,
+      custom: customs(outline),
+      license: { ...lic, assets: scan.assets, rows: cr.rows },
+    };
     r.ok = CATEGORIES.every(([k]) => !insp[k].length);
     // PDF：検査に合格し、outline.md で pdf: true のときだけ作る
     if (r.ok && outline.meta.pdf === true) {
@@ -103,25 +121,35 @@ export async function build(deckDir) {
 function assemble(work, outline, slides, licenses) {
   // Tailwind：スライドの HTML からクラス名を読み取る。import は絶対パスで書き、作業フォルダの場所に左右されないようにする
   fs.writeFileSync(path.join(work, "slides.html"), slides);
-  fs.writeFileSync(path.join(work, "in.css"), [
-    `@import "${path.join(HB, "node_modules/tailwindcss/index.css")}";`,
-    `@import "${path.join(HB, "theme.css")}";`,
-    `@source "${path.join(work, "slides.html")}";`,
-    `@source "${path.join(HB, "base.html")}";`,
-  ].join("\n"));
-  execFileSync(process.execPath, [path.join(HB, "node_modules/@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"], { stdio: "pipe" });
+  fs.writeFileSync(
+    path.join(work, "in.css"),
+    [
+      `@import "${path.join(MODULES, "tailwindcss/index.css")}";`,
+      `@import "${path.join(HB, "theme.css")}";`,
+      `@source "${path.join(work, "slides.html")}";`,
+      `@source "${path.join(HB, "base.html")}";`,
+    ].join("\n"),
+  );
+  execFileSync(
+    process.execPath,
+    [path.join(MODULES, "@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"],
+    { stdio: "pipe" },
+  );
   let css = fs.readFileSync(path.join(work, "out.css"), "utf8");
   const math = slides.includes('data-kind="math"');
   if (math) css += "\n" + katexCss();
 
   // フォント：base.html の文字（ページ番号など）も含める。ライセンスの全文は画面に出さないので含めない
   fs.writeFileSync(path.join(work, "text.html"), slides + fs.readFileSync(path.join(HB, "base.html"), "utf8"));
-  const fontLog = execFileSync("python3", [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], { encoding: "utf8" }).trim();
+  const fontLog = execFileSync("python3", [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], {
+    encoding: "utf8",
+  }).trim();
   const font = fs.readFileSync(path.join(work, "font.css"), "utf8");
 
   // base.html の印を置き換える。置き換える値に $ が含まれても崩れないよう、関数で渡す
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const html = fs.readFileSync(path.join(HB, "base.html"), "utf8")
+  const html = fs
+    .readFileSync(path.join(HB, "base.html"), "utf8")
     .replace("{{title}}", () => esc(outline.meta.title))
     .replace("/*FONT*/", () => font)
     .replace("/*TAILWIND*/", () => css)
@@ -151,12 +179,23 @@ function customs(outline) {
 function buildLog(outline, r) {
   const list = (a) => (a.length ? a.map((x) => `- ${x}`).join("\n") : "なし");
   const L = [
+    // 先頭の設定は status.mjs が読む（下の文は人が読むためのもの。文面を変えても判定は変わらない）
+    "---",
+    `ok: ${!!r.ok}`,
+    "---",
+    "",
     `# ビルドの記録：${outline.meta.deck_id}`,
     "",
     `- 日時：${new Date().toISOString()}`,
     `- 結果：${r.ok ? "合格" : r.inspect ? "不合格（下の検査を確認）" : r.license ? "ライセンスの照合で不合格のため止めた（deck.html は作っていない）" : "書式チェックのエラーで止めた（deck.html は作っていない）"}`,
-    ...(r.inspect ? [`- 出力：deck.html（${r.slides}枚、${Math.round(r.bytes / 1024)} KB。フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`] : []),
-    ...(r.inspect ? [`- PDF：${r.pdf ? `deck.pdf（${Math.round(fs.statSync(r.pdf).size / 1024)} KB）` : outline.meta.pdf === true ? "検査に合格しなかったので作っていない" : "作らない（outline.md の pdf: false）"}`] : []),
+    ...(r.inspect
+      ? [`- 出力：deck.html（${r.slides}枚、${Math.round(r.bytes / 1024)} KB。フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`]
+      : []),
+    ...(r.inspect
+      ? [
+          `- PDF：${r.pdf ? `deck.pdf（${Math.round(fs.statSync(r.pdf).size / 1024)} KB）` : outline.meta.pdf === true ? "検査に合格しなかったので作っていない" : "作らない（outline.md の pdf: false）"}`,
+        ]
+      : []),
     "",
     "## 書式チェック（check-outline.mjs）",
     "",
@@ -170,33 +209,37 @@ function buildLog(outline, r) {
     "",
     "## 機械的な検査（inspect.mjs）",
     "",
-    ...(r.inspect ? [
-      "| 検査 | 件数 |",
-      "|---|---|",
-      ...CATEGORIES.map(([k, label]) => `| ${label} | ${r.inspect[k].length} |`),
-      "",
-      ...CATEGORIES.filter(([k]) => r.inspect[k].length).flatMap(([k, label]) => [`### ${label}`, "", list(r.inspect[k]), ""]),
-    ] : ["前の段階で止めたので、行っていない", ""]),
+    ...(r.inspect
+      ? [
+          "| 検査 | 件数 |",
+          "|---|---|",
+          ...CATEGORIES.map(([k, label]) => `| ${label} | ${r.inspect[k].length} |`),
+          "",
+          ...CATEGORIES.filter(([k]) => r.inspect[k].length).flatMap(([k, label]) => [`### ${label}`, "", list(r.inspect[k]), ""]),
+        ]
+      : ["前の段階で止めたので、行っていない", ""]),
     "## ライセンス（license-notice）",
     "",
-    ...(r.license ? [
-      "### 照合のエラー",
-      "",
-      list(r.license.errors),
-      "",
-      "### 注意（人が確認する）",
-      "",
-      list(r.license.warnings),
-      "",
-      "### 配布物に入った素材（assets-manifest.yaml）",
-      "",
-      list(r.license.assets.map((a) => `${a.id}：${a.found.join("、")}`)),
-      "",
-      "### credits スライドに載せたもの",
-      "",
-      list(r.license.rows.map((x) => `${x.name}（${x.license}）`)),
-      "",
-    ] : ["書式チェックのエラーがあるので、行っていない", ""]),
+    ...(r.license
+      ? [
+          "### 照合のエラー",
+          "",
+          list(r.license.errors),
+          "",
+          "### 注意（人が確認する）",
+          "",
+          list(r.license.warnings),
+          "",
+          "### 配布物に入った素材（assets-manifest.yaml）",
+          "",
+          list(r.license.assets.map((a) => `${a.id}：${a.found.join("、")}`)),
+          "",
+          "### credits スライドに載せたもの",
+          "",
+          list(r.license.rows.map((x) => `${x.name}（${x.license}）`)),
+          "",
+        ]
+      : ["書式チェックのエラーがあるので、行っていない", ""]),
     "## 独自の表現（html:）",
     "",
     r.custom.length ? `次のスライドは部品を使わず HTML で書いている。人が見た目と内容を確認する：${r.custom.join("、")}` : "なし",
@@ -206,15 +249,21 @@ function buildLog(outline, r) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const dir = process.argv[2];
-  if (!dir) { console.error("使い方：node build.mjs decks/<deck-id>"); process.exit(2); }
+  if (!dir) {
+    console.error("使い方：node build.mjs decks/<deck-id>");
+    process.exit(2);
+  }
   const r = await build(dir);
   for (const e of r.check.errors) console.log(`エラー  ${e}`);
   for (const w of r.check.warnings) console.log(`注意    ${w}`);
   for (const e of r.license?.errors ?? []) console.log(`ライセンス  ${e}`);
   for (const w of r.license?.warnings ?? []) console.log(`注意    ${w}`);
-  if (!r.inspect) { console.log(r.license ? "ライセンスの照合で不合格のため、ビルドを止めた" : "書式チェックのエラーがあるので、ビルドを止めた"); process.exit(1); }
+  if (!r.inspect) {
+    console.log(r.license ? "ライセンスの照合で不合格のため、ビルドを止めた" : "書式チェックのエラーがあるので、ビルドを止めた");
+    process.exit(1);
+  }
   console.log(`${r.out}：${r.slides}枚、${Math.round(r.bytes / 1024)} KB（フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`);
   for (const [k, label] of CATEGORIES) for (const x of r.inspect[k]) console.log(`検査    ${label}：${x}`);
   console.log(r.ok ? "検査：合格（build-log.md に記録した）" : "検査：不合格（build-log.md を確認）");

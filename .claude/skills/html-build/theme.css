@@ -1,5 +1,5 @@
 /*
- * theme.css：スライドの見た目のトークン（D2）。運用時は固定（D4）。
+ * theme.css：スライドの見た目のトークン。運用時は固定。
  * - @theme に書いた値は、Tailwind のクラス（例：text-primary、bg-panel、text-title）と CSS 変数の両方になる。
  * - 値の出どころは design-reference/reference/palette.md（色）と slide-style.md（寸法・文字）。
  *   見本を差し替えたら、このファイルを人間が見直す。
@@ -18,7 +18,7 @@
   /* ---- 文字と背景（役割） ---- */
   --color-ink: #1a1a1a;          /* 本文。SolidGray 900 */
   --color-label: #626264;        /* 補足、ラベル、軸の文字 */
-  --color-primary: #0017c1;      /* タイトル、強調の文字、表紙・扉の左端の帯。Blue 900 */
+  --color-primary: #0017c1;      /* タイトル、強調の文字、表紙・締め・章の扉の帯。Blue 900 */
   --color-on-primary: #ffffff;   /* 濃い背景の上の文字 */
   --color-canvas: #ffffff;       /* スライドの背景 */
   --color-panel: #f8f8fb;        /* カード・パネルの背景。Standard */
@@ -28,7 +28,7 @@
 
   /* ---- グラフ：主（Blue の段階。面に使えるのは 600 以上） ---- */
   --color-blue-1200: #000060;
-  --color-lightblue-1200: #00234b; /* 箱の枠と矢印の色（palette.md の Light Blue 1200。ユーザーが決定） */
+  --color-lightblue-1200: #00234b; /* 箱の枠と矢印の色（palette.md の Light Blue 1200） */
   --color-blue-900: #0017c1;
   --color-blue-600: #3460fb;
   --color-blue-400: #7096f8;
@@ -80,7 +80,7 @@
   --spacing-slide-bottom: 27px;  /* フッターの下端 */
   --spacing-title-gap: 50px;     /* タイトルから本文まで */
   --spacing-column: 560px;       /* 左文・右図のときの文章の列幅 */
-  --spacing-strip: 20px;         /* 表紙・章の扉の左端の青い帯の幅（背景は白。ユーザー決定：案C） */
+  --spacing-strip: 20px;         /* 青い帯の太さ（表紙・締めは下端、章の扉は左端。背景は白） */
 
   /* ---- 角の丸み ---- */
   --radius-panel: 8px;

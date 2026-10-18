@@ -1,11 +1,11 @@
 ---
 name: slide-factcheck
-description: 承認済みの outline.md を、fact-checker をスライドのまとまりごとに並列で呼んでファクトチェックし、結果を factcheck.md にまとめ、人間の判断を受けて outline.md を直し、承認してもらうまでを受け持つスキル。構成の承認のあとと、承認後にスライドを変えたときに使う。
+description: slide-outline が書いた outline.md を、fact-checker をスライドのまとまりごとに並列で呼んでファクトチェックし、結果を factcheck.md にまとめ、人間の判断を受けて outline.md を直し、outline.md と factcheck.md を一緒に承認してもらうまでを受け持つスキル。構成ができたあとと、承認後にスライドを変えたときに使う。
 ---
 
 # ファクトチェック（slide-factcheck）
 
-承認済みの `decks/<deck-id>/outline.md` の記述が事実と一致するかを確かめ、`decks/<deck-id>/factcheck.md` にまとめる（要求文書 8章）。確かめるのは `fact-checker`（`.claude/agents/fact-checker.md`）。書式は `factcheck-template.md`。
+`decks/<deck-id>/outline.md` の記述が事実と一致するかを確かめ、`decks/<deck-id>/factcheck.md` にまとめる。確かめるのは `fact-checker`（`.claude/agents/fact-checker.md`）。書式は `factcheck-template.md`。
 
 ## 手順
 
@@ -31,14 +31,14 @@ description: 承認済みの outline.md を、fact-checker をスライドのま
 8. **直す**：「修正する」「削除する」の指摘だけ、`outline.md` の該当スライドの節（`## S04` から次の見出しまで）を直す。
    - 直し方は `suggestion` か、人間が言った内容のとおりにする。ほかのところは変えない。
    - 直したら `node .claude/skills/html-build/scripts/check-outline.mjs decks/<deck-id>/outline.md` で書式を確かめる。
-   - 直したスライドは、承認を頼む前に 2〜5 をそのスライドだけでやり直す（CLAUDE.md「承認後に内容を変えた場合」）。前の指摘は消さず、新しい番号で足す。新しい指摘が出たら 6 に戻る。
+   - 直したスライドは、承認を頼む前に 2〜5 をそのスライドだけでやり直す（CLAUDE.md の「承認」）。前の指摘は消さず、新しい番号で足す。新しい指摘が出たら 6 に戻る。
      - やり直さなくてよいのは、P0・P1 の `suggestion` のとおりに直したとき（根拠を確かめた直し方なので）と、記述を削除しただけのとき。
      - 要確認の `suggestion` のとおりに直したとき、人間が言った内容で直したときは、やり直す（新しい記述の根拠を確かめていないため）。
    - 「出典を足す」は、人間から出典が届いたら `research-standards` の書式で `research.md` に足し、そのスライドを 2〜5 でやり直す。
-9. **承認を頼む**：
-   1. 写した判断と、`outline.md` を直したところ（スライドの番号と、直す前と後）を人間に見せる。
-   2. `node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> factcheck.md` で承認を依頼する。`outline.md` を直したときは `outline.md` も一緒に依頼する（`request.mjs … outline.md factcheck.md`）。
-   3. 人間の答えは hook が記録する。HTML 作成に進めるかは `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> build` で確かめる。
+9. **構成とファクトチェックをまとめて承認してもらう**：
+   1. 写した判断と、`outline.md` を直したところ（スライドの番号と、直す前と後）を人間に見せる。草案があれば `check-structure.mjs` の「変えた」も見せる（`slide-outline` の手順 7 のあとに変わったところがわかるように）。
+   2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。「outline.md と factcheck.md を承認しますか？」）。
+   3. HTML 作成に進めるかは `gate.mjs decks/<deck-id> build` で確かめる。
 
 承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったスライドの番号を出す。そのスライドについて 2 からやり直す。
 
@@ -48,7 +48,7 @@ description: 承認済みの outline.md を、fact-checker をスライドのま
 - 人間の判断を自分で書く、推測で写す。判断の前に `outline.md` を直す。
 - 「修正する」「削除する」の指摘のスライド以外を直す。
 - `factcheck.md` や `outline.md` の承認を自分で判断する。`approvals.yaml` を書く。
-- スライドの見た目や文章の良し悪しを評価する（D6）。
+- スライドの見た目や文章の良し悪しを評価する。
 
 ## ファイル
 

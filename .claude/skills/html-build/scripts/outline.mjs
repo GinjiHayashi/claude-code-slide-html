@@ -1,5 +1,6 @@
 import fs from "fs";
 import YAML from "yaml";
+import { frontMatter } from "../../../lib/common.mjs";
 
 // outline.md を読む。書き方は slide-outline/outline-template.md。
 // - 先頭の --- で囲んだ部分はデッキ全体の設定（YAML）。
@@ -7,7 +8,7 @@ import YAML from "yaml";
 // 戻り値：{ meta, slides: [{ id, line, fields }] }。YAML として読めないときは位置つきでエラーにする。
 
 export function parseOutline(text, file = "outline.md") {
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = frontMatter(text);
   if (!m) throw new Error(`${file}: 先頭に --- で囲んだ設定（deck_id など）がない`);
   const meta = load(m[1], `${file}（先頭の設定）`) ?? {};
   const body = text.slice(m[0].length);
@@ -30,7 +31,8 @@ export function parseOutline(text, file = "outline.md") {
     s.fields = {};
     s.dup = [];
     for (const item of list) {
-      if (item === null || typeof item !== "object" || Array.isArray(item)) throw new Error(`${file}:${s.line}（${s.id}）: 「- 項目: 値」の形になっていない行がある`);
+      if (item === null || typeof item !== "object" || Array.isArray(item))
+        throw new Error(`${file}:${s.line}（${s.id}）: 「- 項目: 値」の形になっていない行がある`);
       for (const [k, val] of Object.entries(item)) {
         if (k in s.fields) s.dup.push(k);
         s.fields[k] = val;

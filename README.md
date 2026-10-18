@@ -59,33 +59,26 @@ git push -u origin feature/harness-update
 # develop への PR を作り、マージコミットで取り込む（squash にしない）
 ```
 
-- この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します（試して確かめました）。
-
+- この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します。
 - `decks/` の中身はハーネスにないので、衝突しません。
 - 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
-- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm ci` をやり直します。
+- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm run setup` をやり直します。
 
 ### 3. セットアップ（初回だけ）
 
 必要なもの：Node.js 22 以上、Python 3、git。
 
 ```sh
-# ビルドに使う npm パッケージ（版は package-lock.json で固定）
-cd .claude/skills/html-build
-npm ci
-# 検査と PDF に使うブラウザ（Chromium）
-node node_modules/playwright/cli.js install chromium
-cd ../../..
-
-# フォントのサブセット化に使う Python のパッケージ
-python3 -m pip install fonttools==4.67.0 brotli==1.2.0
+npm run setup
 ```
+
+npm のパッケージ（版は `package-lock.json` で固定）、検査と PDF に使うブラウザ（Chromium）、フォントのサブセット化に使う Python のパッケージをまとめて入れます。
 
 - 使っているパッケージとその版は、すべて `.claude/skills/license-notice/registry.yaml` に登録しています。版を変えるとビルドの照合で止まります。
 - 確認：見本をビルドして、終了コードが 0 なら準備完了です。
 
   ```sh
-  node .claude/skills/html-build/scripts/build.mjs examples/sample-deck
+  npm run build -- examples/sample-deck
   ```
 
   `examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
@@ -99,7 +92,7 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 | いつ | git でのこと |
 |---|---|
 | デッキを始めるとき | `develop` から `feature/<deck-id>` を作る（デッキ＝発表1回分のスライド一式） |
-| 承認するたび（brief、構成、ファクトチェック、最終確認） | そのデッキのフォルダをコミットする。最終確認のコミットには `build/` の `deck.html`・`deck.pdf` も入る |
+| 承認するたび（brief、構成とファクトチェック、最終確認） | そのデッキのフォルダをコミットする。最終確認のコミットには `build/` の `deck.html`・`deck.pdf` も入る |
 | 完成したとき | push して `develop` への PR を作る。人間が確認して squash マージする |
 | 完成後に直すとき | `develop` から `feature/<deck-id>-fix` を作り、同じ流れで PR |
 | 発表した版を残すとき | 人間が頼むと `develop` → `main` の PR を作る。人間がマージしたあと、`main` に `<deck-id>` のタグを付けて push する（直したあと2回目の発表なら `<deck-id>-2`） |
@@ -139,7 +132,7 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 |---|---|---|
 | `feature/*` → `develop` | PR を作り、確認してから **squash マージ**（1つの作業を1コミットにまとめる） | 作業が終わったとき |
 | `feature/harness-update` → `develop`（スライド用リポジトリ） | PR を作り、**マージコミット** で取り込む（squash にすると、次の取り込みで衝突する） | ハーネスの更新を取り込むとき |
-| `develop` → `main` | PR を作り、**マージコミット** で取り込む（ハーネスではタグは付けない。区切りは main のマージコミットで分かるため。スライド用リポジトリでは、発表した版に `<deck-id>` のタグを付ける） | 区切りのよいところ（ハーネスでは構築順序の1フェーズごと） |
+| `develop` → `main` | PR を作り、**マージコミット** で取り込む（ハーネスではタグは付けない。区切りは main のマージコミットで分かるため。スライド用リポジトリでは、発表した版に `<deck-id>` のタグを付ける） | 区切りのよいところ（ハーネスでは、まとまった変更が develop にそろったとき） |
 | `hotfix/*` → `main`、`develop` | PR を作り、両方に取り込む | 修正が終わったとき |
 
 ### コミットメッセージ
@@ -158,6 +151,13 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 ### 注意
 
 - このリポジトリは public です。トークン、パスワード、案件の情報をコミットしないでください。
+
+## ハーネスを直すとき
+
+- `develop` から `feature/<短い英語>` を切って直し、`develop` への PR を作ります（上の「git の運用ルール」）。
+- テストは `npm test`、見本のビルドは `npm run build -- examples/sample-deck` です。PR では CI（GitHub Actions）が同じものを実行します。
+- コードの書式は Prettier でそろえています（設定は `.prettierrc.json`）。直したあとに `npx prettier@3.3.3 --write "**/*.mjs"` をかけます。Prettier はビルドに使わないので、`package.json` には入れていません。
+- スライドの型や図の部品の決まりは、コード（`.claude/skills/html-build/scripts/spec.mjs` と各部品の `schema`）が正です。文書には書き写さず、`node .claude/skills/html-build/scripts/schema.mjs` を参照します。
 
 ## ライセンス
 

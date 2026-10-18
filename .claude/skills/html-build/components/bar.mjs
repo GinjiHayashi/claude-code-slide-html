@@ -1,4 +1,4 @@
-import { esc, num, need, callout, unitLabel } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel } from "./_util.mjs";
 
 // bar：分類ごとの量を比べる縦棒。2〜12本、原点は0。
 // data: { data: [{ label, value, highlight? }], unit, callout?: { value, label } }
@@ -8,8 +8,11 @@ import { esc, num, need, callout, unitLabel } from "./_util.mjs";
 // 基準線と単位は棒のまとまりの幅に合わせ、枠の中央に置く（枠が広くても線だけが長く伸びない）。
 // 枠いっぱいに広がるので、置く場所の大きさを親が決めれば、単体でも他の図と並べても使える。callout は任意。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { data: [{ label: R, value: R, highlight: O }], unit: R, callout: optional({ value: R, label: R }) };
+
 export default function bar(data) {
-  need("bar", data, ["data", "unit"]);
+  check("bar", data, schema);
   const rows = data.data;
   if (rows.length < 2 || rows.length > 12) throw new Error("bar: data は2〜12本");
   const max = Math.max(...rows.map((r) => r.value), 0) || 1;
@@ -25,9 +28,7 @@ export default function bar(data) {
   </div>`;
     })
     .join("\n");
-  const labels = rows
-    .map((r) => `<div class="min-w-0 max-w-[160px] flex-1 text-center text-body text-ink">${esc(r.label)}</div>`)
-    .join("\n");
+  const labels = rows.map((r) => `<div class="min-w-0 max-w-[160px] flex-1 text-center text-body text-ink">${esc(r.label)}</div>`).join("\n");
   const fit = rows.length * 160 + (rows.length - 1) * 24 + 32;
   return `<div class="flex h-full w-full gap-[32px]" data-kind="bar">
 <div class="mx-auto flex w-full min-w-0 flex-1 flex-col" style="max-width: ${fit}px">

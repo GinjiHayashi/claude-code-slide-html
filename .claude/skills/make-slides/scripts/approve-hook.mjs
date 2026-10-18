@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する（要求文書 4章）。
+// 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する。
 // - 答えは自由な言葉でよい（「OK」「問題ないです」「承認します」など）。判定は approvals.mjs の judge()（決まった語で判定。AI は使わない）
 //   - 承認：依頼のときから変わっていない対象を approvals.yaml に、答えの原文ごと記録する。依頼は消す
 //   - 承認ではない（直す・待つ・疑問など）：記録せず、依頼を消す
@@ -22,30 +22,54 @@ if (!prompt || prompt.startsWith("<")) process.exit(0);
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const decks = path.join(root, "decks");
 if (!fs.existsSync(decks)) process.exit(0);
-let pending = fs.readdirSync(decks).map((d) => path.join(decks, d)).filter((d) => fs.existsSync(path.join(d, REQUEST)));
+let pending = fs
+  .readdirSync(decks)
+  .map((d) => path.join(decks, d))
+  .filter((d) => fs.existsSync(path.join(d, REQUEST)));
 if (!pending.length) process.exit(0);
 const lines = [];
 if (pending.length > 1) {
   pending.sort((a, b) => String(readRequest(b).requested_at).localeCompare(String(readRequest(a).requested_at)));
-  for (const dir of pending.slice(1)) { fs.rmSync(path.join(dir, REQUEST)); lines.push(`decks/${path.basename(dir)}：古い承認の依頼が残っていたので消した（記録していない）。必要なら依頼し直す`); }
+  for (const dir of pending.slice(1)) {
+    fs.rmSync(path.join(dir, REQUEST));
+    lines.push(`decks/${path.basename(dir)}：古い承認の依頼が残っていたので消した（記録していない）。必要なら依頼し直す`);
+  }
   pending = pending.slice(0, 1);
 }
 
 let by = "";
-try { by = execFileSync("git", ["-C", root, "config", "user.name"], { encoding: "utf8" }).trim(); } catch {}
+try {
+  by = execFileSync("git", ["-C", root, "config", "user.name"], { encoding: "utf8" }).trim();
+} catch {}
 const verdict = judge(prompt);
 for (const dir of pending) {
   const id = path.basename(dir);
   const req = readRequest(dir);
-  if (verdict === "unclear") { lines.push(`decks/${id}：答えが承認かどうか判断できないので記録しなかった。依頼は残した。もう一度、承認するかを聞く`); continue; }
+  if (verdict === "unclear") {
+    lines.push(`decks/${id}：答えが承認かどうか判断できないので記録しなかった。依頼は残した。もう一度、承認するかを聞く`);
+    continue;
+  }
   fs.rmSync(path.join(dir, REQUEST));
-  if (verdict === "reject") { lines.push(`decks/${id}：答えは承認ではないと判定した（直す・待つ・疑問の言葉がある）。記録せず、依頼を消した`); continue; }
-  if (!by) { lines.push(`decks/${id}：承認者がわからない（git config user.name が空）。記録しなかった`); continue; }
+  if (verdict === "reject") {
+    lines.push(`decks/${id}：答えは承認ではないと判定した（直す・待つ・疑問の言葉がある）。記録せず、依頼を消した`);
+    continue;
+  }
+  if (!by) {
+    lines.push(`decks/${id}：承認者がわからない（git config user.name が空）。記録しなかった`);
+    continue;
+  }
   for (const t of req.targets) {
     const f = path.join(dir, t.target);
-    if (!fs.existsSync(f) || sha256(fs.readFileSync(f)) !== t.sha256) { lines.push(`decks/${id}/${t.target}：依頼のあとに変わったので記録しなかった。依頼し直す`); continue; }
+    if (!fs.existsSync(f) || sha256(fs.readFileSync(f)) !== t.sha256) {
+      lines.push(`decks/${id}/${t.target}：依頼のあとに変わったので記録しなかった。依頼し直す`);
+      continue;
+    }
     const { entry, changed } = recordApproval(dir, t.target, {
-      approved_by: by, approved_at: new Date().toISOString(), answer: prompt.slice(0, 200), session_id: input.session_id ?? null, prompt_id: input.prompt_id ?? null,
+      approved_by: by,
+      approved_at: new Date().toISOString(),
+      answer: prompt.slice(0, 200),
+      session_id: input.session_id ?? null,
+      prompt_id: input.prompt_id ?? null,
     });
     lines.push(`decks/${id}/${t.target}：承認を記録した（sha256 ${entry.sha256.slice(0, 12)}…、承認者 ${by}、${changed}）`);
   }

@@ -1,6 +1,6 @@
 # factcheck.md の書式
 
-`decks/<deck-id>/factcheck.md` は、承認済みの `outline.md` をファクトチェックした結果と、それに対する人間の判断をまとめるファイル（要求文書 8章）。`fact-checker` の結果を呼び出し元（`slide-factcheck`）がここにまとめる。
+`decks/<deck-id>/factcheck.md` は、`outline.md` をファクトチェックした結果と、それに対する人間の判断をまとめるファイル。`fact-checker` の結果を呼び出し元（`slide-factcheck`）がここにまとめる。
 
 チェック：`node .claude/skills/slide-factcheck/scripts/check-factcheck.mjs decks/<deck-id>/factcheck.md`
 
@@ -64,8 +64,7 @@ deck_id: 2026-10-24-report-automation
 | 出典を足す | 人間が出典を用意する。届いたら research.md に足して確かめ直す | 要確認 |
 
 - 判断するのは人間。人間はチャットで「FC-101 は修正、FC-102 は残す（初学者向けなので）」のように答え、AI がそれを `decision` と `decision_note` に言葉どおり写す。AI が自分で判断を書かない。
-- 写したあと、`factcheck.md` の承認を `request.mjs` で依頼する。承認のときに人間が判断の内容を確かめる。
-- 「修正する」「削除する」で `outline.md` を直したら、`outline.md` も承認し直してもらう（承認後に変わるので、ゲートが止める）。
+- 写したあと、`outline.md` と `factcheck.md` を一緒に承認してもらう（`slide-factcheck` の手順 9）。承認のときに人間が判断の内容と、直した `outline.md` を確かめる。
 - `factcheck.md` の承認には、そのときの `outline.md` のスライドごとの sha256 が記録される。承認のあとに `outline.md` のスライドが変わったら、ゲート（`gate.mjs … build`）が「ファクトチェックのあとに outline.md のスライドが変わった」と止める。変わったスライドを確かめ直し、`factcheck.md` を承認し直してもらう。
 - P1 と要確認は、判断が空のままでも先に進める。
 

@@ -1,24 +1,23 @@
-// 照合：走査の結果を registry.yaml と policy.md に照らす（要求文書 12.4 ③）。
+// 照合：走査の結果を registry.yaml と policy.md に照らす。
 // エラー（ビルドを止める）
 // - 外部への読み込み、登録のない素材（フォント・data: の埋め込み・registry にない id）
 // - 未確認の項目（verified_by・verified_at が空）
 // - 許可されていないライセンス（policy.md の allow にない。conditional は conditions があり、人が承認したものだけ通す）
 // - バージョンの不一致（registry.yaml と、入っている npm・pypi のパッケージ）
 // - 実体ファイルの sha256 の不一致（registry.yaml の files）
-// - html-build/package.json の依存に、登録のないものがある
+// - package.json の依存に、登録のないものがある
 // - Tailwind の CSS の先頭のライセンス表記が消えている、または版が違う
 // 注意（人が確認する）
 // - 識別子（data-origin・data-asset-id）のない SVG
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { execFileSync } from "child_process";
-import { createRequire } from "module";
+import YAML from "yaml";
+import { sha256File as sha256 } from "../../../lib/common.mjs";
 import { fileURLToPath } from "url";
 
 const LN = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const HB = path.join(LN, "..", "html-build");
-const YAML = createRequire(path.join(HB, "package.json"))("yaml");
+const ROOT = path.join(LN, "..", "..", ".."); // リポジトリの直下（package.json と node_modules の場所）
 
 export function readRegistry() {
   return YAML.parse(fs.readFileSync(path.join(LN, "registry.yaml"), "utf8"));
@@ -42,16 +41,18 @@ export function licenseClass(policy, id) {
 function installed(spec) {
   const [kind, rest] = spec.split(":");
   const at = rest.lastIndexOf(kind === "pypi" ? "==" : "@");
-  const name = rest.slice(0, at), want = rest.slice(at + (kind === "pypi" ? 2 : 1));
+  const name = rest.slice(0, at),
+    want = rest.slice(at + (kind === "pypi" ? 2 : 1));
   let have = null;
   try {
-    if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(HB, "node_modules", name, "package.json"), "utf8")).version;
-    if (kind === "pypi") have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
-  } catch { have = null; }
+    if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(ROOT, "node_modules", name, "package.json"), "utf8")).version;
+    if (kind === "pypi")
+      have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
+  } catch {
+    have = null;
+  }
   return { name, want, have };
 }
-
-const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 
 // 項目そのものの検査（このデッキで使ったかどうかによらない）
 function checkEntry(e, policy, err) {
@@ -61,7 +62,9 @@ function checkEntry(e, policy, err) {
     if (c === "deny") err(`${e.id}：${lic}${label} は policy.md で許可されていない`);
     if (c === "conditional" && !(e.conditions ?? []).length) err(`${e.id}：${lic}${label} は条件付き。守る条件（conditions）と人間の承認が要る`);
   }
-  for (const spec of String(e.package ?? "").split(/,\s*/).filter((s) => /^(npm|pypi):/.test(s))) {
+  for (const spec of String(e.package ?? "")
+    .split(/,\s*/)
+    .filter((s) => /^(npm|pypi):/.test(s))) {
     const p = installed(spec);
     if (p.have !== p.want) err(`${e.id}：${p.name} の版が違う（registry.yaml は ${p.want}、入っているのは ${p.have ?? "なし"}）`);
   }
@@ -73,15 +76,20 @@ function checkEntry(e, policy, err) {
 }
 
 export function verify(scan) {
-  const errors = [], warnings = [];
+  const errors = [],
+    warnings = [];
   const err = (m) => errors.push(m);
-  const reg = readRegistry(), policy = readPolicy();
+  const reg = readRegistry(),
+    policy = readPolicy();
   const byId = new Map(reg.map((e) => [e.id, e]));
 
   // 配布物に入った素材
   for (const a of scan.assets) {
     const e = byId.get(a.id);
-    if (!e) { err(`${a.id}：registry.yaml に登録がない（${a.found.join("、")}）`); continue; }
+    if (!e) {
+      err(`${a.id}：registry.yaml に登録がない（${a.found.join("、")}）`);
+      continue;
+    }
     if (e.scope !== "distributed") err(`${a.id}：build-only の項目が deck.html に入っている`);
   }
   for (const x of scan.external) err(`外部への読み込み：${x}`);
@@ -91,16 +99,17 @@ export function verify(scan) {
   const used = new Set([...scan.assets.map((a) => a.id), ...reg.filter((e) => e.scope === "build-only").map((e) => e.id)]);
   for (const e of reg) if (used.has(e.id)) checkEntry(e, policy, err);
 
-  // html-build の依存がすべて登録されているか
-  const deps = Object.keys(JSON.parse(fs.readFileSync(path.join(HB, "package.json"), "utf8")).dependencies ?? {});
+  // package.json の依存がすべて登録されているか
+  const deps = Object.keys(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).dependencies ?? {});
   const registered = new Set(reg.flatMap((e) => String(e.package ?? "").split(/,\s*/)).map((s) => s.replace(/^npm:/, "").replace(/@[^@]+$/, "")));
-  for (const d of deps) if (!registered.has(d)) err(`html-build/package.json の ${d} が registry.yaml に登録されていない`);
+  for (const d of deps) if (!registered.has(d)) err(`package.json の ${d} が registry.yaml に登録されていない`);
 
   // Tailwind の表記
   const tw = byId.get("tailwindcss");
   if (!scan.tailwind) err("Tailwind の CSS の先頭のライセンス表記（/*! tailwindcss … */）がない");
   else if (tw && scan.tailwind !== tw.version) err(`Tailwind の表記の版 ${scan.tailwind} が registry.yaml の ${tw.version} と違う`);
 
-  if (scan.untaggedSvg.length) warnings.push(`識別子（data-origin・data-asset-id）のない SVG がある：${scan.untaggedSvg.join("、")}。独自の表現なら、素材を写していないかを人が確かめる`);
+  if (scan.untaggedSvg.length)
+    warnings.push(`識別子（data-origin・data-asset-id）のない SVG がある：${scan.untaggedSvg.join("、")}。独自の表現なら、素材を写していないかを人が確かめる`);
   return { errors, warnings, registry: byId };
 }

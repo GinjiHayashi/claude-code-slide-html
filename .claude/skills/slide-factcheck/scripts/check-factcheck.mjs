@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// factcheck.md のチェック：書式と、区分・根拠・人間の判断の食い違いを出す（要求文書 8章）。
+// factcheck.md のチェック：書式と、区分・根拠・人間の判断の食い違いを出す。
 // 使い方：node .claude/skills/slide-factcheck/scripts/check-factcheck.mjs decks/<deck-id>/factcheck.md
 // - 書式は slide-factcheck/factcheck-template.md。「## FC-101」ごとに「- 項目: 値」の YAML の箇条書き
 // - 根拠の出典は research.md と同じきまり（check-research.mjs の checkSource）
@@ -7,26 +7,29 @@
 // - 終了コード：0＝合格、1＝判断待ちの P0 がある、2＝エラーあり
 import fs from "fs";
 import path from "path";
-import { createRequire } from "module";
+import YAML from "yaml";
 import { fileURLToPath } from "url";
 import { checkSource, bannedDomains } from "../../research-standards/scripts/check-research.mjs";
+import { empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const YAML = createRequire(path.join(HERE, "..", "..", "html-build", "package.json"))("yaml");
 
 const LEVEL = ["P0", "P1", "要確認"];
 const DECISION = ["修正する", "残す", "削除する", "出典を足す"];
 const REQUIRED = ["slide", "claim_id", "target", "level", "problem"];
 const OPTIONAL = ["sources", "suggestion", "decision", "decision_note"];
 const OTHER = ["問題がなかった記述", "検索の記録"]; // 指摘以外の見出し（自由に書く）
-const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 
 export function checkFactcheck(text, banned = bannedDomains()) {
   const errors = [];
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = frontMatter(text);
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id）がない");
   else {
-    try { if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない"); } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
+    try {
+      if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない");
+    } catch (e) {
+      errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`);
+    }
   }
   const offset = m ? m[0].split("\n").length - 1 : 0;
   const body = (m ? text.slice(m[0].length) : text).split("\n");
@@ -36,18 +39,31 @@ export function checkFactcheck(text, banned = bannedDomains()) {
     if (h) parts.push({ id: h[1], line: offset + i + 1, src: [] });
     else if (parts.length) parts.at(-1).src.push(l);
   });
-  const findings = [], waiting = [], seen = new Set();
+  const findings = [],
+    waiting = [],
+    seen = new Set();
   for (const p of parts) {
     if (OTHER.includes(p.id)) continue;
     const at = `${p.line}行目（${p.id}）`;
-    if (!/^FC-\d{3,}$/.test(p.id)) { errors.push(`${at}：見出しは FC-101 の形か、${OTHER.join("・")}`); continue; }
+    if (!/^FC-\d{3,}$/.test(p.id)) {
+      errors.push(`${at}：見出しは FC-101 の形か、${OTHER.join("・")}`);
+      continue;
+    }
     if (seen.has(p.id)) errors.push(`${at}：ID が重複している`);
     seen.add(p.id);
     let list;
-    try { list = YAML.parse(p.src.join("\n")) ?? []; } catch (e) { errors.push(`${at}：YAML として読めない：${e.message.split("\n")[0]}`); continue; }
+    try {
+      list = YAML.parse(p.src.join("\n")) ?? [];
+    } catch (e) {
+      errors.push(`${at}：YAML として読めない：${e.message.split("\n")[0]}`);
+      continue;
+    }
     const f = {};
     for (const item of Array.isArray(list) ? list : [list]) {
-      if (item === null || typeof item !== "object" || Array.isArray(item)) { errors.push(`${at}：「- 項目: 値」の形になっていない行がある`); continue; }
+      if (item === null || typeof item !== "object" || Array.isArray(item)) {
+        errors.push(`${at}：「- 項目: 値」の形になっていない行がある`);
+        continue;
+      }
       Object.assign(f, item);
     }
     findings.push({ id: p.id, line: p.line, fields: f });
@@ -72,13 +88,18 @@ export function checkFactcheck(text, banned = bannedDomains()) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const file = process.argv[2];
-  if (!file) { console.error("使い方：node check-factcheck.mjs decks/<deck-id>/factcheck.md"); process.exit(2); }
+  if (!file) {
+    console.error("使い方：node check-factcheck.mjs decks/<deck-id>/factcheck.md");
+    process.exit(2);
+  }
   const r = checkFactcheck(fs.readFileSync(file, "utf8"));
   for (const e of r.errors) console.log(`エラー  ${e}`);
   if (r.waiting.length) console.log(`判断待ち  P0：${r.waiting.join("、")}（人間の判断を聞いて decision に写す）`);
   const n = (lv) => r.findings.filter((x) => x.fields.level === lv).length;
-  console.log(`指摘 ${r.findings.length}件（P0 ${n("P0")}、P1 ${n("P1")}、要確認 ${n("要確認")}）、判断待ちの P0 ${r.waiting.length}件、エラー ${r.errors.length}件`);
+  console.log(
+    `指摘 ${r.findings.length}件（P0 ${n("P0")}、P1 ${n("P1")}、要確認 ${n("要確認")}）、判断待ちの P0 ${r.waiting.length}件、エラー ${r.errors.length}件`,
+  );
   process.exit(r.errors.length ? 2 : r.waiting.length ? 1 : 0);
 }

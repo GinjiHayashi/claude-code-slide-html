@@ -1,6 +1,6 @@
 # outline.md の書き方（outline-template）
 
-`outline.md` は、スライドの元ファイル（ソース）の**ただ1つの**ファイル。`deck.html` はここからビルドで作るので、手で直さない。直すときは、`outline.md` の該当スライドの節だけを読んで書き換える（`deck.html` は読まない。要求文書 11章）。
+`outline.md` は、スライドの元ファイル（ソース）の**ただ1つの**ファイル。`deck.html` はここからビルドで作るので、手で直さない。直すときは、`outline.md` の該当スライドの節だけを読んで書き換える（`deck.html` は読まない）。
 
 ビルドの前に `html-build/scripts/check-outline.mjs` が書式を検査する。エラーがあればビルドを止め、注意は報告して人間の確認で見る。
 
@@ -50,42 +50,28 @@ pdf: false                              # PDF も書き出すか（brief.md か�
 | `claims` | このスライドの主張の ID。`[C-001, C-002]` の形（`research.md`・`factcheck.md` と同じ ID）。書式チェックが、同じフォルダの `research.md` にある主張か（使わなくなった主張でないか）を確かめる |
 | `html` | 独自の表現。部品で表しにくいときだけ使う（`html-build/components.md` 4.1）。スクリプト（script タグ・on〜 属性・javascript:）は書けない（エラー） |
 | `breadcrumb` | タイトルの上の章の名前。**書かなければ「CHAPTER 01: 章の名前」（前の `section`）が自動で入る** |
-| `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（下の表で「本文」と書いた型）では必須**。要らないスライドだけ `lead: false` と書く。3行まで（長いときはビルドが幅を広げて3行に収める。全角およそ210字を超えるとエラー） |
+| `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（schema.mjs で lead が必須と出る型）では必須**。要らないスライドだけ `lead: false` と書く。3行まで（長いときはビルドが幅を広げて3行に収める。全角およそ210字を超えるとエラー） |
 
 ## 3. 型ごとの項目
 
-上限の「字」は全角で数える（半角は 0.5）。文字数は目安で、最後はビルド時にブラウザで実際の行数を測る。
+型ごとに書ける項目（必須・任意）と、文字数・項目数の目安は `node .claude/skills/html-build/scripts/schema.mjs [型の名前]` で出す（正は `html-build/scripts/spec.mjs`）。
 
-| 型 | 必須 | 任意 | 書き方 |
-|---|---|---|---|
-| `title` | title, date | subtitle, author | title は2行まで（1行 22字）。author は `{org: 所属, name: 氏名}`（片方でもよい。両方なら2行）。日付と発表者は brief.md から写す |
-| `toc` | — | title | 項目は書かない。後ろの `section` の title から自動で作る。7章以上は2列。12章まで |
-| `section` | title | description, topics | title は 16字。topics は箇条書き 3〜6項目（各 20字）。章番号と進み具合の点は自動 |
-| `title-body` | title, body | breadcrumb, source | body は箇条書き 1〜5項目（各 110字） |
-| `text-diagram` | title, body ＋ 図 | breadcrumb, caption, source | body は 1〜4項目（各 68字）。図は右に置く |
-| `title-diagram` | title ＋ 図 | breadcrumb, caption, source | 図は `diagram`（1つ）か `diagrams`（左右に2つ） |
-| `two-column` | title, left, right | breadcrumb, source | left・right は `{heading: 小見出し, items: [箇条書き 1〜4項目]}` |
-| `do-dont` | title, do, dont | breadcrumb | do・dont は two-column と同じ形 |
-| `grid-4` | title, items | breadcrumb | items はちょうど4つ。各 `{heading: 15字まで, text: 3行まで, icon: 任意}` |
-| `checklist` | title, items | breadcrumb | items は 1〜8項目。各 `{text: 項目, done: true か false}` |
-| `closing` | — | contact, email | 問い合わせ先とメール。brief.md から写し、「なし」なら書かない |
-
-「図」は `diagram`・`diagrams`・`html` のどれか1つ。
-
-「本文」の型（`lead` が必須）：title-body・text-diagram・title-diagram・two-column・do-dont・grid-4・checklist。
+- 字数は全角で数える（半角は 0.5）。目安を超えると注意になり、最後はビルド時にブラウザで実際の行数を測る。
+- 「図」は `diagram`・`diagrams`・`html` のどれか1つ。
+- 表紙の日付と発表者、締めの問い合わせ先とメールは brief.md から写す（「なし」なら書かない）。
 
 ## 4. 図（diagram）
 
 ```yaml
 - diagram:
     kind: line            # diagram-catalog.md の型の名前
-    unit: 人              # 以下、その型が求める項目（html-build/components.md 3章）
+    unit: 人              # 以下、その型の項目（schema.mjs <kind> で出す）
     x: [4月, 5月, 6月]
     series:
       - {name: 今年度, values: [8200, 8600, 9100]}
 ```
 
-- 2つ並べるときは `diagrams:` に2つ書く。kpi を左に縦に積み、棒グラフを右に置く形（案B）は、`diagrams` の1つ目に kpi を書く。
+- 2つ並べるときは `diagrams:` に2つ書く。kpi を左に縦に積み、棒グラフを右に置く形は、`diagrams` の1つ目に kpi を書く。
 - 1枚の図は2つまで。kpi は図として数えない（`components.md` 4章）。
 - 強調する値（`callout`、kpi の値）も outline に書く。部品は計算しない（承認とファクトチェックの対象にするため）。
 

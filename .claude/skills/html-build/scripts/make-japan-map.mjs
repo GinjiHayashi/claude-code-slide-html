@@ -8,25 +8,59 @@ import fs from "fs";
 import { geoConicConformal, geoPath } from "d3-geo";
 
 const src = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-const feats = src.features.filter((f) => f.properties.iso_a2 === "JP").map((f) => ({ type: "Feature", properties: { name: f.properties.name_ja }, geometry: f.geometry }));
+const feats = src.features
+  .filter((f) => f.properties.iso_a2 === "JP")
+  .map((f) => ({ type: "Feature", properties: { name: f.properties.name_ja }, geometry: f.geometry }));
 if (feats.length !== 47) throw new Error(`都道府県が ${feats.length} 件（47 のはず）`);
 const keep = (f, ok) => {
   const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
-  const c = (poly) => { const r = poly[0]; return [r.reduce((a, p) => a + p[0], 0) / r.length, r.reduce((a, p) => a + p[1], 0) / r.length]; };
+  const c = (poly) => {
+    const r = poly[0];
+    return [r.reduce((a, p) => a + p[0], 0) / r.length, r.reduce((a, p) => a + p[1], 0) / r.length];
+  };
   return { ...f, geometry: { type: "MultiPolygon", coordinates: polys.filter((poly) => ok(c(poly))) } };
 };
 const trimmed = feats.map((f) =>
-  f.properties.name === "東京都" ? keep(f, ([, y]) => y > 35)
-  : f.properties.name === "鹿児島県" ? keep(f, ([, y]) => y > 30)
-  : f.properties.name === "沖縄県" ? keep(f, ([x, y]) => x > 126.5 && x < 128.5 && y > 25.9 && y < 27)
-  : f);
-const W = 620, H = 440;
+  f.properties.name === "東京都"
+    ? keep(f, ([, y]) => y > 35)
+    : f.properties.name === "鹿児島県"
+      ? keep(f, ([, y]) => y > 30)
+      : f.properties.name === "沖縄県"
+        ? keep(f, ([x, y]) => x > 126.5 && x < 128.5 && y > 25.9 && y < 27)
+        : f,
+);
+const W = 620,
+  H = 440;
 const main = { type: "FeatureCollection", features: trimmed.filter((f) => f.properties.name !== "沖縄県") };
 const oki = trimmed.find((f) => f.properties.name === "沖縄県");
-const p1 = geoConicConformal().rotate([-137, 0]).parallels([33, 44]).fitExtent([[150, 4], [W - 4, H - 4]], main);
-const p2 = geoConicConformal().rotate([-127.8, 0]).parallels([25, 28]).fitExtent([[16, 16], [124, 104]], oki);
+const p1 = geoConicConformal()
+  .rotate([-137, 0])
+  .parallels([33, 44])
+  .fitExtent(
+    [
+      [150, 4],
+      [W - 4, H - 4],
+    ],
+    main,
+  );
+const p2 = geoConicConformal()
+  .rotate([-127.8, 0])
+  .parallels([25, 28])
+  .fitExtent(
+    [
+      [16, 16],
+      [124, 104],
+    ],
+    oki,
+  );
 const round = (d) => d.replace(/(\d+\.\d)\d+/g, "$1");
-const out = { source: "Natural Earth v5.1.2 ne_10m_admin_1_states_provinces（加工：make-japan-map.mjs）", width: W, height: H, inset: [0, 0, 140, 120], paths: {} };
+const out = {
+  source: "Natural Earth v5.1.2 ne_10m_admin_1_states_provinces（加工：make-japan-map.mjs）",
+  width: W,
+  height: H,
+  inset: [0, 0, 140, 120],
+  paths: {},
+};
 for (const f of main.features) out.paths[f.properties.name] = round(geoPath(p1)(f));
 out.paths["沖縄県"] = round(geoPath(p2)(oki));
 fs.writeFileSync(process.argv[3], JSON.stringify(out));

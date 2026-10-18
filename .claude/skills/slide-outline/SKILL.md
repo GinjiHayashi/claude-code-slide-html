@@ -19,6 +19,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 3. **構成を作る**：「構成の進め方」の1行目で分ける（下の「モードごとの動き方」）。草案があるときは、`outline-draft.md` を `outline.md` に写してから始める（`cp`）。
 4. **調べる**：「調査が必要な項目」と「構成で検討すること」のうち調べればわかるものを論点にし、`researcher` を論点ごとに並列で呼ぶ。呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」。構成を考える途中で新しい論点が出たときも同じ。
    - 調べた主張をスライドに使うときは、そのスライドの `claims` に主張の ID を書く。確度が「未確認」「矛盾あり」の主張を使うときは、人間に伝える。
+   - research.md の主張を使わなくなったら、消さずに `dropped` を足し、そのスライドの `claims` からも外す（`research-template.md`）。
    - 検索語に機密の情報を入れない（CLAUDE.md）。
 5. **outline.md を書く**：
    - 先頭の設定と表紙（S01）・締めは、`brief.md` の先頭の設定から写す（`brief-template.md` の対応表）。
@@ -27,7 +28,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。
    - 出典は、そのスライドの `source` に書く。
 6. **チェック**：`node .claude/skills/html-build/scripts/check-outline.mjs decks/<deck-id>/outline.md`。
-   - エラーは直して、もう一度チェックする。エラーが0件になってから人間に見せる。
+   - エラーは直して、もう一度チェックする。エラーが0件になってから人間に見せる。`claims` の ID が research.md にない、使わなくなった主張を指している、もエラーになる。
    - 「決まっている」のとき、直すのに人間の文を変える必要があるエラー（字数の上限など）は、自分で直さずに人間に聞く。
    - 注意（文字数の目安、図の数、太字の数、独自の表現）は、人間に見せるときに伝える。
    - 草案があるときは `node .claude/skills/slide-outline/scripts/check-structure.mjs decks/<deck-id>` で草案と比べる。エラー（草案が確認されていない、確認のあとに変わった、「決まっている」なのに草案がない）は先に解決する。

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
+import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する（要求文書 7.2・11章）。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -11,6 +12,7 @@ import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
 //   図が3つ以上、太字の数、独自の表現（html:）を使った。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
+// claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
 // 型の決まりは slide-outline/layout-catalog.md、図は diagram-catalog.md と html-build/components.md。
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
@@ -168,6 +170,26 @@ export async function checkOutline(file) {
     if (f.html) warn(s, "独自の表現（html:）を使っている。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る");
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html))) err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");
+  }
+  // claims と research.md の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
+  const withClaims = o.slides.filter((s) => s.fields.claims !== undefined);
+  if (withClaims.length) {
+    const rf = path.join(path.dirname(file), "research.md");
+    const claims = fs.existsSync(rf) ? Object.fromEntries(checkResearch(fs.readFileSync(rf, "utf8")).claims.map((c) => [c.id, c.fields])) : null;
+    for (const s of withClaims) {
+      const ids = s.fields.claims;
+      if (!Array.isArray(ids) || ids.some((x) => typeof x !== "string")) continue; // 形の誤りは上で出している
+      if (!claims) { err(s, `claims（${ids.join("・")}）があるのに research.md がない`); continue; }
+      for (const id of ids) {
+        const c = claims[id];
+        if (!c) err(s, `claims の ${id} が research.md にない`);
+        else if (c.dropped) err(s, `claims の ${id} は research.md で使わなくなった主張（dropped：${c.dropped}）`);
+        else {
+          if (["未確認", "矛盾あり"].includes(c.confidence)) warn(s, `claims の ${id} は確度が「${c.confidence}」。人間に伝える`);
+          if (c.kind === "推測") warn(s, `claims の ${id} は推測の主張。スライドで事実のように書いていないか確かめる`);
+        }
+      }
+    }
   }
   return { errors, warnings, slides: o.slides.length };
 }

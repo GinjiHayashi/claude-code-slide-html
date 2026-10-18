@@ -90,7 +90,19 @@ python3 -m pip install fonttools==4.67.0 brotli==1.2.0
 
 ### 4. スライドを作る
 
-（構築後に記載します。いまは `decks/<deck-id>/outline.md` を `examples/sample-deck/outline.md` にならって書き、上のコマンドの `examples/sample-deck` を `decks/<deck-id>` に変えてビルドできます）
+スライド用リポジトリで Claude Code を起動し、`/make-slides` に続けて依頼を書きます（例：`/make-slides 新任職員向けに、行政のデジタル化の歩みを10分で話したい。…`）。途中で止まったときや、完成したスライドを直したいときも `/make-slides` で続きを頼めます。
+
+git は次のように進みます（AI が行うのは 1〜3 と、頼まれたときの 4。マージは人間）。
+
+| いつ | git でのこと |
+|---|---|
+| デッキを始めるとき | `develop` から `feature/<deck-id>` を作る（デッキ＝発表1回分のスライド一式） |
+| 承認するたび（brief、構成、ファクトチェック、最終確認） | そのデッキのフォルダをコミットする。最終確認のコミットには `build/` の `deck.html`・`deck.pdf` も入る |
+| 完成したとき | push して `develop` への PR を作る。人間が確認して squash マージする |
+| 完成後に直すとき | `develop` から `feature/<deck-id>-fix` を作り、同じ流れで PR |
+| 発表した版を残すとき | 人間が頼むと `develop` → `main` の PR を作る。人間がマージしたあと、`main` に `<deck-id>` のタグを付けて push する（直したあと2回目の発表なら `<deck-id>-2`） |
+
+承認の依頼中の一時ファイル（`approval-request.yaml`）はコミットされません。
 
 ## git の運用ルール（簡易 GitFlow）
 
@@ -120,7 +132,7 @@ python3 -m pip install fonttools==4.67.0 brotli==1.2.0
 | 向き | 方法 | タイミング |
 |---|---|---|
 | `feature/*` → `develop` | PR を作り、確認してから **squash マージ**（1つの作業を1コミットにまとめる） | 作業が終わったとき |
-| `develop` → `main` | PR を作り、**マージコミット** で取り込む（区切りは main のマージコミットで分かるため、タグは付けない） | 区切りのよいところ（ハーネスでは構築順序の1フェーズごと） |
+| `develop` → `main` | PR を作り、**マージコミット** で取り込む（ハーネスではタグは付けない。区切りは main のマージコミットで分かるため。スライド用リポジトリでは、発表した版に `<deck-id>` のタグを付ける） | 区切りのよいところ（ハーネスでは構築順序の1フェーズごと） |
 | `hotfix/*` → `main`、`develop` | PR を作り、両方に取り込む | 修正が終わったとき |
 
 ### コミットメッセージ

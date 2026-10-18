@@ -73,4 +73,5 @@
 
 - 簡易 GitFlow。`develop` から `feature/<短い英語>` を切って作業し、PR で `develop` にマージする。
 - コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。
+- スライド用リポジトリでは、デッキ1件ごとに `feature/<deck-id>` を切り、承認のたびにコミットし、完成したら develop への PR を作る（`make-slides` の「git」）。PR のマージは人間が行う。
 - 詳細は `README.md` の「git の運用ルール」を参照。

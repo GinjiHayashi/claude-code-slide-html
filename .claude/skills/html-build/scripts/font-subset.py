@@ -32,7 +32,7 @@ for weight in (400, 700):
         need = {c for c in chars if any(a <= c <= b for a, b in rs)}
         if not need:
             continue
-        font = TTFont(os.path.join(FS, 'files', fname))
+        font = TTFont(os.path.join(FS, 'files', fname), recalcTimestamp=False)  # 保存の時刻を head.modified に書かない（毎回同じバイト列にする）
         opt = subset.Options()
         opt.flavor = 'woff2'
         sub = subset.Subsetter(opt)

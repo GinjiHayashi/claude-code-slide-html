@@ -41,6 +41,21 @@ const hostIn = (url, domains) => {
   return domains.find((d) => h === d || h.endsWith("." + d)) ?? null;
 };
 
+// 出典1つの項目を確かめる（factcheck.md の根拠でも使う）
+export function checkSource(s, sa, banned = bannedDomains()) {
+  const errors = [];
+  if (s === null || typeof s !== "object") return [`${sa}：url・title などの項目で書く`];
+  for (const k of Object.keys(s)) if (![...SRC_REQUIRED, ...SRC_OPTIONAL].includes(k)) errors.push(`${sa}：知らない項目「${k}」`);
+  for (const k of SRC_REQUIRED) if (empty(s[k])) errors.push(`${sa}：${k} がない`);
+  if (!empty(s.url) && !/^https?:\/\/[^\s/]+\.[^\s]+/.test(s.url)) errors.push(`${sa}：url が URL の形でない`);
+  const d = !empty(s.url) && hostIn(s.url, banned);
+  if (d) errors.push(`${sa}：${d} は出典にしない（domains.md の「引用しない」か「除外」）。原典をたどって出典にする`);
+  if (!empty(s.published) && s.published !== "不明" && !DATE.test(String(s.published))) errors.push(`${sa}：published は YYYY-MM-DD か「不明」`);
+  if (!empty(s.accessed) && !DATE.test(String(s.accessed))) errors.push(`${sa}：accessed は YYYY-MM-DD`);
+  if (!empty(s.tier) && !TIER.includes(s.tier)) errors.push(`${sa}：tier は ${TIER.join("・")}`);
+  return errors;
+}
+
 export function checkResearch(text, banned = bannedDomains()) {
   const errors = [];
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
@@ -80,18 +95,7 @@ export function checkResearch(text, banned = bannedDomains()) {
     if (f.confidence === "矛盾あり" && empty(f.counter)) errors.push(`${at}：矛盾ありなのに counter（食い違う内容）がない`);
     const srcs = Array.isArray(f.sources) ? f.sources : [];
     if (f.sources != null && !Array.isArray(f.sources)) errors.push(`${at}：sources は「- url: …」の並び`);
-    srcs.forEach((s, i) => {
-      const sa = `${at} の出典${i + 1}`;
-      if (s === null || typeof s !== "object") { errors.push(`${sa}：url・title などの項目で書く`); return; }
-      for (const k of Object.keys(s)) if (![...SRC_REQUIRED, ...SRC_OPTIONAL].includes(k)) errors.push(`${sa}：知らない項目「${k}」`);
-      for (const k of SRC_REQUIRED) if (empty(s[k])) errors.push(`${sa}：${k} がない`);
-      if (!empty(s.url) && !/^https?:\/\/[^\s/]+\.[^\s]+/.test(s.url)) errors.push(`${sa}：url が URL の形でない`);
-      const d = !empty(s.url) && hostIn(s.url, banned);
-      if (d) errors.push(`${sa}：${d} は出典にしない（domains.md の「引用しない」か「除外」）。原典をたどって出典にする`);
-      if (!empty(s.published) && s.published !== "不明" && !DATE.test(String(s.published))) errors.push(`${sa}：published は YYYY-MM-DD か「不明」`);
-      if (!empty(s.accessed) && !DATE.test(String(s.accessed))) errors.push(`${sa}：accessed は YYYY-MM-DD`);
-      if (!empty(s.tier) && !TIER.includes(s.tier)) errors.push(`${sa}：tier は ${TIER.join("・")}`);
-    });
+    srcs.forEach((s, i) => errors.push(...checkSource(s, `${at} の出典${i + 1}`, banned)));
     // 確度と出典の数・発行元・tier（同じ発行元は1つと数える）
     const pubs = (pred) => new Set(srcs.filter(pred).map((s) => String(s?.publisher ?? "").trim()).filter(Boolean)).size;
     const all = pubs(() => true), primary = pubs((s) => s?.tier === "一次");

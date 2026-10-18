@@ -79,3 +79,4 @@ node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id
 | `domains.md` | 優先・引用しない・除外のドメインと、情報源の段階（人間が管理する固定ファイル） |
 | `scripts/check-research.mjs` | research.md のチェック |
 | `.claude/agents/researcher.md` | 調査用サブエージェント（このスキルを読み込んで動く） |
+| `.claude/agents/fact-checker.md` | ファクトチェック用サブエージェント（このスキルを読み込んで動く。書式は `slide-factcheck/factcheck-template.md`） |

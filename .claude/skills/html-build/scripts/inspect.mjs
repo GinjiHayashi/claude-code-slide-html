@@ -104,7 +104,8 @@ function measure({ tokens, mx, my }) {
       const q = box(e);
       if (!q.w || !q.h) continue;
       if (q.w >= S.width - 1 && q.h >= S.height - 1) continue;
-      if (q.l < mx - 0.5 || q.r > S.width - mx + 0.5 || q.t < my - 0.5 || q.b > S.height - my + 0.5) add("margin", `${name(e)} が余白（左右 ${mx}・上下 ${my}）に入っている`);
+      if (q.l < mx - 0.5 || q.r > S.width - mx + 0.5 || q.t < my - 0.5 || q.b > S.height - my + 0.5)
+        add("margin", `${name(e)} が余白（左右 ${mx}・上下 ${my}）に入っている`);
     }
     // 色と文字の大きさ
     const texts = [];
@@ -112,7 +113,17 @@ function measure({ tokens, mx, my }) {
       const cs = getComputedStyle(e);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       const own = [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-      const props = ["color", "backgroundColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor", "fill", "stroke", "outlineColor"];
+      const props = [
+        "color",
+        "backgroundColor",
+        "borderTopColor",
+        "borderBottomColor",
+        "borderLeftColor",
+        "borderRightColor",
+        "fill",
+        "stroke",
+        "outlineColor",
+      ];
       for (const p of props) {
         const v = cs[p];
         if (!v || v === "none" || v.startsWith("url(")) continue;
@@ -138,15 +149,18 @@ function measure({ tokens, mx, my }) {
       }
     }
     // 重なり：別の要素の文字どうしが 2px 以上重なっている
-    for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
-      const a = texts[i], b = texts[j];
-      if (a.e === b.e || a.e.contains(b.e) || b.e.contains(a.e)) continue;
-      const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
-      if (w > 2 && h > 2) {
-        const msg = `${id}: ${name(a.e)} と ${name(b.e)} が重なっている`;
-        if (!out.overlap.includes(msg)) out.overlap.push(msg);
+    for (let i = 0; i < texts.length; i++)
+      for (let j = i + 1; j < texts.length; j++) {
+        const a = texts[i],
+          b = texts[j];
+        if (a.e === b.e || a.e.contains(b.e) || b.e.contains(a.e)) continue;
+        const w = Math.min(a.r, b.r) - Math.max(a.l, b.l),
+          h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+        if (w > 2 && h > 2) {
+          const msg = `${id}: ${name(a.e)} と ${name(b.e)} が重なっている`;
+          if (!out.overlap.includes(msg)) out.overlap.push(msg);
+        }
       }
-    }
     // 説明文の行数
     for (const e of sl.querySelectorAll("[data-lead]")) {
       const lines = Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));

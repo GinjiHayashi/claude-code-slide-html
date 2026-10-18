@@ -26,7 +26,8 @@ const EXISTS = { factcheck: ["outline.md"] };
 // factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
 export function factcheckedChanges(approval, outlineText) {
   if (!approval?.outline_slides) return null;
-  const now = slideHashes(outlineText), then = approval.outline_slides;
+  const now = slideHashes(outlineText),
+    then = approval.outline_slides;
   return [...new Set([...Object.keys(then), ...Object.keys(now)])].filter((k) => k !== "meta" && then[k] !== now[k]);
 }
 
@@ -37,9 +38,15 @@ export function checkGate(deckDir, stage) {
   const optional = (IF_EXISTS[stage] ?? []).filter((t) => fs.existsSync(path.join(deckDir, t)));
   for (const target of [...NEEDS[stage], ...optional]) {
     const file = path.join(deckDir, target);
-    if (!fs.existsSync(file)) { errors.push(`${target} がない`); continue; }
+    if (!fs.existsSync(file)) {
+      errors.push(`${target} がない`);
+      continue;
+    }
     const a = latest(approvals, target);
-    if (!a) { errors.push(`${target} が承認されていない（request.mjs で承認を依頼し、人間が答える）`); continue; }
+    if (!a) {
+      errors.push(`${target} が承認されていない（request.mjs で承認を依頼し、人間が答える）`);
+      continue;
+    }
     const text = fs.readFileSync(file);
     if (a.sha256 === sha256(text)) continue;
     let where = "";
@@ -59,7 +66,10 @@ export function checkGate(deckDir, stage) {
     if (a && fs.existsSync(of)) {
       const changed = factcheckedChanges(a, fs.readFileSync(of, "utf8"));
       if (changed === null) errors.push("factcheck.md の承認に、そのときの outline.md の記録がない。factcheck.md を承認し直す");
-      else if (changed.length) errors.push(`ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`);
+      else if (changed.length)
+        errors.push(
+          `ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`,
+        );
     }
   }
   return { ok: !errors.length, errors };
@@ -68,7 +78,10 @@ export function checkGate(deckDir, stage) {
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const [deckDir, stage] = process.argv.slice(2);
-  if (!deckDir || !NEEDS[stage]) { console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`); process.exit(2); }
+  if (!deckDir || !NEEDS[stage]) {
+    console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`);
+    process.exit(2);
+  }
   const r = checkGate(deckDir, stage);
   for (const e of r.errors) console.log(`止める  ${e}`);
   console.log(r.ok ? `${stage} に進んでよい` : `${stage} に進めない`);

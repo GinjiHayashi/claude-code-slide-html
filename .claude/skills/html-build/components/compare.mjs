@@ -11,9 +11,12 @@ import { esc, check, R, O } from "./_util.mjs";
 //  ◯ は primary、△ は ink、× は label の色。
 
 const MARK = {
-  "◯": "text-primary", "○": "text-primary", "◎": "text-primary",
+  "◯": "text-primary",
+  "○": "text-primary",
+  "◎": "text-primary",
   "△": "text-ink",
-  "×": "text-label", "✕": "text-label",
+  "×": "text-label",
+  "✕": "text-label",
 };
 
 const cell = (v) => {
@@ -28,20 +31,28 @@ export const schema = { options: [R], criteria: [R], values: [O], recommend: O }
 
 export default function compare(data) {
   check("compare", data, schema);
-  const O = data.options, Cr = data.criteria;
+  const O = data.options,
+    Cr = data.criteria;
   if (O.length < 2 || O.length > 3) throw new Error("compare: options は2〜3");
   if (Cr.length > 6) throw new Error("compare: criteria は6まで");
   if (data.values.length !== Cr.length || data.values.some((r) => r.length !== O.length)) throw new Error("compare: values は 観点の数 × 選択肢の数");
   const rec = data.recommend ? O.indexOf(data.recommend) : -1;
   if (data.recommend && rec < 0) throw new Error(`compare: recommend の ${data.recommend} が options にない`);
   const tint = (j) => (j === rec ? "bg-highlight" : "");
-  const head = O.map((o, j) => `<div class="flex flex-col items-center justify-end gap-[4px] rounded-t-panel px-[12px] pb-[12px] pt-[8px] ${tint(j)}">
+  const head = O.map(
+    (o, j) => `<div class="flex flex-col items-center justify-end gap-[4px] rounded-t-panel px-[12px] pb-[12px] pt-[8px] ${tint(j)}">
   ${j === rec ? `<span class="rounded-full bg-primary px-[12px] text-caption font-bold text-on-primary">推奨</span>` : ""}
   <span class="text-center text-heading font-bold ${j === rec ? "text-primary" : "text-ink"}">${esc(o)}</span>
-</div>`).join("");
+</div>`,
+  ).join("");
   const rows = Cr.map((c, i) => {
     const last = i === Cr.length - 1;
-    const vals = data.values[i].map((v, j) => `<div class="flex flex-col items-center justify-center gap-[2px] border-t border-line px-[12px] py-[8px] text-center ${tint(j)} ${last && j === rec ? "rounded-b-panel" : ""}">${cell(v)}</div>`).join("");
+    const vals = data.values[i]
+      .map(
+        (v, j) =>
+          `<div class="flex flex-col items-center justify-center gap-[2px] border-t border-line px-[12px] py-[8px] text-center ${tint(j)} ${last && j === rec ? "rounded-b-panel" : ""}">${cell(v)}</div>`,
+      )
+      .join("");
     return `<div class="flex items-center border-t border-line pr-[12px] text-body font-bold text-ink">${esc(c)}</div>${vals}`;
   }).join("");
   return `<div class="grid h-full w-full" style="grid-template-columns: minmax(160px, 0.8fr) repeat(${O.length}, 1fr); grid-template-rows: auto repeat(${Cr.length}, 1fr)" data-kind="compare">

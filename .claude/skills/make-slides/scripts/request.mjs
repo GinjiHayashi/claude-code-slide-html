@@ -18,12 +18,20 @@ const req = {
   requested_at: new Date().toISOString(),
   targets: targets.map((t) => {
     const f = path.join(deckDir, t);
-    if (!fs.existsSync(f)) { console.error(`${f} がない`); process.exit(2); }
+    if (!fs.existsSync(f)) {
+      console.error(`${f} がない`);
+      process.exit(2);
+    }
     return { target: t, sha256: sha256(fs.readFileSync(f)) };
   }),
 };
-const others = fs.readdirSync(path.dirname(path.resolve(deckDir))).map((d) => path.join(path.dirname(path.resolve(deckDir)), d))
+const others = fs
+  .readdirSync(path.dirname(path.resolve(deckDir)))
+  .map((d) => path.join(path.dirname(path.resolve(deckDir)), d))
   .filter((d) => d !== path.resolve(deckDir) && fs.existsSync(path.join(d, REQUEST)));
-for (const d of others) { fs.rmSync(path.join(d, REQUEST)); console.log(`${path.basename(d)} に残っていた承認の依頼を消した（同時に依頼できるのは1つのデッキだけ）`); }
+for (const d of others) {
+  fs.rmSync(path.join(d, REQUEST));
+  console.log(`${path.basename(d)} に残っていた承認の依頼を消した（同時に依頼できるのは1つのデッキだけ）`);
+}
 fs.writeFileSync(path.join(deckDir, REQUEST), "# 承認の依頼（request.mjs が書く）。人間の次の答えで hook が判定し、消す\n" + YAML.stringify(req));
 console.log(`承認の依頼を出した：${targets.join("、")}。人間に「${targets.join("・")} を承認しますか？」と聞く`);

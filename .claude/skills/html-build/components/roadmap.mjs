@@ -12,7 +12,8 @@ export const schema = { periods: [R], lanes: [{ name: R, items: [{ start: R, end
 
 export default function roadmap(data) {
   check("roadmap", data, schema);
-  const P = data.periods, L = data.lanes;
+  const P = data.periods,
+    L = data.lanes;
   if (P.length < 2 || P.length > 8) throw new Error("roadmap: periods は2〜8");
   if (L.length < 1 || L.length > 4) throw new Error("roadmap: lanes は1〜4");
   const LN = LINE;
@@ -26,7 +27,8 @@ export default function roadmap(data) {
   const lanes = L.map((lane, r) => {
     const used = new Set();
     const bars = lane.items.map((it) => {
-      const s = idx(it.start), e = idx(it.end);
+      const s = idx(it.start),
+        e = idx(it.end);
       for (let k = s; k <= e; k++) {
         if (used.has(k)) throw new Error(`roadmap: ${lane.name} の棒が重なっている`);
         used.add(k);

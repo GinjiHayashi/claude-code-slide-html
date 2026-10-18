@@ -38,7 +38,10 @@ export default function stackedBar(data) {
     .join("\n");
   const labels = cats.map((c) => `<div class="min-w-0 max-w-[160px] flex-1 text-center text-body text-ink">${esc(c)}</div>`).join("");
   const legend = series
-    .map((s, k) => `<div class="flex items-center gap-[8px] text-body text-ink"><span class="inline-block h-[14px] w-[14px] ${SERIES[k].bg}"></span>${esc(s.name)}</div>`)
+    .map(
+      (s, k) =>
+        `<div class="flex items-center gap-[8px] text-body text-ink"><span class="inline-block h-[14px] w-[14px] ${SERIES[k].bg}"></span>${esc(s.name)}</div>`,
+    )
     .reverse()
     .join("");
   return `<div class="flex h-full w-full gap-[32px]" data-kind="stacked-bar">

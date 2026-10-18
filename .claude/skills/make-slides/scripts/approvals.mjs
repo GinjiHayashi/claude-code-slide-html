@@ -58,7 +58,9 @@ export function recordApproval(deckDir, target, info) {
     changed = `前回の承認から変わったところ：${[...ids].filter((k) => prev.slides[k] !== entry.slides[k]).join("、")}`;
   }
   const f = path.join(deckDir, "approvals.yaml");
-  const head = fs.existsSync(f) ? "" : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない\n";
+  const head = fs.existsSync(f)
+    ? ""
+    : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない\n";
   fs.appendFileSync(f, head + YAML.stringify([entry]));
   return { entry, changed };
 }
@@ -74,8 +76,10 @@ export function readRequest(deckDir) {
 // - 直す・待つ・否定の語や疑問符があれば「承認ではない」。なければ、同意の語があるときだけ「承認」。どちらもなければ「判断できない」
 // - 否定の言い方（「承認しません」「まだ承認しないで」「あとで」）は、同意の語を含んでいても承認ではない。
 //   迷う言い方は承認ではない側に倒す（承認されないだけなら、AI がもう一度聞けば済むため）。「問題ありません」は否定の語に当たらない
-const NO = /直し|直して|修正|変更|変えて|だめ|ダメ|駄目|NG|待って|まって|やめ|違う|ちがう|保留|却下|いいえ|ではな|じゃな|しない|しません|できな|できません|ないで(?!す)|まだ|あとで|後で|[?？]/i;
-const YES = /承認|OK|オーケー|はい|いいです|いいよ|良いです|よいです|大丈夫|問題な|問題ありません|かまいません|構いません|了解|進めて|進めましょう|お願いします|LGTM|👍/i;
+const NO =
+  /直し|直して|修正|変更|変えて|だめ|ダメ|駄目|NG|待って|まって|やめ|違う|ちがう|保留|却下|いいえ|ではな|じゃな|しない|しません|できな|できません|ないで(?!す)|まだ|あとで|後で|[?？]/i;
+const YES =
+  /承認|OK|オーケー|はい|いいです|いいよ|良いです|よいです|大丈夫|問題な|問題ありません|かまいません|構いません|了解|進めて|進めましょう|お願いします|LGTM|👍/i;
 export function judge(text) {
   if (NO.test(text)) return "reject";
   if (YES.test(text)) return "approve";

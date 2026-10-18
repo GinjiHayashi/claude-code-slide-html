@@ -20,20 +20,35 @@ export default function donut(data, opt = {}) {
   check("donut", data, schema);
   if (data.items.length < 2 || data.items.length > 5) throw new Error("donut: items は2〜5");
   const others = data.items.filter((d) => d.label === "その他");
-  const items = data.items.filter((d) => d.label !== "その他").sort((a, b) => b.value - a.value).concat(others);
+  const items = data.items
+    .filter((d) => d.label !== "その他")
+    .sort((a, b) => b.value - a.value)
+    .concat(others);
   const sum = items.reduce((a, d) => a + d.value, 0);
   const { w, h: h0 } = svgSize(data, opt);
   const h = h0 - 28; // 単位（18）と間（8）の分を引き、枠の高さに収める
   const legend = data.legend ?? "direct";
   // 輪の大きさは書き方ごとに決める。direct は左右に名前を書く幅、table は右の表の幅、compact は下の1行の高さを残す
-  const r = Math.max(60, Math.min(200,
-    legend === "direct" ? Math.min(h / 2 - 8, (w - 340) / 2 - 8)
-    : legend === "table" ? Math.min(h / 2 - 8, (w - 528) / 2 - 8)
-    : Math.min((h - 48) / 2 - 8, w / 2 - 8)));
-  const cx = r + 8, cy = h / 2;
+  const r = Math.max(
+    60,
+    Math.min(
+      200,
+      legend === "direct"
+        ? Math.min(h / 2 - 8, (w - 340) / 2 - 8)
+        : legend === "table"
+          ? Math.min(h / 2 - 8, (w - 528) / 2 - 8)
+          : Math.min((h - 48) / 2 - 8, w / 2 - 8),
+    ),
+  );
+  const cx = r + 8,
+    cy = h / 2;
   const color = (d, k) => (d.label === "その他" ? SERIES[4] : SERIES[Math.min(k, 3)]);
-  const arcs = pie().sort(null).value((d) => d.value)(items);
-  const shape = arc().innerRadius(r * 0.6).outerRadius(r);
+  const arcs = pie()
+    .sort(null)
+    .value((d) => d.value)(items);
+  const shape = arc()
+    .innerRadius(r * 0.6)
+    .outerRadius(r);
   const slices = arcs
     .map((a, k) => `<path class="${color(a.data, k).fill} stroke-canvas" stroke-width="2" d="${shape(a)}" transform="translate(${cx},${cy})"/>`)
     .join("");
@@ -44,12 +59,14 @@ export default function donut(data, opt = {}) {
 
   if (legend === "table") {
     const rows = items
-      .map((d, k) => `<div class="flex items-center gap-[12px] border-b border-line py-[10px]">
+      .map(
+        (d, k) => `<div class="flex items-center gap-[12px] border-b border-line py-[10px]">
     <span class="inline-block h-[16px] w-[16px] shrink-0 ${color(d, k).bg}"></span>
     <span class="min-w-0 flex-1 text-body text-ink">${esc(d.label)}</span>
     <span class="w-[96px] text-right text-body text-ink">${num(d.value)}</span>
     <span class="w-[72px] text-right text-heading font-bold text-ink">${pct(d)}</span>
-  </div>`)
+  </div>`,
+      )
       .join("\n");
     return wrap(`<div class="mt-[8px] flex min-h-0 flex-1 items-center gap-[48px]">
     <svg data-origin="generated" class="block shrink-0" width="${2 * r + 16}" height="${h}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${center}</svg>
@@ -59,13 +76,22 @@ export default function donut(data, opt = {}) {
 
   if (legend === "compact") {
     // 割合を輪の上に書く。細すぎる切れ目（8% 未満）には書かず、下の並びで読ませる
-    const mid = arc().innerRadius(r * 0.8).outerRadius(r * 0.8);
+    const mid = arc()
+      .innerRadius(r * 0.8)
+      .outerRadius(r * 0.8);
     const onRing = arcs
-      .map((a, k) => (a.data.value / sum < 0.08 ? "" : `<text class="${color(a.data, k).onFill} text-body font-bold" x="${(cx + mid.centroid(a)[0]).toFixed(1)}" y="${(cy + mid.centroid(a)[1]).toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${pct(a.data)}</text>`))
+      .map((a, k) =>
+        a.data.value / sum < 0.08
+          ? ""
+          : `<text class="${color(a.data, k).onFill} text-body font-bold" x="${(cx + mid.centroid(a)[0]).toFixed(1)}" y="${(cy + mid.centroid(a)[1]).toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${pct(a.data)}</text>`,
+      )
       .join("");
     const R2 = Math.min(r, (h - 48) / 2 - 8);
     const names = items
-      .map((d, k) => `<span class="inline-flex items-center gap-[6px] text-body text-ink"><span class="inline-block h-[14px] w-[14px] ${color(d, k).bg}"></span>${esc(d.label)}${d.value / sum < 0.08 ? ` ${pct(d)}` : ""}</span>`)
+      .map(
+        (d, k) =>
+          `<span class="inline-flex items-center gap-[6px] text-body text-ink"><span class="inline-block h-[14px] w-[14px] ${color(d, k).bg}"></span>${esc(d.label)}${d.value / sum < 0.08 ? ` ${pct(d)}` : ""}</span>`,
+      )
       .join("");
     return wrap(`<div class="mt-[8px] flex min-h-0 flex-1 flex-col items-center">
     <svg data-origin="generated" class="block min-h-0 flex-1" width="${2 * r + 16}" height="${h - 48}" viewBox="0 0 ${2 * r + 16} ${h}" role="img" aria-label="ドーナツグラフ">${slices}${onRing}${center}</svg>
@@ -74,13 +100,22 @@ export default function donut(data, opt = {}) {
   }
 
   // direct：引き出し線で外に書く。左右それぞれで、ラベルが重ならないよう上下に押し広げる
-  const out = arc().innerRadius(r + 12).outerRadius(r + 12);
+  const out = arc()
+    .innerRadius(r + 12)
+    .outerRadius(r + 12);
   const edge = arc().innerRadius(r).outerRadius(r);
   const L = arcs.map((a, k) => {
     const [ox, oy] = out.centroid(a);
     return { a, k, side: ox >= 0 ? 1 : -1, y: cy + oy, ex: edge.centroid(a), ox, oy };
   });
-  const lab = [1, -1].flatMap((side) => spread(L.filter((l) => l.side === side), 44, 24, h - 26)); // 名前（上）と割合（下）が SVG の内側に収まる範囲
+  const lab = [1, -1].flatMap((side) =>
+    spread(
+      L.filter((l) => l.side === side),
+      44,
+      24,
+      h - 26,
+    ),
+  ); // 名前（上）と割合（下）が SVG の内側に収まる範囲
   const cw = 2 * r + 2 * 170; // 輪の左右に名前を書く幅
   const dcx = cw / 2;
   const tags = lab

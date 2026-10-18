@@ -5,7 +5,10 @@ import { esc, check, R, O } from "./_util.mjs";
 
 const spark = (values) => {
   if (!Array.isArray(values) || values.length < 2) return "";
-  const w = 160, h = 32, min = Math.min(...values), max = Math.max(...values);
+  const w = 160,
+    h = 32,
+    min = Math.min(...values),
+    max = Math.max(...values);
   const y = (v) => (max === min ? h / 2 : h - ((v - min) / (max - min)) * (h - 4) - 2);
   const pts = values.map((v, i) => `${((i / (values.length - 1)) * (w - 4) + 2).toFixed(1)},${y(v).toFixed(1)}`);
   const last = pts.at(-1).split(",");

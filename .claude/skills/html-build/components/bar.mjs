@@ -28,9 +28,7 @@ export default function bar(data) {
   </div>`;
     })
     .join("\n");
-  const labels = rows
-    .map((r) => `<div class="min-w-0 max-w-[160px] flex-1 text-center text-body text-ink">${esc(r.label)}</div>`)
-    .join("\n");
+  const labels = rows.map((r) => `<div class="min-w-0 max-w-[160px] flex-1 text-center text-body text-ink">${esc(r.label)}</div>`).join("\n");
   const fit = rows.length * 160 + (rows.length - 1) * 24 + 32;
   return `<div class="flex h-full w-full gap-[32px]" data-kind="bar">
 <div class="mx-auto flex w-full min-w-0 flex-1 flex-col" style="max-width: ${fit}px">

@@ -18,8 +18,10 @@ test("judge：はっきりした承認・否定・判断できない答え", () 
 });
 
 test("judge：同意の語を含む否定の言い方は承認にしない", () => {
-  for (const t of ["承認しません", "承認できません", "まだ承認しないで", "OK しないでください", "はいはい、あとでね", "後で承認します"]) assert.equal(judge(t), "reject", t);
-  for (const t of ["問題ありません", "問題ないです", "はい、承認します", "大丈夫です。進めてください", "かまいません。OK です"]) assert.equal(judge(t), "approve", t);
+  for (const t of ["承認しません", "承認できません", "まだ承認しないで", "OK しないでください", "はいはい、あとでね", "後で承認します"])
+    assert.equal(judge(t), "reject", t);
+  for (const t of ["問題ありません", "問題ないです", "はい、承認します", "大丈夫です。進めてください", "かまいません。OK です"])
+    assert.equal(judge(t), "approve", t);
 });
 
 test("slideHashes：1枚だけ変えると、その番号だけ変わる", () => {
@@ -96,7 +98,10 @@ test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）�
   fs.mkdirSync(out);
   fs.writeFileSync(path.join(out, "deck.html"), "<html></html>");
   const sha = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
-  fs.writeFileSync(path.join(out, "assets-manifest.yaml"), `outline_sha256: ${sha(path.join(dir, "outline.md"))}\ndeck_sha256: ${sha(path.join(out, "deck.html"))}\n`);
+  fs.writeFileSync(
+    path.join(out, "assets-manifest.yaml"),
+    `outline_sha256: ${sha(path.join(dir, "outline.md"))}\ndeck_sha256: ${sha(path.join(out, "deck.html"))}\n`,
+  );
   const log = (ok) => fs.writeFileSync(path.join(out, "build-log.md"), `---\nok: ${ok}\n---\n\n- 結果：合格\n`);
   log(false);
   assert.equal(deckStatus(dir).stage, "4 HTML 作成");

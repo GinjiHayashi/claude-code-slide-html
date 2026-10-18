@@ -11,7 +11,14 @@ import path from "path";
 import { isMain } from "../../../lib/common.mjs";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-const ok = (...args) => { try { git(...args); return true; } catch { return false; } };
+const ok = (...args) => {
+  try {
+    git(...args);
+    return true;
+  } catch {
+    return false;
+  }
+};
 const time = (ref, dir) => Number(git("log", "-1", "--format=%ct", ref, "--", dir) || 0);
 
 export function deckBranch(deckDir) {
@@ -42,7 +49,9 @@ export function deckBranch(deckDir) {
   if (working.length > 1) return at("人間に聞く", null, [`作業中のブランチが複数ある：${working.join("、")}`]);
   if (working.length === 1) {
     const b = working[0];
-    return at("続き", b === cur ? null : `git switch ${b}`, [onDevelop ? `${b} に、develop にまだ入っていない変更がある` : `${b} があり、デッキはまだ develop にマージされていない`]);
+    return at("続き", b === cur ? null : `git switch ${b}`, [
+      onDevelop ? `${b} に、develop にまだ入っていない変更がある` : `${b} があり、デッキはまだ develop にマージされていない`,
+    ]);
   }
   if (!onDevelop) return at("新規", `git switch -c feature/${id} develop`, ["デッキが develop になく、作業中のブランチもない"]);
   // develop から作ったばかりの直しのブランチにいる（develop の最新を含み、まだコミットがない）
@@ -55,7 +64,10 @@ export function deckBranch(deckDir) {
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const dir = process.argv[2];
-  if (!dir) { console.error("使い方：node branch.mjs decks/<deck-id> [--json]"); process.exit(2); }
+  if (!dir) {
+    console.error("使い方：node branch.mjs decks/<deck-id> [--json]");
+    process.exit(2);
+  }
   const r = deckBranch(dir);
   if (process.argv.includes("--json")) console.log(JSON.stringify(r, null, 2));
   else {

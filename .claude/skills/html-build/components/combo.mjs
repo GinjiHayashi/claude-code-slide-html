@@ -19,9 +19,18 @@ export default function combo(data, opt = {}) {
   if (xs.length < 2 || xs.length > 12) throw new Error("combo: 時点は2〜12");
   const { w, h } = svgSize(data, opt);
   const m = { l: 64, r: 64, t: 40, b: 32 };
-  const x = scaleBand().domain(xs).range([m.l, w - m.r]).padding(0.4);
-  const yb = scaleLinear().domain([0, Math.max(...bar.values)]).nice(5).range([h - m.b, m.t]);
-  const yl = scaleLinear().domain([Math.min(0, ...ln.values), Math.max(...ln.values)]).nice(5).range([h - m.b, m.t]);
+  const x = scaleBand()
+    .domain(xs)
+    .range([m.l, w - m.r])
+    .padding(0.4);
+  const yb = scaleLinear()
+    .domain([0, Math.max(...bar.values)])
+    .nice(5)
+    .range([h - m.b, m.t]);
+  const yl = scaleLinear()
+    .domain([Math.min(0, ...ln.values), Math.max(...ln.values)])
+    .nice(5)
+    .range([h - m.b, m.t]);
   const cx = (l) => x(l) + x.bandwidth() / 2;
   const bars = xs
     .map((l, i) => {
@@ -34,8 +43,10 @@ export default function combo(data, opt = {}) {
   const pts = ln.values.map((v, i) => [cx(xs[i]), yl(v)]);
   const path = d3line()(pts);
   const marks = pts
-    .map(([px, py], i) => `<circle class="fill-primary stroke-canvas" stroke-width="2" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6"/>
-<text class="fill-primary text-caption font-bold" x="${px.toFixed(1)}" y="${(py - 14).toFixed(1)}" text-anchor="middle">${num(ln.values[i])}</text>`)
+    .map(
+      ([px, py], i) => `<circle class="fill-primary stroke-canvas" stroke-width="2" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6"/>
+<text class="fill-primary text-caption font-bold" x="${px.toFixed(1)}" y="${(py - 14).toFixed(1)}" text-anchor="middle">${num(ln.values[i])}</text>`,
+    )
     .join("");
   return `<div class="flex h-full w-full gap-[32px]" data-kind="combo">
 <div class="flex min-w-0 flex-1 flex-col">
@@ -45,7 +56,13 @@ export default function combo(data, opt = {}) {
   <circle class="fill-primary" cx="${w - m.r + 50}" cy="11" r="6"/>
   <text class="fill-primary text-body font-bold" x="${w - m.r + 36}" y="20" text-anchor="end">${esc(ln.name)}（${esc(ln.unit)}・右の目盛）</text>
   ${yGrid(yb, m.l, w - m.r)}
-  ${yl.ticks(5).map((t) => `<text class="fill-primary text-caption" x="${w - m.r + 10}" y="${yl(t).toFixed(1)}" dominant-baseline="middle">${t.toLocaleString("ja-JP")}</text>`).join("")}
+  ${yl
+    .ticks(5)
+    .map(
+      (t) =>
+        `<text class="fill-primary text-caption" x="${w - m.r + 10}" y="${yl(t).toFixed(1)}" dominant-baseline="middle">${t.toLocaleString("ja-JP")}</text>`,
+    )
+    .join("")}
   ${bars}
   <line class="stroke-gray-600" x1="${m.l}" x2="${w - m.r}" y1="${h - m.b}" y2="${h - m.b}" stroke-width="2"/>
   <path class="fill-none stroke-primary" stroke-width="4" stroke-linejoin="round" d="${path}"/>

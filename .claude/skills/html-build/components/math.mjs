@@ -17,7 +17,9 @@ export const schema = { tex: R, size: O, caption: O };
 export default function math(data) {
   check("math", data, schema);
   // html のときも MathML を併せて出す（読み上げソフトのため。見た目は KaTeX の CSS で隠れる）
-  const html = katex.renderToString(data.tex, { displayMode: true, output: "htmlAndMathml", throwOnError: true }).replace(/<svg /g, '<svg data-origin="generated" '); // KaTeX が作る SVG（根号など）にも、部品が作ったことを示す印を付ける
+  const html = katex
+    .renderToString(data.tex, { displayMode: true, output: "htmlAndMathml", throwOnError: true })
+    .replace(/<svg /g, '<svg data-origin="generated" '); // KaTeX が作る SVG（根号など）にも、部品が作ったことを示す印を付ける
   const size = data.size === "body" ? "text-body" : "flex h-full flex-col justify-center text-title"; // large は枠の縦の中央に置く
   const cap = data.caption ? `<div class="mt-[12px] text-center text-caption text-label">${esc(data.caption)}</div>` : "";
   return `<div class="${size} text-ink" data-kind="math">${html}${cap}</div>`;
@@ -27,7 +29,9 @@ export default function math(data) {
 export function katexCss() {
   const dir = path.dirname(createRequire(import.meta.url).resolve("katex/dist/katex.min.css"));
   let css = fs.readFileSync(path.join(dir, "katex.min.css"), "utf8");
-  css = css.replace(/src:url\(fonts\/([^)]+?\.woff2)\) format\("woff2"\)(,url\([^)]+\) format\("[^"]+"\))*/g, (_, f) =>
-    `src:url(data:font/woff2;base64,${fs.readFileSync(path.join(dir, "fonts", f)).toString("base64")}) format("woff2")`);
+  css = css.replace(
+    /src:url\(fonts\/([^)]+?\.woff2)\) format\("woff2"\)(,url\([^)]+\) format\("[^"]+"\))*/g,
+    (_, f) => `src:url(data:font/woff2;base64,${fs.readFileSync(path.join(dir, "fonts", f)).toString("base64")}) format("woff2")`,
+  );
   return css;
 }

@@ -156,6 +156,7 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 
 - `develop` から `feature/<短い英語>` を切って直し、`develop` への PR を作ります（上の「git の運用ルール」）。
 - テストは `npm test`、見本のビルドは `npm run build -- examples/sample-deck` です。PR では CI（GitHub Actions）が同じものを実行します。
+- コードの書式は Prettier でそろえています（設定は `.prettierrc.json`）。直したあとに `npx prettier@3.3.3 --write "**/*.mjs"` をかけます。Prettier はビルドに使わないので、`package.json` には入れていません。
 - スライドの型や図の部品の決まりは、コード（`.claude/skills/html-build/scripts/spec.mjs` と各部品の `schema`）が正です。文書には書き写さず、`node .claude/skills/html-build/scripts/schema.mjs` を参照します。
 
 ## ライセンス

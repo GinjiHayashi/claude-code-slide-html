@@ -30,20 +30,14 @@ export default function table(data) {
   }[style];
   if (!ST) throw new Error(`table: style は panel・lines・zebra・light・light-zebra のどれか`);
   const align = columns.map((_, j) => data.align?.[j] ?? (rows.every((r) => typeof r[j] === "number") ? "right" : "left"));
-  const digits = columns.map((_, j) =>
-    Math.max(0, ...rows.map((r) => (typeof r[j] === "number" ? (String(r[j]).split(".")[1] ?? "").length : 0))));
-  const fmt = (v, j) =>
-    typeof v === "number" ? v.toLocaleString("ja-JP", { minimumFractionDigits: digits[j], maximumFractionDigits: digits[j] }) : esc(v);
+  const digits = columns.map((_, j) => Math.max(0, ...rows.map((r) => (typeof r[j] === "number" ? (String(r[j]).split(".")[1] ?? "").length : 0))));
+  const fmt = (v, j) => (typeof v === "number" ? v.toLocaleString("ja-JP", { minimumFractionDigits: digits[j], maximumFractionDigits: digits[j] }) : esc(v));
   const cls = { left: "text-left", right: "text-right", center: "text-center" };
-  const head = columns
-    .map((c, j) => `<th class="${ST.th} px-[16px] py-[10px] font-bold ${cls[align[j]]}">${esc(c)}</th>`)
-    .join("");
+  const head = columns.map((c, j) => `<th class="${ST.th} px-[16px] py-[10px] font-bold ${cls[align[j]]}">${esc(c)}</th>`).join("");
   const body = rows
     .map((r, i) => {
       const row = hi.has(i + 1) ? "bg-highlight font-bold" : ST.row(i);
-      const tds = r
-        .map((v, j) => `<td class="${ST.td} px-[16px] py-[10px] ${cls[align[j]]}">${fmt(v, j)}</td>`)
-        .join("");
+      const tds = r.map((v, j) => `<td class="${ST.td} px-[16px] py-[10px] ${cls[align[j]]}">${fmt(v, j)}</td>`).join("");
       return `<tr class="${row}">${tds}</tr>`;
     })
     .join("\n");

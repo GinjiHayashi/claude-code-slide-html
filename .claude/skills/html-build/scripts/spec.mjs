@@ -17,10 +17,41 @@ const spacing = (name) => {
   if (!m) throw new Error(`theme.css に --spacing-${name} がない`);
   return Number(m[1]);
 };
-export const SPACE = { x: spacing("slide-x"), top: spacing("slide-top"), bottom: spacing("slide-bottom"), titleGap: spacing("title-gap"), column: spacing("column") };
+export const SPACE = {
+  x: spacing("slide-x"),
+  top: spacing("slide-top"),
+  bottom: spacing("slide-bottom"),
+  titleGap: spacing("title-gap"),
+  column: spacing("column"),
+};
 
 // ---- 図の型（components/<kind>.mjs。項目は各部品の schema） ----
-export const KINDS = ["kpi", "bar", "hbar", "table", "stacked-bar", "line", "area", "combo", "donut", "scatter", "steps", "flowchart", "timeline", "roadmap", "matrix", "pyramid", "tree", "compare", "heatmap", "venn", "sequence", "er", "map", "math"];
+export const KINDS = [
+  "kpi",
+  "bar",
+  "hbar",
+  "table",
+  "stacked-bar",
+  "line",
+  "area",
+  "combo",
+  "donut",
+  "scatter",
+  "steps",
+  "flowchart",
+  "timeline",
+  "roadmap",
+  "matrix",
+  "pyramid",
+  "tree",
+  "compare",
+  "heatmap",
+  "venn",
+  "sequence",
+  "er",
+  "map",
+  "math",
+];
 
 // ---- スライドの型 ----
 // required・optional：書ける項目。visual：図（diagram・diagrams・html のどれか1つ）が必須。lead：説明文が必須（要らないなら lead: false）
@@ -38,7 +69,13 @@ export const LAYOUTS = {
   "title-body": { required: ["title", "body"], optional: BODY, lead: true, text: { title: 30 }, list: { body: [1, 5, 110] } },
   "text-diagram": { required: ["title", "body"], visual: true, optional: [...BODY, "caption"], lead: true, text: { title: 30 }, list: { body: [1, 4, 68] } },
   "title-diagram": { required: ["title"], visual: true, optional: [...BODY, "caption"], lead: true, text: { title: 30 } },
-  "two-column": { required: ["title", "left", "right"], optional: BODY, lead: true, text: { title: 30 }, columns: { keys: ["left", "right"], ...COLUMN, each: 40 } },
+  "two-column": {
+    required: ["title", "left", "right"],
+    optional: BODY,
+    lead: true,
+    text: { title: 30 },
+    columns: { keys: ["left", "right"], ...COLUMN, each: 40 },
+  },
   "do-dont": { required: ["title", "do", "dont"], optional: BODY, lead: true, text: { title: 30 }, columns: { keys: ["do", "dont"], ...COLUMN, each: 34 } },
   "grid-4": { required: ["title", "items"], optional: BODY, lead: true, text: { title: 30 }, grid: { count: 4, heading: 15, text: 75 } },
   checklist: { required: ["title", "items"], optional: BODY, lead: true, text: { title: 30 }, checks: { min: 1, max: 8, text: 24 } },
@@ -57,8 +94,12 @@ export function describeLayout(name) {
   const L = LAYOUTS[name];
   const limit = (k) => {
     if (L.text?.[k]) return `${k}（${L.text[k]}字）`;
-    if (L.list?.[k]) { const [a, b, c] = L.list[k]; return `${k}（箇条書き ${a}〜${b}項目、各${c}字）`; }
-    if (L.columns?.keys.includes(k)) return `${k}（{ heading?: ${L.columns.heading}字, items: 箇条書き ${L.columns.items[0]}〜${L.columns.items[1]}項目、各${L.columns.each}字 }）`;
+    if (L.list?.[k]) {
+      const [a, b, c] = L.list[k];
+      return `${k}（箇条書き ${a}〜${b}項目、各${c}字）`;
+    }
+    if (L.columns?.keys.includes(k))
+      return `${k}（{ heading?: ${L.columns.heading}字, items: 箇条書き ${L.columns.items[0]}〜${L.columns.items[1]}項目、各${L.columns.each}字 }）`;
     if (k === "items" && L.grid) return `items（ちょうど${L.grid.count}つ。各 { heading: ${L.grid.heading}字, text: ${L.grid.text}字 }）`;
     if (k === "items" && L.checks) return `items（${L.checks.min}〜${L.checks.max}項目。各 { text: ${L.checks.text}字, done: true か false }）`;
     if (k === "author") return `author（{ org?: ${L.author.org}字, name?: ${L.author.name}字 }）`;

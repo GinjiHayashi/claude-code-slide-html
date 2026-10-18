@@ -21,7 +21,8 @@ import { KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
 
 export async function checkOutline(file) {
-  const errors = [], warnings = [];
+  const errors = [],
+    warnings = [];
   let o;
   try {
     o = readOutline(file);
@@ -39,7 +40,8 @@ export async function checkOutline(file) {
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
   if (!o.slides.length) errors.push("スライドが1枚もない");
   const nch = o.slides.filter((s) => s.fields.layout === "section").length;
-  if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc")) errors.push(`章が${nch}ある。目次（toc）に載せられるのは${LAYOUTS.toc.chapters}章まで`);
+  if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc"))
+    errors.push(`章が${nch}ある。目次（toc）に載せられるのは${LAYOUTS.toc.chapters}章まで`);
 
   const seen = new Set();
   const comps = {};
@@ -51,14 +53,21 @@ export async function checkOutline(file) {
     if (s.id !== `S${String(i + 1).padStart(2, "0")}`) warn(s, `${i + 1}枚目だが番号が ${s.id}（番号は並び順と合わせると直しやすい）`);
     for (const k of s.dup) err(s, `項目「${k}」が2回書かれている`);
     const L = LAYOUTS[f.layout];
-    if (!f.layout) { err(s, "layout がない"); continue; }
-    if (!L) { err(s, `layout「${f.layout}」は一覧にない（${Object.keys(LAYOUTS).join("・")}）`); continue; }
+    if (!f.layout) {
+      err(s, "layout がない");
+      continue;
+    }
+    if (!L) {
+      err(s, `layout「${f.layout}」は一覧にない（${Object.keys(LAYOUTS).join("・")}）`);
+      continue;
+    }
     if (i === 0 && f.layout !== "title") warn(s, "1枚目が表紙（title）ではない");
 
     // 項目の有無
     const lead = !!L.lead;
     const allowed = allowedFields(L);
-    for (const k of Object.keys(f)) if (!allowed.has(k)) err(s, `${f.layout} に項目「${k}」は書けない（書けるもの：${[...allowed].filter((x) => x !== "layout").join("・")}）`);
+    for (const k of Object.keys(f))
+      if (!allowed.has(k)) err(s, `${f.layout} に項目「${k}」は書けない（書けるもの：${[...allowed].filter((x) => x !== "layout").join("・")}）`);
     for (const k of L.required) if (f[k] === undefined || f[k] === null || f[k] === "") err(s, `${f.layout} に必須の項目「${k}」がない`);
     if (L.visual && !f.diagram && !f.diagrams && !f.html) err(s, `${f.layout} には diagram・diagrams・html のどれかが必要`);
     if (f.diagram && f.diagrams) err(s, "diagram と diagrams は片方だけにする");
@@ -75,10 +84,11 @@ export async function checkOutline(file) {
     }
     if (f.layout === "title" && f.author != null) {
       if (typeof f.author !== "object" || Array.isArray(f.author)) err(s, "author は { org: 所属, name: 氏名 } の形にする（どちらか片方でもよい）");
-      else for (const [k, v] of Object.entries(f.author)) {
-        if (!(k in L.author)) err(s, `author に知らない項目「${k}」がある（org・name）`);
-        else if (width(String(v)) > L.author[k]) warn(s, `author.${k} が全角${L.author[k]}字の目安を超えている`);
-      }
+      else
+        for (const [k, v] of Object.entries(f.author)) {
+          if (!(k in L.author)) err(s, `author に知らない項目「${k}」がある（org・name）`);
+          else if (width(String(v)) > L.author[k]) warn(s, `author.${k} が全角${L.author[k]}字の目安を超えている`);
+        }
     }
 
     // 箇条書き（太字を数えるため、説明文もここに入れる）
@@ -104,9 +114,13 @@ export async function checkOutline(file) {
     };
     for (const [k, rule] of Object.entries(L.list ?? {})) list(k, rule);
     for (const k of L.columns?.keys ?? []) {
-      const c = f[k], C = L.columns;
+      const c = f[k],
+        C = L.columns;
       if (c == null) continue;
-      if (typeof c !== "object" || Array.isArray(c)) { err(s, `${k} は { heading: 小見出し, items: [箇条書き] } の形にする`); continue; }
+      if (typeof c !== "object" || Array.isArray(c)) {
+        err(s, `${k} は { heading: 小見出し, items: [箇条書き] } の形にする`);
+        continue;
+      }
       for (const x of Object.keys(c)) if (!["heading", "items"].includes(x)) err(s, `${k} に知らない項目「${x}」がある（heading・items）`);
       if (!c.items) err(s, `${k} に items（箇条書き）がない`);
       list(`${k}.items`, [...C.items, C.each], c.items);
@@ -115,22 +129,25 @@ export async function checkOutline(file) {
     if (L.grid && f.items != null) {
       const G = L.grid;
       if (!Array.isArray(f.items) || f.items.length !== G.count) err(s, `${f.layout} の items はちょうど${G.count}つ`);
-      else f.items.forEach((it, n) => {
-        if (!it?.heading || !it?.text) return err(s, `items の${n + 1}つ目に heading（小見出し）と text（説明）が要る`);
-        for (const x of Object.keys(it)) if (!["heading", "text"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
-        if (width(it.heading) > G.heading) warn(s, `items の${n + 1}つ目の heading が全角${G.heading}字を超えている`);
-        if (width(plain(it.text)) > G.text) warn(s, `items の${n + 1}つ目の text が3行の目安（全角${G.text}字）を超えている`);
-        bullets.push(it.text);
-      });
+      else
+        f.items.forEach((it, n) => {
+          if (!it?.heading || !it?.text) return err(s, `items の${n + 1}つ目に heading（小見出し）と text（説明）が要る`);
+          for (const x of Object.keys(it)) if (!["heading", "text"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+          if (width(it.heading) > G.heading) warn(s, `items の${n + 1}つ目の heading が全角${G.heading}字を超えている`);
+          if (width(plain(it.text)) > G.text) warn(s, `items の${n + 1}つ目の text が3行の目安（全角${G.text}字）を超えている`);
+          bullets.push(it.text);
+        });
     }
     if (L.checks && f.items != null) {
       const K = L.checks;
       if (!Array.isArray(f.items) || f.items.length < K.min || f.items.length > K.max) err(s, `${f.layout} の items は${K.min}〜${K.max}項目`);
-      else f.items.forEach((it, n) => {
-        if (typeof it?.text !== "string" || typeof it?.done !== "boolean") return err(s, `items の${n + 1}つ目は { text: 項目, done: true か false } の形にする`);
-        for (const x of Object.keys(it)) if (!["text", "done"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
-        if (width(it.text) > K.text) warn(s, `items の${n + 1}つ目が全角${K.text}字の目安を超えている`);
-      });
+      else
+        f.items.forEach((it, n) => {
+          if (typeof it?.text !== "string" || typeof it?.done !== "boolean")
+            return err(s, `items の${n + 1}つ目は { text: 項目, done: true か false } の形にする`);
+          for (const x of Object.keys(it)) if (!["text", "done"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+          if (width(it.text) > K.text) warn(s, `items の${n + 1}つ目が全角${K.text}字の目安を超えている`);
+        });
     }
 
     // 太字（components.md 4.2）：1項目に1か所、1枚に3か所まで
@@ -142,21 +159,29 @@ export async function checkOutline(file) {
     // 図：名前が一覧にあるか、データが部品の決まりに合うか（部品を実際に呼んで確かめる）
     const ds = f.diagrams ?? (f.diagram ? [f.diagram] : []);
     if (f.diagrams && (!Array.isArray(f.diagrams) || f.diagrams.length !== 2)) err(s, "diagrams は図を2つ並べるときに使い、ちょうど2つ書く（1つなら diagram）");
-    if (Array.isArray(ds)) for (const d of ds) {
-      if (!d || typeof d !== "object") { err(s, "diagram は kind と、その型の項目を書く"); continue; }
-      if (!KINDS.includes(d.kind)) { err(s, `図の型「${d.kind}」は一覧にない（${KINDS.join("・")}）`); continue; }
-      const { kind, ...data } = d;
-      try {
-        comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
-        comps[kind](data);
-      } catch (e) {
-        err(s, `図 ${kind} のデータが決まりに合わない：${e.message}`);
+    if (Array.isArray(ds))
+      for (const d of ds) {
+        if (!d || typeof d !== "object") {
+          err(s, "diagram は kind と、その型の項目を書く");
+          continue;
+        }
+        if (!KINDS.includes(d.kind)) {
+          err(s, `図の型「${d.kind}」は一覧にない（${KINDS.join("・")}）`);
+          continue;
+        }
+        const { kind, ...data } = d;
+        try {
+          comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
+          comps[kind](data);
+        } catch (e) {
+          err(s, `図 ${kind} のデータが決まりに合わない：${e.message}`);
+        }
       }
-    }
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
     if (f.html) warn(s, "独自の表現（html:）を使っている。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る");
-    if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html))) err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
+    if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
+      err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");
   }
   // claims と research.md の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
@@ -167,7 +192,10 @@ export async function checkOutline(file) {
     for (const s of withClaims) {
       const ids = s.fields.claims;
       if (!Array.isArray(ids) || ids.some((x) => typeof x !== "string")) continue; // 形の誤りは上で出している
-      if (!claims) { err(s, `claims（${ids.join("・")}）があるのに research.md がない`); continue; }
+      if (!claims) {
+        err(s, `claims（${ids.join("・")}）があるのに research.md がない`);
+        continue;
+      }
       for (const id of ids) {
         const c = claims[id];
         if (!c) err(s, `claims の ${id} が research.md にない`);
@@ -185,7 +213,10 @@ export async function checkOutline(file) {
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const file = process.argv[2];
-  if (!file) { console.error("使い方：node check-outline.mjs <outline.md>"); process.exit(2); }
+  if (!file) {
+    console.error("使い方：node check-outline.mjs <outline.md>");
+    process.exit(2);
+  }
   const r = await checkOutline(file);
   for (const e of r.errors) console.log(`エラー  ${e}`);
   for (const w of r.warnings) console.log(`注意    ${w}`);

@@ -59,7 +59,10 @@ export async function build(deckDir) {
     const first = assemble(work, outline, slides, "");
     const scan1 = scanDeck(first.html);
     const lic = verify(scan1);
-    const cr = credits(scan1.assets.map((a) => a.id), lic.registry);
+    const cr = credits(
+      scan1.assets.map((a) => a.id),
+      lic.registry,
+    );
     lic.errors.push(...cr.errors);
     if (lic.errors.length) {
       const r = { ok: false, check: chk, custom: customs(outline), license: { ...lic, assets: scan1.assets, rows: [] } };
@@ -90,7 +93,17 @@ export async function build(deckDir) {
 
     const count = outline.slides.length + 1; // credits を含む
     const insp = await inspect(out, count);
-    const r = { check: chk, out, slides: count, bytes: Buffer.byteLength(html), math, fontLog, inspect: insp, custom: customs(outline), license: { ...lic, assets: scan.assets, rows: cr.rows } };
+    const r = {
+      check: chk,
+      out,
+      slides: count,
+      bytes: Buffer.byteLength(html),
+      math,
+      fontLog,
+      inspect: insp,
+      custom: customs(outline),
+      license: { ...lic, assets: scan.assets, rows: cr.rows },
+    };
     r.ok = CATEGORIES.every(([k]) => !insp[k].length);
     // PDF：検査に合格し、outline.md で pdf: true のときだけ作る
     if (r.ok && outline.meta.pdf === true) {
@@ -108,25 +121,35 @@ export async function build(deckDir) {
 function assemble(work, outline, slides, licenses) {
   // Tailwind：スライドの HTML からクラス名を読み取る。import は絶対パスで書き、作業フォルダの場所に左右されないようにする
   fs.writeFileSync(path.join(work, "slides.html"), slides);
-  fs.writeFileSync(path.join(work, "in.css"), [
-    `@import "${path.join(MODULES, "tailwindcss/index.css")}";`,
-    `@import "${path.join(HB, "theme.css")}";`,
-    `@source "${path.join(work, "slides.html")}";`,
-    `@source "${path.join(HB, "base.html")}";`,
-  ].join("\n"));
-  execFileSync(process.execPath, [path.join(MODULES, "@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"], { stdio: "pipe" });
+  fs.writeFileSync(
+    path.join(work, "in.css"),
+    [
+      `@import "${path.join(MODULES, "tailwindcss/index.css")}";`,
+      `@import "${path.join(HB, "theme.css")}";`,
+      `@source "${path.join(work, "slides.html")}";`,
+      `@source "${path.join(HB, "base.html")}";`,
+    ].join("\n"),
+  );
+  execFileSync(
+    process.execPath,
+    [path.join(MODULES, "@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"],
+    { stdio: "pipe" },
+  );
   let css = fs.readFileSync(path.join(work, "out.css"), "utf8");
   const math = slides.includes('data-kind="math"');
   if (math) css += "\n" + katexCss();
 
   // フォント：base.html の文字（ページ番号など）も含める。ライセンスの全文は画面に出さないので含めない
   fs.writeFileSync(path.join(work, "text.html"), slides + fs.readFileSync(path.join(HB, "base.html"), "utf8"));
-  const fontLog = execFileSync("python3", [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], { encoding: "utf8" }).trim();
+  const fontLog = execFileSync("python3", [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], {
+    encoding: "utf8",
+  }).trim();
   const font = fs.readFileSync(path.join(work, "font.css"), "utf8");
 
   // base.html の印を置き換える。置き換える値に $ が含まれても崩れないよう、関数で渡す
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const html = fs.readFileSync(path.join(HB, "base.html"), "utf8")
+  const html = fs
+    .readFileSync(path.join(HB, "base.html"), "utf8")
     .replace("{{title}}", () => esc(outline.meta.title))
     .replace("/*FONT*/", () => font)
     .replace("/*TAILWIND*/", () => css)
@@ -165,8 +188,14 @@ function buildLog(outline, r) {
     "",
     `- 日時：${new Date().toISOString()}`,
     `- 結果：${r.ok ? "合格" : r.inspect ? "不合格（下の検査を確認）" : r.license ? "ライセンスの照合で不合格のため止めた（deck.html は作っていない）" : "書式チェックのエラーで止めた（deck.html は作っていない）"}`,
-    ...(r.inspect ? [`- 出力：deck.html（${r.slides}枚、${Math.round(r.bytes / 1024)} KB。フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`] : []),
-    ...(r.inspect ? [`- PDF：${r.pdf ? `deck.pdf（${Math.round(fs.statSync(r.pdf).size / 1024)} KB）` : outline.meta.pdf === true ? "検査に合格しなかったので作っていない" : "作らない（outline.md の pdf: false）"}`] : []),
+    ...(r.inspect
+      ? [`- 出力：deck.html（${r.slides}枚、${Math.round(r.bytes / 1024)} KB。フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`]
+      : []),
+    ...(r.inspect
+      ? [
+          `- PDF：${r.pdf ? `deck.pdf（${Math.round(fs.statSync(r.pdf).size / 1024)} KB）` : outline.meta.pdf === true ? "検査に合格しなかったので作っていない" : "作らない（outline.md の pdf: false）"}`,
+        ]
+      : []),
     "",
     "## 書式チェック（check-outline.mjs）",
     "",
@@ -180,33 +209,37 @@ function buildLog(outline, r) {
     "",
     "## 機械的な検査（inspect.mjs）",
     "",
-    ...(r.inspect ? [
-      "| 検査 | 件数 |",
-      "|---|---|",
-      ...CATEGORIES.map(([k, label]) => `| ${label} | ${r.inspect[k].length} |`),
-      "",
-      ...CATEGORIES.filter(([k]) => r.inspect[k].length).flatMap(([k, label]) => [`### ${label}`, "", list(r.inspect[k]), ""]),
-    ] : ["前の段階で止めたので、行っていない", ""]),
+    ...(r.inspect
+      ? [
+          "| 検査 | 件数 |",
+          "|---|---|",
+          ...CATEGORIES.map(([k, label]) => `| ${label} | ${r.inspect[k].length} |`),
+          "",
+          ...CATEGORIES.filter(([k]) => r.inspect[k].length).flatMap(([k, label]) => [`### ${label}`, "", list(r.inspect[k]), ""]),
+        ]
+      : ["前の段階で止めたので、行っていない", ""]),
     "## ライセンス（license-notice）",
     "",
-    ...(r.license ? [
-      "### 照合のエラー",
-      "",
-      list(r.license.errors),
-      "",
-      "### 注意（人が確認する）",
-      "",
-      list(r.license.warnings),
-      "",
-      "### 配布物に入った素材（assets-manifest.yaml）",
-      "",
-      list(r.license.assets.map((a) => `${a.id}：${a.found.join("、")}`)),
-      "",
-      "### credits スライドに載せたもの",
-      "",
-      list(r.license.rows.map((x) => `${x.name}（${x.license}）`)),
-      "",
-    ] : ["書式チェックのエラーがあるので、行っていない", ""]),
+    ...(r.license
+      ? [
+          "### 照合のエラー",
+          "",
+          list(r.license.errors),
+          "",
+          "### 注意（人が確認する）",
+          "",
+          list(r.license.warnings),
+          "",
+          "### 配布物に入った素材（assets-manifest.yaml）",
+          "",
+          list(r.license.assets.map((a) => `${a.id}：${a.found.join("、")}`)),
+          "",
+          "### credits スライドに載せたもの",
+          "",
+          list(r.license.rows.map((x) => `${x.name}（${x.license}）`)),
+          "",
+        ]
+      : ["書式チェックのエラーがあるので、行っていない", ""]),
     "## 独自の表現（html:）",
     "",
     r.custom.length ? `次のスライドは部品を使わず HTML で書いている。人が見た目と内容を確認する：${r.custom.join("、")}` : "なし",
@@ -218,13 +251,19 @@ function buildLog(outline, r) {
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const dir = process.argv[2];
-  if (!dir) { console.error("使い方：node build.mjs decks/<deck-id>"); process.exit(2); }
+  if (!dir) {
+    console.error("使い方：node build.mjs decks/<deck-id>");
+    process.exit(2);
+  }
   const r = await build(dir);
   for (const e of r.check.errors) console.log(`エラー  ${e}`);
   for (const w of r.check.warnings) console.log(`注意    ${w}`);
   for (const e of r.license?.errors ?? []) console.log(`ライセンス  ${e}`);
   for (const w of r.license?.warnings ?? []) console.log(`注意    ${w}`);
-  if (!r.inspect) { console.log(r.license ? "ライセンスの照合で不合格のため、ビルドを止めた" : "書式チェックのエラーがあるので、ビルドを止めた"); process.exit(1); }
+  if (!r.inspect) {
+    console.log(r.license ? "ライセンスの照合で不合格のため、ビルドを止めた" : "書式チェックのエラーがあるので、ビルドを止めた");
+    process.exit(1);
+  }
   console.log(`${r.out}：${r.slides}枚、${Math.round(r.bytes / 1024)} KB（フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`);
   for (const [k, label] of CATEGORIES) for (const x of r.inspect[k]) console.log(`検査    ${label}：${x}`);
   console.log(r.ok ? "検査：合格（build-log.md に記録した）" : "検査：不合格（build-log.md を確認）");

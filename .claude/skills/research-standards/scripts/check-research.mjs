@@ -36,7 +36,11 @@ export function bannedDomains(file = path.join(HERE, "..", "domains.md")) {
 }
 const hostIn = (url, domains) => {
   let h;
-  try { h = new URL(url).hostname.toLowerCase(); } catch { return null; }
+  try {
+    h = new URL(url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
   return domains.find((d) => h === d || h.endsWith("." + d)) ?? null;
 };
 
@@ -60,7 +64,11 @@ export function checkResearch(text, banned = bannedDomains()) {
   const m = frontMatter(text);
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id）がない");
   else {
-    try { if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない"); } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
+    try {
+      if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない");
+    } catch (e) {
+      errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`);
+    }
   }
   const offset = m ? m[0].split("\n").length - 1 : 0;
   const body = (m ? text.slice(m[0].length) : text).split("\n");
@@ -70,18 +78,30 @@ export function checkResearch(text, banned = bannedDomains()) {
     if (h) parts.push({ id: h[1], line: offset + i + 1, src: [] });
     else if (parts.length) parts.at(-1).src.push(l);
   });
-  const claims = [], seen = new Set();
+  const claims = [],
+    seen = new Set();
   for (const p of parts) {
     if (OTHER.includes(p.id)) continue;
     const at = `${p.line}行目（${p.id}）`;
-    if (!/^C-\d{3,}$/.test(p.id)) { errors.push(`${at}：見出しは C-001 の形か、${OTHER.join("・")}`); continue; }
+    if (!/^C-\d{3,}$/.test(p.id)) {
+      errors.push(`${at}：見出しは C-001 の形か、${OTHER.join("・")}`);
+      continue;
+    }
     if (seen.has(p.id)) errors.push(`${at}：ID が重複している`);
     seen.add(p.id);
     let list;
-    try { list = YAML.parse(p.src.join("\n")) ?? []; } catch (e) { errors.push(`${at}：YAML として読めない：${e.message.split("\n")[0]}`); continue; }
+    try {
+      list = YAML.parse(p.src.join("\n")) ?? [];
+    } catch (e) {
+      errors.push(`${at}：YAML として読めない：${e.message.split("\n")[0]}`);
+      continue;
+    }
     const f = {};
     for (const item of Array.isArray(list) ? list : [list]) {
-      if (item === null || typeof item !== "object" || Array.isArray(item)) { errors.push(`${at}：「- 項目: 値」の形になっていない行がある`); continue; }
+      if (item === null || typeof item !== "object" || Array.isArray(item)) {
+        errors.push(`${at}：「- 項目: 値」の形になっていない行がある`);
+        continue;
+      }
       Object.assign(f, item);
     }
     claims.push({ id: p.id, line: p.line, fields: f });
@@ -96,11 +116,19 @@ export function checkResearch(text, banned = bannedDomains()) {
     if (f.sources != null && !Array.isArray(f.sources)) errors.push(`${at}：sources は「- url: …」の並び`);
     srcs.forEach((s, i) => errors.push(...checkSource(s, `${at} の出典${i + 1}`, banned)));
     // 確度と出典の数・発行元・tier（同じ発行元は1つと数える）
-    const pubs = (pred) => new Set(srcs.filter(pred).map((s) => String(s?.publisher ?? "").trim()).filter(Boolean)).size;
-    const all = pubs(() => true), primary = pubs((s) => s?.tier === "一次");
+    const pubs = (pred) =>
+      new Set(
+        srcs
+          .filter(pred)
+          .map((s) => String(s?.publisher ?? "").trim())
+          .filter(Boolean),
+      ).size;
+    const all = pubs(() => true),
+      primary = pubs((s) => s?.tier === "一次");
     if (f.confidence === "確認済み" && primary < 2) errors.push(`${at}：確認済みには、発行元の異なる一次情報が2つ以上いる（今は ${primary}）`);
     if (f.confidence === "おおむね確実" && all < 2) errors.push(`${at}：おおむね確実には、発行元の異なる情報源が2つ以上いる（今は ${all}）。1つなら未確認`);
-    if (f.confidence === "未確認" && all > 1) errors.push(`${at}：発行元の異なる情報源が ${all} つあるのに未確認になっている（一致するならおおむね確実、食い違うなら矛盾あり）`);
+    if (f.confidence === "未確認" && all > 1)
+      errors.push(`${at}：発行元の異なる情報源が ${all} つあるのに未確認になっている（一致するならおおむね確実、食い違うなら矛盾あり）`);
   }
   return { errors, claims };
 }
@@ -108,10 +136,15 @@ export function checkResearch(text, banned = bannedDomains()) {
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const file = process.argv[2];
-  if (!file) { console.error("使い方：node check-research.mjs decks/<deck-id>/research.md"); process.exit(2); }
+  if (!file) {
+    console.error("使い方：node check-research.mjs decks/<deck-id>/research.md");
+    process.exit(2);
+  }
   const r = checkResearch(fs.readFileSync(file, "utf8"));
   for (const e of r.errors) console.log(`エラー  ${e}`);
   const n = (c) => r.claims.filter((x) => empty(x.fields.dropped) && x.fields.confidence === c).length;
-  console.log(`主張 ${r.claims.length}件（確認済み ${n("確認済み")}、おおむね確実 ${n("おおむね確実")}、未確認 ${n("未確認")}、矛盾あり ${n("矛盾あり")}）、エラー ${r.errors.length}件`);
+  console.log(
+    `主張 ${r.claims.length}件（確認済み ${n("確認済み")}、おおむね確実 ${n("おおむね確実")}、未確認 ${n("未確認")}、矛盾あり ${n("矛盾あり")}）、エラー ${r.errors.length}件`,
+  );
   process.exit(r.errors.length ? 2 : 0);
 }

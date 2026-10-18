@@ -25,16 +25,31 @@ export default function area(data, opt = {}) {
   if (data.percent) st.offset(stackOffsetExpand);
   const layers = st(rows);
   const top = data.percent ? 1 : Math.max(...layers.at(-1).map((d) => d[1]));
-  const y = scaleLinear().domain([0, top]).nice(5).range([h - m.b, m.t]);
-  const x = scalePoint().domain(xs).range([m.l, w - m.r]).padding(0);
-  const shape = d3area().x((d, i) => x(xs[i])).y0((d) => y(d[0])).y1((d) => y(d[1]));
+  const y = scaleLinear()
+    .domain([0, top])
+    .nice(5)
+    .range([h - m.b, m.t]);
+  const x = scalePoint()
+    .domain(xs)
+    .range([m.l, w - m.r])
+    .padding(0);
+  const shape = d3area()
+    .x((d, i) => x(xs[i]))
+    .y0((d) => y(d[0]))
+    .y1((d) => y(d[1]));
   const fmt = data.percent ? (v) => `${Math.round(v * 100)}%` : undefined;
-  const paths = layers
-    .map((L, k) => `<path class="${SERIES[k].fill} stroke-canvas" stroke-width="1.5" d="${shape(L)}"/>`)
-    .join("");
-  const labels = spread(layers.map((L, k) => ({ k, y: y((L.at(-1)[0] + L.at(-1)[1]) / 2) })), 22, m.t, h - m.b)
+  const paths = layers.map((L, k) => `<path class="${SERIES[k].fill} stroke-canvas" stroke-width="1.5" d="${shape(L)}"/>`).join("");
+  const labels = spread(
+    layers.map((L, k) => ({ k, y: y((L.at(-1)[0] + L.at(-1)[1]) / 2) })),
+    22,
+    m.t,
+    h - m.b,
+  )
     // 文字は白地で読める ink にし、どの面かは文字の前の色の四角で示す
-    .map(({ k, y: ly }) => `<rect class="${SERIES[k].fill}" x="${w - m.r + 16}" y="${(ly - 7).toFixed(1)}" width="14" height="14"/><text class="fill-ink text-body font-bold" x="${w - m.r + 38}" y="${ly.toFixed(1)}" dominant-baseline="middle">${esc(series[k].name)}</text>`)
+    .map(
+      ({ k, y: ly }) =>
+        `<rect class="${SERIES[k].fill}" x="${w - m.r + 16}" y="${(ly - 7).toFixed(1)}" width="14" height="14"/><text class="fill-ink text-body font-bold" x="${w - m.r + 38}" y="${ly.toFixed(1)}" dominant-baseline="middle">${esc(series[k].name)}</text>`,
+    )
     .join("");
   return `<div class="flex h-full w-full gap-[32px]" data-kind="area">
 <div class="flex min-w-0 flex-1 flex-col">

@@ -17,19 +17,28 @@ export const schema = { sets: [{ label: R, items: O }], overlaps: optional([{ se
 
 export default function venn(data, opt = {}) {
   check("venn", data, schema);
-  const S = data.sets, n = S.length;
+  const S = data.sets,
+    n = S.length;
   if (n < 2 || n > 3) throw new Error("venn: sets は2〜3");
   const LN = LINE;
-  const W = opt.width ?? 1172, H = opt.height ?? 440;
+  const W = opt.width ?? 1172,
+    H = opt.height ?? 440;
   const mid = W / 2;
   let C, r;
   if (n === 2) {
     r = Math.min(190, H / 2 - 20);
-    C = [[mid - r * 0.62, H / 2], [mid + r * 0.62, H / 2]];
+    C = [
+      [mid - r * 0.62, H / 2],
+      [mid + r * 0.62, H / 2],
+    ];
   } else {
     r = Math.min(150, (H - 20) / 2.95); // 中心どうしの距離を半径の 1.1 倍にし、3つが重なる部分に文字が入るようにする
     const top = r + 10;
-    C = [[mid - r * 0.55, top], [mid + r * 0.55, top], [mid, top + r * 0.95]];
+    C = [
+      [mid - r * 0.55, top],
+      [mid + r * 0.55, top],
+      [mid, top + r * 0.95],
+    ];
   }
   const key = (a) => [...a].sort().join("-");
   const ov = Object.fromEntries((data.overlaps ?? []).map((o) => [key(o.sets), o.items ?? []]));
@@ -41,8 +50,12 @@ export default function venn(data, opt = {}) {
       const d = C.map(([cx, cy]) => Math.hypot(x - cx, y - cy));
       const inside = d.map((v, i) => (v < r ? i : -1)).filter((i) => i >= 0);
       if (!inside.length) continue;
-      const k = inside.join("-"), m = Math.min(...d.map((v) => Math.abs(v - r)));
-      if (!best[k] || m > best[k]) { best[k] = m; at[k] = [x, y]; }
+      const k = inside.join("-"),
+        m = Math.min(...d.map((v) => Math.abs(v - r)));
+      if (!best[k] || m > best[k]) {
+        best[k] = m;
+        at[k] = [x, y];
+      }
     }
   }
   const size = n === 2 ? "text-body" : "text-caption";
@@ -51,7 +64,12 @@ export default function venn(data, opt = {}) {
     if (!items?.length) return "";
     const [x, y] = at[k];
     const y0 = y - ((items.length - 1) * lh) / 2;
-    return items.map((t, i) => `<text class="fill-ink ${size} ${bold ? "font-bold" : ""}" x="${x.toFixed(1)}" y="${(y0 + i * lh).toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${esc(t)}</text>`).join("");
+    return items
+      .map(
+        (t, i) =>
+          `<text class="fill-ink ${size} ${bold ? "font-bold" : ""}" x="${x.toFixed(1)}" y="${(y0 + i * lh).toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${esc(t)}</text>`,
+      )
+      .join("");
   };
   const all = key(S.map((_, i) => i));
   const uid = `venn${++seq}`;
@@ -67,13 +85,27 @@ export default function venn(data, opt = {}) {
   const labels = S.map((s, i) => {
     const [x, y] = C[i];
     let lx, ly, anchor;
-    if (n === 2) { lx = x + (i ? r * 0.35 : -r * 0.35); ly = y - r - 16; anchor = i ? "start" : "end"; }
-    else if (i < 2) { lx = x + (i ? r * 0.75 : -r * 0.75); ly = y - r * 0.8; anchor = i ? "start" : "end"; }
-    else { lx = x + r * 0.85; ly = y + r * 0.85; anchor = "start"; }
+    if (n === 2) {
+      lx = x + (i ? r * 0.35 : -r * 0.35);
+      ly = y - r - 16;
+      anchor = i ? "start" : "end";
+    } else if (i < 2) {
+      lx = x + (i ? r * 0.75 : -r * 0.75);
+      ly = y - r * 0.8;
+      anchor = i ? "start" : "end";
+    } else {
+      lx = x + r * 0.85;
+      ly = y + r * 0.85;
+      anchor = "start";
+    }
     return `<text class="fill-ink text-heading font-bold" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle">${esc(s.label)}</text>`;
   }).join("");
-  const texts = S.map((s, i) => block(String(i), s.items)).join("") +
-    Object.keys(at).filter((k) => k.includes("-") && k.split("-").length <= n).map((k) => block(k, ov[k], k === all && data.highlight)).join("");
+  const texts =
+    S.map((s, i) => block(String(i), s.items)).join("") +
+    Object.keys(at)
+      .filter((k) => k.includes("-") && k.split("-").length <= n)
+      .map((k) => block(k, ov[k], k === all && data.highlight))
+      .join("");
   return `<div class="mx-auto" style="width:${W}px;height:${H}px" data-kind="venn">
 <svg data-origin="generated" class="block overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="ベン図"><defs>${clips}</defs>${hiShape}${circles}${labels}${texts}</svg>
 </div>`;

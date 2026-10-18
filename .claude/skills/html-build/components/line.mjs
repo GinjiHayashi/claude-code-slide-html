@@ -12,7 +12,15 @@ import { yGrid, xLabels, spread } from "./_axis.mjs";
 // - target は点線で示す。callout は任意。
 
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
-export const schema = { x: [R], series: [{ name: R, values: R }], unit: R, highlight: O, target: optional({ value: R, label: O }), zero: O, callout: optional({ value: R, label: R }) };
+export const schema = {
+  x: [R],
+  series: [{ name: R, values: R }],
+  unit: R,
+  highlight: O,
+  target: optional({ value: R, label: O }),
+  zero: O,
+  callout: optional({ value: R, label: R }),
+};
 
 export default function line(data, opt = {}) {
   check("line", data, schema);
@@ -24,25 +32,39 @@ export default function line(data, opt = {}) {
   const m = { l: 64, r: 184, t: 12, b: 32 };
   const all = series.flatMap((s) => s.values).concat(data.target ? [data.target.value] : []);
   const lo = data.zero === false ? Math.min(...all) : Math.min(0, ...all);
-  const y = scaleLinear().domain([lo, Math.max(...all)]).nice(5).range([h - m.b, m.t]);
-  const x = scalePoint().domain(xs).range([m.l, w - m.r]).padding(0.2);
+  const y = scaleLinear()
+    .domain([lo, Math.max(...all)])
+    .nice(5)
+    .range([h - m.b, m.t]);
+  const x = scalePoint()
+    .domain(xs)
+    .range([m.l, w - m.r])
+    .padding(0.2);
   const anyHi = series.some((s) => s.name === data.highlight);
   const look = (s, k) =>
-    !anyHi ? { ...SERIES[k], width: 3, strong: true }
-    : s.name === data.highlight ? { ...SERIES[0], width: 4, strong: true }
-    : { ...SERIES[4], width: 2, strong: false };
+    !anyHi
+      ? { ...SERIES[k], width: 3, strong: true }
+      : s.name === data.highlight
+        ? { ...SERIES[0], width: 4, strong: true }
+        : { ...SERIES[4], width: 2, strong: false };
 
-  const path = d3line().x((d) => x(d[0])).y((d) => y(d[1]));
-  const lines = series
-    .map((s, k) => {
-      const L = look(s, k);
-      const pts = s.values.map((v, i) => [xs[i], v]);
-      const marks = pts.map(([xi, v]) => marker(k, x(xi), y(v), L.fill)).join("");
-      return `<path class="fill-none ${L.stroke}" stroke-width="${L.width}" stroke-linejoin="round" d="${path(pts)}"/>${marks}`;
-    });
+  const path = d3line()
+    .x((d) => x(d[0]))
+    .y((d) => y(d[1]));
+  const lines = series.map((s, k) => {
+    const L = look(s, k);
+    const pts = s.values.map((v, i) => [xs[i], v]);
+    const marks = pts.map(([xi, v]) => marker(k, x(xi), y(v), L.fill)).join("");
+    return `<path class="fill-none ${L.stroke}" stroke-width="${L.width}" stroke-linejoin="round" d="${path(pts)}"/>${marks}`;
+  });
   // 強調する系列を最後に描いて、いちばん上に重ねる
   const order = series.map((s, k) => k).sort((a, b) => look(series[a], a).strong - look(series[b], b).strong);
-  const ends = spread(series.map((s, k) => ({ s, k, y: y(s.values.at(-1)) })), 22, m.t, h - m.b)
+  const ends = spread(
+    series.map((s, k) => ({ s, k, y: y(s.values.at(-1)) })),
+    22,
+    m.t,
+    h - m.b,
+  )
     .map(({ s, k, y: ly }) => {
       const L = look(s, k);
       // 文字は白地で 4.5:1 を満たす色にし、系列の色と印の形は文字の前の印で示す（淡い青の文字は読みにくいため）

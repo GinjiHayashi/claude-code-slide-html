@@ -25,7 +25,10 @@ if (isMain(import.meta.url)) {
     process.exit(2);
   }
   const dir = path.join(ROOT, "decks", id);
-  if (fs.existsSync(dir)) { console.error(`decks/${id} はもうある。上書きしない`); process.exit(1); }
+  if (fs.existsSync(dir)) {
+    console.error(`decks/${id} はもうある。上書きしない`);
+    process.exit(1);
+  }
   for (const sub of ["inputs", "build"]) fs.mkdirSync(path.join(dir, sub), { recursive: true });
   fs.writeFileSync(path.join(dir, "brief.md"), briefSkeleton(id));
   console.log(`decks/${id}/brief.md と inputs/・build/ を作った。資料は inputs/ に置き、読んで brief.md を埋める（slide-intake の手順 2・3）`);

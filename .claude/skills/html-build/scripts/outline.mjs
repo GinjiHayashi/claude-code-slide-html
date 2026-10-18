@@ -31,7 +31,8 @@ export function parseOutline(text, file = "outline.md") {
     s.fields = {};
     s.dup = [];
     for (const item of list) {
-      if (item === null || typeof item !== "object" || Array.isArray(item)) throw new Error(`${file}:${s.line}（${s.id}）: 「- 項目: 値」の形になっていない行がある`);
+      if (item === null || typeof item !== "object" || Array.isArray(item))
+        throw new Error(`${file}:${s.line}（${s.id}）: 「- 項目: 値」の形になっていない行がある`);
       for (const [k, val] of Object.entries(item)) {
         if (k in s.fields) s.dup.push(k);
         s.fields[k] = val;

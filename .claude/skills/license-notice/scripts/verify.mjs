@@ -41,15 +41,18 @@ export function licenseClass(policy, id) {
 function installed(spec) {
   const [kind, rest] = spec.split(":");
   const at = rest.lastIndexOf(kind === "pypi" ? "==" : "@");
-  const name = rest.slice(0, at), want = rest.slice(at + (kind === "pypi" ? 2 : 1));
+  const name = rest.slice(0, at),
+    want = rest.slice(at + (kind === "pypi" ? 2 : 1));
   let have = null;
   try {
     if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(ROOT, "node_modules", name, "package.json"), "utf8")).version;
-    if (kind === "pypi") have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
-  } catch { have = null; }
+    if (kind === "pypi")
+      have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
+  } catch {
+    have = null;
+  }
   return { name, want, have };
 }
-
 
 // 項目そのものの検査（このデッキで使ったかどうかによらない）
 function checkEntry(e, policy, err) {
@@ -59,7 +62,9 @@ function checkEntry(e, policy, err) {
     if (c === "deny") err(`${e.id}：${lic}${label} は policy.md で許可されていない`);
     if (c === "conditional" && !(e.conditions ?? []).length) err(`${e.id}：${lic}${label} は条件付き。守る条件（conditions）と人間の承認が要る`);
   }
-  for (const spec of String(e.package ?? "").split(/,\s*/).filter((s) => /^(npm|pypi):/.test(s))) {
+  for (const spec of String(e.package ?? "")
+    .split(/,\s*/)
+    .filter((s) => /^(npm|pypi):/.test(s))) {
     const p = installed(spec);
     if (p.have !== p.want) err(`${e.id}：${p.name} の版が違う（registry.yaml は ${p.want}、入っているのは ${p.have ?? "なし"}）`);
   }
@@ -71,15 +76,20 @@ function checkEntry(e, policy, err) {
 }
 
 export function verify(scan) {
-  const errors = [], warnings = [];
+  const errors = [],
+    warnings = [];
   const err = (m) => errors.push(m);
-  const reg = readRegistry(), policy = readPolicy();
+  const reg = readRegistry(),
+    policy = readPolicy();
   const byId = new Map(reg.map((e) => [e.id, e]));
 
   // 配布物に入った素材
   for (const a of scan.assets) {
     const e = byId.get(a.id);
-    if (!e) { err(`${a.id}：registry.yaml に登録がない（${a.found.join("、")}）`); continue; }
+    if (!e) {
+      err(`${a.id}：registry.yaml に登録がない（${a.found.join("、")}）`);
+      continue;
+    }
     if (e.scope !== "distributed") err(`${a.id}：build-only の項目が deck.html に入っている`);
   }
   for (const x of scan.external) err(`外部への読み込み：${x}`);
@@ -99,6 +109,7 @@ export function verify(scan) {
   if (!scan.tailwind) err("Tailwind の CSS の先頭のライセンス表記（/*! tailwindcss … */）がない");
   else if (tw && scan.tailwind !== tw.version) err(`Tailwind の表記の版 ${scan.tailwind} が registry.yaml の ${tw.version} と違う`);
 
-  if (scan.untaggedSvg.length) warnings.push(`識別子（data-origin・data-asset-id）のない SVG がある：${scan.untaggedSvg.join("、")}。独自の表現なら、素材を写していないかを人が確かめる`);
+  if (scan.untaggedSvg.length)
+    warnings.push(`識別子（data-origin・data-asset-id）のない SVG がある：${scan.untaggedSvg.join("、")}。独自の表現なら、素材を写していないかを人が確かめる`);
   return { errors, warnings, registry: byId };
 }

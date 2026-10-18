@@ -6,6 +6,9 @@ decks/*/approval-request.yaml
 # ビルドで使う依存パッケージ
 node_modules/
 
+# スライド用リポジトリを作る設定（.env.sample を写して書く。個人の設定なのでコミットしない）
+.env
+
 # 個人用の Claude Code 設定
 .claude/settings.local.json
 

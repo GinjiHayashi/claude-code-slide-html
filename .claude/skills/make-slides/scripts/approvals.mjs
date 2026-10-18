@@ -15,7 +15,7 @@ const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "
 export const YAML = createRequire(path.join(HB, "package.json"))("yaml");
 
 // 承認できるもの（工程の順）
-export const TARGETS = ["brief.md", "outline.md", "factcheck.md", "deck.html"];
+export const TARGETS = ["brief.md", "outline.md", "factcheck.md", "build/deck.html"]; // デッキのフォルダからの相対パス
 
 export const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
 

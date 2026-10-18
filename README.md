@@ -75,7 +75,7 @@ python3 -m pip install fonttools==4.67.0 brotli==1.2.0
   node .claude/skills/html-build/scripts/build.mjs examples/sample-deck
   ```
 
-  `examples/sample-deck/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
+  `examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
 
 ### 4. スライドを作る
 

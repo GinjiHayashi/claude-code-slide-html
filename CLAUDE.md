@@ -1,6 +1,6 @@
 # スライド作成ハーネス（HTML版）
 
-構成の検討から、1ファイルで完結する HTML スライド（`decks/<deck-id>/deck.html`）の作成までを、工程ごとに人間の承認を挟みながら進める。
+構成の検討から、1ファイルで完結する HTML スライド（`decks/<deck-id>/build/deck.html`）の作成までを、工程ごとに人間の承認を挟みながら進める。
 
 ## 原則
 
@@ -44,7 +44,14 @@
 ## 命名とフォルダ
 
 - `deck-id` は `YYYY-MM-DD-<短い英語名>`（例：`2026-10-17-data-platform`）。
-- スライド1件の成果物はすべて `decks/<deck-id>/` に置く。
+- スライド1件の成果物はすべて `decks/<deck-id>/` に置く。中は次の3つに分ける。
+
+| 場所 | 置くもの | 誰が直すか |
+|---|---|---|
+| `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、メモなど） | 人間が置く。AI は書き換えない |
+| フォルダの直下 | `brief.md`、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml` | 人間と AI（`approvals.yaml` は hook だけ） |
+| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` | ビルドのスクリプトだけ。手で直さない |
+
 - 動作確認用のサンプルは `examples/sample-deck/` にある。
 
 ## 固定ファイル（変更しない）
@@ -52,6 +59,7 @@
 - `.claude/skills/html-build/` の `base.html`、`theme.css`、`components/`
 - `.claude/skills/slide-outline/` の `layout-catalog.md`、`diagram-catalog.md`
 - `.claude/skills/license-notice/` の `policy.md`、`registry.yaml`、`templates/`、`assets/`
+- `.claude/skills/research-standards/domains.md`（情報源のドメインの一覧）
 
 変更が必要なときは、人間に理由を報告して判断を仰ぐ。
 

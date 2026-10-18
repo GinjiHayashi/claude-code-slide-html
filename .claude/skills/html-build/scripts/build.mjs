@@ -17,7 +17,7 @@ import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
 
-// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る（要求文書 11章）。
+// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る（要求文書 11章）。書き出すものはすべて decks/<deck-id>/build/ に置く。
 // 使い方：node build.mjs decks/<deck-id>
 // 1. 書式チェック（check-outline.mjs）。エラーがあれば止める。承認ゲート（gate.mjs）が通らなければ注意として記録する
 // 2. スライドを組み立てる（layouts.mjs と components/）
@@ -38,9 +38,12 @@ export async function build(deckDir) {
   // 承認ゲート：単独で呼んだときは止めずに注意として記録する（要求文書 11章。止めるのは make-slides が gate.mjs で行う）
   chk.warnings.unshift(...checkGate(deckDir, "build").errors.map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
+  // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
+  const outDir = path.join(deckDir, "build");
+  fs.mkdirSync(outDir, { recursive: true });
   if (chk.errors.length) {
     const r = { ok: false, check: chk, custom: customs(outline) };
-    fs.writeFileSync(path.join(deckDir, "build-log.md"), buildLog(outline, r));
+    fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
     return r;
   }
 
@@ -55,13 +58,13 @@ export async function build(deckDir) {
     lic.errors.push(...cr.errors);
     if (lic.errors.length) {
       const r = { ok: false, check: chk, custom: customs(outline), license: { ...lic, assets: scan1.assets, rows: [] } };
-      fs.writeFileSync(path.join(deckDir, "build-log.md"), buildLog(outline, r));
+      fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
       return r;
     }
     // 2回目：最後に credits スライドを足し、ライセンスの全文を入れて組み立て直す（スライドの文字と Tailwind のクラスが増えるため）
     const all = slides + "\n" + renderCredits(cr.rows);
     const { html, math, fontLog } = assemble(work, outline, all, licensesHtml(cr.texts));
-    const out = path.join(deckDir, "deck.html");
+    const out = path.join(outDir, "deck.html");
     fs.writeFileSync(out, html);
 
     // 書き出した deck.html をもう一度走査して、素材の一覧（assets-manifest.yaml）を作る
@@ -77,7 +80,7 @@ export async function build(deckDir) {
         svg_without_id: scan.untaggedSvg,
       }),
     ].join("\n");
-    fs.writeFileSync(path.join(deckDir, "assets-manifest.yaml"), manifest);
+    fs.writeFileSync(path.join(outDir, "assets-manifest.yaml"), manifest);
 
     const count = outline.slides.length + 1; // credits を含む
     const insp = await inspect(out, count);
@@ -85,10 +88,10 @@ export async function build(deckDir) {
     r.ok = CATEGORIES.every(([k]) => !insp[k].length);
     // PDF：検査に合格し、outline.md で pdf: true のときだけ作る
     if (r.ok && outline.meta.pdf === true) {
-      r.pdf = path.join(deckDir, "deck.pdf");
+      r.pdf = path.join(outDir, "deck.pdf");
       await toPdf(out, r.pdf);
     }
-    fs.writeFileSync(path.join(deckDir, "build-log.md"), buildLog(outline, r));
+    fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
     return r;
   } finally {
     fs.rmSync(work, { recursive: true, force: true });

@@ -57,13 +57,13 @@ pdf: false                               # PDF も作るか
 | 項目 | 出どころ |
 |---|---|
 | 目的 | プロンプト（2026-10-17 のやり取り） |
-| 聞き手 | intake.md |
+| 聞き手 | inputs/intake.md |
 | 数値 | 実績.xlsx「月次」シート B2:D14 |
 ```
 
 ## 事前記入シートとの対応
 
-人間用の事前記入シート（`slide-intake/intake-form.md`、記入したものは `decks/<deck-id>/intake.md`）は、次のように brief.md と1対1に対応する。
+人間用の事前記入シート（`slide-intake/intake-form.md`、記入したものは `decks/<deck-id>/inputs/intake.md`）は、次のように brief.md と1対1に対応する。
 
 | シート | brief.md |
 |---|---|

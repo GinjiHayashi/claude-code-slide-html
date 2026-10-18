@@ -17,7 +17,7 @@ description: スライドに使う素材（フォント・アイコン・ライ�
 | `scripts/verify.mjs` | `registry.yaml` と `policy.md` に照らす。未登録・未承認・許可外のライセンス・版や sha256 の違い・`html-build/package.json` の未登録の依存・Tailwind の表記の欠けがあればエラー |
 | `scripts/credits.mjs` | `registry.yaml` の値と `templates/` の本文から、credits スライドの行とライセンスの全文を作る |
 
-- 結果は `assets-manifest.yaml`（使った素材の一覧）と `build-log.md` の「ライセンス」の節に出る。
+- 結果は `build/assets-manifest.yaml`（使った素材の一覧）と `build/build-log.md` の「ライセンス」の節に出る。
 - `deck.html` には全文を入れる。PDF には credits スライドの表記だけが入る（フォントを文書に埋め込む場合、OFL の全文は不要：OFL FAQ 1.10・1.12）。
 
 ## 素材を新しく使いたいとき

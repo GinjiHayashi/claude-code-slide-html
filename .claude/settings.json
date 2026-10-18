@@ -3,16 +3,52 @@
   "permissions": {
     "deny": [
       "Edit(approvals.yaml)",
+      "Edit(/.claude/settings.json)",
       "Bash(node *approve-hook.mjs*)"
+    ],
+    "ask": [
+      "Edit(/.claude/**)",
+      "Edit(/CLAUDE.md)"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-check.mjs\" start"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/approve-hook.mjs\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-bash.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-check.mjs\" stop"
           }
         ]
       }

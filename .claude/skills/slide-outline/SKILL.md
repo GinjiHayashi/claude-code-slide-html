@@ -1,6 +1,6 @@
 ---
 name: slide-outline
-description: 承認済みの brief.md をもとに、人間の構成の草案と調査を行き来しながら outline.md（スライドの元ファイル）を作り、承認してもらうまでを受け持つスキル。brief.md の「構成の進め方」（決まっている・たたき台がある・相談して決めたい）で動き方を変える。
+description: 承認済みの brief.md をもとに、人間の構成の草案と調査を行き来しながら outline.md（スライドの元ファイル）を作り、ファクトチェックに渡すまでを受け持つスキル。brief.md の「構成の進め方」（決まっている・たたき台がある・相談して決めたい）で動き方を変える。
 ---
 
 # 構成の検討（slide-outline）
@@ -39,7 +39,8 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    4. 調査の要点と、確度が「未確認」「矛盾あり」の主張、調べきれなかったこと。
    5. チェックの注意。
    - 直してほしいと言われたら直し、4〜7 をやり直す。
-8. **承認を頼む**：`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> outline.md` で依頼する。人間の答えは hook が記録する。承認されたかは `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> factcheck` で確かめ、通ったら `slide-factcheck` に進む。
+8. **ファクトチェックに進む**：outline.md だけの承認は頼まない。見せたら、答えを待たずに `slide-factcheck` に進む（構成への直しの指示は、ファクトチェックの途中でも受けて直す）。構成とファクトチェックの結果は、`slide-factcheck` の手順 9 で一緒に承認してもらう。
+   - モードごとの相談（章立ての案を選ぶ、修正案を採用するか）の答えは、進む前にもらう。
 
 承認のあとに outline.md を変えたときは、変えたスライドについてファクトチェックからやり直す（CLAUDE.md）。
 
@@ -64,7 +65,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 - まず、草案（`outline-draft.md`）を outline.md に写す。
 - 調査と `design-reference` の基本方針をもとに、修正案を出す。1つの案ごとに、どのスライドを・どう変えるか・なぜか（調査の主張の ID や、基本方針の該当箇所）を書く。
 - 採用するかは人間が決める。採用された案だけ outline.md に反映する。採用されなかった案は、もう一度は出さない。
-- 承認を頼むときに `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
+- 手順 7 と、承認を頼むとき（`slide-factcheck` の手順 9）に `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
 
 ### 相談して決めたい
 

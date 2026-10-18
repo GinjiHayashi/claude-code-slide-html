@@ -3,7 +3,7 @@
 // AI の自己申告では判定しない。
 // 使い方：node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>
 // - outline：brief.md が承認済み。outline-draft.md（人間の構成の草案）があれば、それも承認済み
-// - factcheck：brief.md と outline.md が承認済み
+// - factcheck：brief.md（と草案）が承認済みで、outline.md がある。outline.md は単独では承認せず、factcheck.md と一緒に承認する
 // - build：outline.md と factcheck.md が承認済みで、factcheck.md の書式にエラーがなく、P0 にすべて人間の判断（decision）が書かれている。
 //   さらに、factcheck.md を承認したときから outline.md のスライドが変わっていない（変わったスライドはファクトチェックし直す）
 // 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
@@ -15,11 +15,13 @@ import { isMain } from "../../../lib/common.mjs";
 
 const NEEDS = {
   outline: ["brief.md"],
-  factcheck: ["brief.md", "outline.md"],
+  factcheck: ["brief.md"],
   build: ["outline.md", "factcheck.md"],
 };
 // あるときだけ承認が要るもの（草案を渡さないデッキもあるため）
-const IF_EXISTS = { outline: ["outline-draft.md"] };
+const IF_EXISTS = { outline: ["outline-draft.md"], factcheck: ["outline-draft.md"] };
+// 承認は要らないが、ないと進めないもの
+const EXISTS = { factcheck: ["outline.md"] };
 
 // factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
 export function factcheckedChanges(approval, outlineText) {
@@ -31,6 +33,7 @@ export function factcheckedChanges(approval, outlineText) {
 export function checkGate(deckDir, stage) {
   const errors = [];
   const approvals = readApprovals(deckDir);
+  for (const t of EXISTS[stage] ?? []) if (!fs.existsSync(path.join(deckDir, t))) errors.push(`${t} がない`);
   const optional = (IF_EXISTS[stage] ?? []).filter((t) => fs.existsSync(path.join(deckDir, t)));
   for (const target of [...NEEDS[stage], ...optional]) {
     const file = path.join(deckDir, target);

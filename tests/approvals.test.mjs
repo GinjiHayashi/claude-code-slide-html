@@ -50,6 +50,14 @@ test("ゲート（outline）：構成の草案があれば、その承認も要�
   assert.equal(checkGate(dir, "outline").ok, true);
 });
 
+test("ゲート（factcheck）：outline.md の承認は要らないが、outline.md がなければ止める", () => {
+  const dir = tempDeck(undefined, ["brief.md"]);
+  approve(dir, "brief.md");
+  assert.ok(checkGate(dir, "factcheck").errors.some((e) => e.includes("outline.md がない")));
+  fs.copyFileSync(path.join(path.dirname(path.dirname(SKILLS)), "examples/sample-deck/outline.md"), path.join(dir, "outline.md"));
+  assert.equal(checkGate(dir, "factcheck").ok, true);
+});
+
 test("ゲート（build）：factcheck.md の承認のあとに変わったスライドを示す", () => {
   const dir = tempDeck();
   fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
@@ -66,9 +74,16 @@ test("現在地：承認の進み具合で工程が進み、依頼中は答え�
   const dir = tempDeck();
   assert.equal(deckStatus(dir).stage, "1b ヒアリング");
   approve(dir, "brief.md");
+  // outline.md は単独では承認しない。factcheck.md ができるまでは構成の工程
   assert.equal(deckStatus(dir).stage, "2 構成");
+  assert.equal(checkGate(dir, "factcheck").ok, true);
+  fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
+  const s = deckStatus(dir);
+  assert.equal(s.stage, "3 ファクトチェック");
+  assert.equal(s.state, "構成とファクトチェックの承認待ち");
   approve(dir, "outline.md");
-  assert.equal(deckStatus(dir).stage, "3 ファクトチェック");
+  approve(dir, "factcheck.md");
+  assert.equal(deckStatus(dir).stage, "4 HTML 作成");
   fs.writeFileSync(path.join(dir, "approval-request.yaml"), "requested_at: x\ntargets:\n  - {target: brief.md, sha256: x}\n");
   assert.equal(deckStatus(dir).stage, "承認の確認");
 });

@@ -1,6 +1,6 @@
 ---
 name: fact-checker
-description: 承認済みの outline.md の記述が事実と一致するかを、スライドのまとまりごとに確かめるファクトチェック用サブエージェント。slide-factcheck が、まとまりごとに並列で呼ぶ。指摘は P0・P1・要確認に分け、根拠を付けて返し、呼び出し元が factcheck.md にまとめる。
+description: outline.md の記述が事実と一致するかを、スライドのまとまりごとに確かめるファクトチェック用サブエージェント。slide-factcheck が、まとまりごとに並列で呼ぶ。指摘は P0・P1・要確認に分け、根拠を付けて返し、呼び出し元が factcheck.md にまとめる。
 tools: Read, WebSearch, WebFetch
 skills:
   - research-standards

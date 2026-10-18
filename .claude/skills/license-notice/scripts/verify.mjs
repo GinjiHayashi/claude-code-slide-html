@@ -5,20 +5,19 @@
 // - 許可されていないライセンス（policy.md の allow にない。conditional は conditions があり、人が承認したものだけ通す）
 // - バージョンの不一致（registry.yaml と、入っている npm・pypi のパッケージ）
 // - 実体ファイルの sha256 の不一致（registry.yaml の files）
-// - html-build/package.json の依存に、登録のないものがある
+// - package.json の依存に、登録のないものがある
 // - Tailwind の CSS の先頭のライセンス表記が消えている、または版が違う
 // 注意（人が確認する）
 // - 識別子（data-origin・data-asset-id）のない SVG
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { execFileSync } from "child_process";
-import { createRequire } from "module";
+import YAML from "yaml";
+import { sha256File as sha256 } from "../../../lib/common.mjs";
 import { fileURLToPath } from "url";
 
 const LN = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const HB = path.join(LN, "..", "html-build");
-const YAML = createRequire(path.join(HB, "package.json"))("yaml");
+const ROOT = path.join(LN, "..", "..", ".."); // リポジトリの直下（package.json と node_modules の場所）
 
 export function readRegistry() {
   return YAML.parse(fs.readFileSync(path.join(LN, "registry.yaml"), "utf8"));
@@ -45,13 +44,12 @@ function installed(spec) {
   const name = rest.slice(0, at), want = rest.slice(at + (kind === "pypi" ? 2 : 1));
   let have = null;
   try {
-    if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(HB, "node_modules", name, "package.json"), "utf8")).version;
+    if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(ROOT, "node_modules", name, "package.json"), "utf8")).version;
     if (kind === "pypi") have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
   } catch { have = null; }
   return { name, want, have };
 }
 
-const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 
 // 項目そのものの検査（このデッキで使ったかどうかによらない）
 function checkEntry(e, policy, err) {
@@ -91,10 +89,10 @@ export function verify(scan) {
   const used = new Set([...scan.assets.map((a) => a.id), ...reg.filter((e) => e.scope === "build-only").map((e) => e.id)]);
   for (const e of reg) if (used.has(e.id)) checkEntry(e, policy, err);
 
-  // html-build の依存がすべて登録されているか
-  const deps = Object.keys(JSON.parse(fs.readFileSync(path.join(HB, "package.json"), "utf8")).dependencies ?? {});
+  // package.json の依存がすべて登録されているか
+  const deps = Object.keys(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).dependencies ?? {});
   const registered = new Set(reg.flatMap((e) => String(e.package ?? "").split(/,\s*/)).map((s) => s.replace(/^npm:/, "").replace(/@[^@]+$/, "")));
-  for (const d of deps) if (!registered.has(d)) err(`html-build/package.json の ${d} が registry.yaml に登録されていない`);
+  for (const d of deps) if (!registered.has(d)) err(`package.json の ${d} が registry.yaml に登録されていない`);
 
   // Tailwind の表記
   const tw = byId.get("tailwindcss");

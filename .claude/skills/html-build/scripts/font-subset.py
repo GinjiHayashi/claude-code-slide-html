@@ -11,7 +11,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 
 SRC, DEST = sys.argv[1], sys.argv[2]
-FS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'node_modules', '@fontsource', 'noto-sans-jp')
+FS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..', 'node_modules', '@fontsource', 'noto-sans-jp')  # リポジトリの直下の node_modules
 doc = open(SRC, encoding='utf-8').read()
 text = html.unescape(re.sub(r'<style.*?</style>|<[^>]+>', ' ', doc, flags=re.S))
 chars = {ord(c) for c in text if not c.isspace()} | set(range(0x20, 0x7f))  # ASCII は常に入れる（ページ番号など、表示時に足される文字のため）

@@ -63,29 +63,23 @@ git push -u origin feature/harness-update
 
 - `decks/` の中身はハーネスにないので、衝突しません。
 - 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
-- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm ci` をやり直します。
+- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm run setup` をやり直します。
 
 ### 3. セットアップ（初回だけ）
 
 必要なもの：Node.js 22 以上、Python 3、git。
 
 ```sh
-# ビルドに使う npm パッケージ（版は package-lock.json で固定）
-cd .claude/skills/html-build
-npm ci
-# 検査と PDF に使うブラウザ（Chromium）
-node node_modules/playwright/cli.js install chromium
-cd ../../..
-
-# フォントのサブセット化に使う Python のパッケージ
-python3 -m pip install fonttools==4.67.0 brotli==1.2.0
+npm run setup
 ```
+
+npm のパッケージ（版は `package-lock.json` で固定）、検査と PDF に使うブラウザ（Chromium）、フォントのサブセット化に使う Python のパッケージをまとめて入れます。
 
 - 使っているパッケージとその版は、すべて `.claude/skills/license-notice/registry.yaml` に登録しています。版を変えるとビルドの照合で止まります。
 - 確認：見本をビルドして、終了コードが 0 なら準備完了です。
 
   ```sh
-  node .claude/skills/html-build/scripts/build.mjs examples/sample-deck
+  npm run build -- examples/sample-deck
   ```
 
   `examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。

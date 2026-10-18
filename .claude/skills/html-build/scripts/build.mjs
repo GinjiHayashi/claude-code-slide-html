@@ -11,11 +11,12 @@ import { katexCss } from "../components/math.mjs";
 import { inspect } from "./inspect.mjs";
 import { toPdf } from "./pdf.mjs";
 import crypto from "crypto";
-import { createRequire } from "module";
+import YAML from "yaml";
 import { scanDeck } from "../../license-notice/scripts/scan.mjs";
 import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
+import { isMain } from "../../../lib/common.mjs";
 
 // ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
 // 使い方：node build.mjs decks/<deck-id>
@@ -30,7 +31,7 @@ import { checkGate } from "../../make-slides/scripts/gate.mjs";
 // 9. 合格し、outline.md が pdf: true なら deck.pdf も作る（pdf.mjs）
 
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const YAML = createRequire(import.meta.url)("yaml");
+const MODULES = path.join(HB, "..", "..", "..", "node_modules"); // リポジトリの直下
 // build/ に書き出すもの（build-log.md は毎回書き直す）
 const OUTPUTS = ["deck.html", "deck.pdf", "assets-manifest.yaml"];
 
@@ -108,12 +109,12 @@ function assemble(work, outline, slides, licenses) {
   // Tailwind：スライドの HTML からクラス名を読み取る。import は絶対パスで書き、作業フォルダの場所に左右されないようにする
   fs.writeFileSync(path.join(work, "slides.html"), slides);
   fs.writeFileSync(path.join(work, "in.css"), [
-    `@import "${path.join(HB, "node_modules/tailwindcss/index.css")}";`,
+    `@import "${path.join(MODULES, "tailwindcss/index.css")}";`,
     `@import "${path.join(HB, "theme.css")}";`,
     `@source "${path.join(work, "slides.html")}";`,
     `@source "${path.join(HB, "base.html")}";`,
   ].join("\n"));
-  execFileSync(process.execPath, [path.join(HB, "node_modules/@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"], { stdio: "pipe" });
+  execFileSync(process.execPath, [path.join(MODULES, "@tailwindcss/cli/dist/index.mjs"), "-i", path.join(work, "in.css"), "-o", path.join(work, "out.css"), "--minify"], { stdio: "pipe" });
   let css = fs.readFileSync(path.join(work, "out.css"), "utf8");
   const math = slides.includes('data-kind="math"');
   if (math) css += "\n" + katexCss();
@@ -215,7 +216,7 @@ function buildLog(outline, r) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const dir = process.argv[2];
   if (!dir) { console.error("使い方：node build.mjs decks/<deck-id>"); process.exit(2); }
   const r = await build(dir);

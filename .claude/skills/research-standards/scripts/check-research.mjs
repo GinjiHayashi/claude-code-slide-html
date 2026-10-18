@@ -6,11 +6,11 @@
 // - 戻り値：{ errors, claims: [{ id, line, fields }] }。終了コード：0＝合格、2＝エラーあり
 import fs from "fs";
 import path from "path";
-import { createRequire } from "module";
+import YAML from "yaml";
 import { fileURLToPath } from "url";
+import { empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const YAML = createRequire(path.join(HERE, "..", "..", "html-build", "package.json"))("yaml");
 
 const KIND = ["事実", "推測"];
 const CONFIDENCE = ["確認済み", "おおむね確実", "未確認", "矛盾あり"];
@@ -21,7 +21,6 @@ const SRC_REQUIRED = ["url", "title", "publisher", "published", "accessed", "tie
 const SRC_OPTIONAL = ["interest", "reuse"];
 const OTHER = ["調べきれなかったこと", "検索の記録"]; // 主張以外の見出し（自由に書く）
 const DATE = /^\d{4}-\d{2}-\d{2}/;
-const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 
 // domains.md の「引用しない」「除外」の表のドメイン
 export function bannedDomains(file = path.join(HERE, "..", "domains.md")) {
@@ -58,7 +57,7 @@ export function checkSource(s, sa, banned = bannedDomains()) {
 
 export function checkResearch(text, banned = bannedDomains()) {
   const errors = [];
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = frontMatter(text);
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id）がない");
   else {
     try { if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない"); } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
@@ -107,7 +106,7 @@ export function checkResearch(text, banned = bannedDomains()) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-research.mjs decks/<deck-id>/research.md"); process.exit(2); }
   const r = checkResearch(fs.readFileSync(file, "utf8"));

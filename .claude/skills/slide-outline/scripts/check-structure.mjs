@@ -9,13 +9,12 @@
 // - 終了コード：0＝変えたところなし、1＝変えたところあり（人間に見せる）、2＝エラー
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { parseOutline, plain } from "../../html-build/scripts/outline.mjs";
 import { checkBrief } from "../../slide-hearing/scripts/check-brief.mjs";
 import { readApprovals, latest, sha256 } from "../../make-slides/scripts/approvals.mjs";
+import { empty, isMain } from "../../../lib/common.mjs";
 
 export const DRAFT = "outline-draft.md";
-const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 // 比べるときは前後の空白と太字の印を無視する
 const norm = (v) => typeof v === "string" ? plain(v).trim() : Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, norm(x)])) : v;
 const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
@@ -86,7 +85,7 @@ export function checkStructure(deckDir) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const dir = process.argv[2];
   if (!dir) { console.error("使い方：node check-structure.mjs decks/<deck-id>"); process.exit(2); }
   const r = checkStructure(dir);

@@ -9,9 +9,9 @@
 // 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { sha256, slideHashes, readApprovals, latest } from "./approvals.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
+import { isMain } from "../../../lib/common.mjs";
 
 const NEEDS = {
   outline: ["brief.md"],
@@ -63,7 +63,7 @@ export function checkGate(deckDir, stage) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const [deckDir, stage] = process.argv.slice(2);
   if (!deckDir || !NEEDS[stage]) { console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`); process.exit(2); }
   const r = checkGate(deckDir, stage);

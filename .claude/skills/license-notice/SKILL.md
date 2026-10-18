@@ -14,7 +14,7 @@ description: スライドに使う素材（フォント・アイコン・ライ�
 | スクリプト | すること |
 |---|---|
 | `scripts/scan.mjs` | `deck.html` から、使った素材（フォント、`data-asset-id` の付いた素材、KaTeX）、外部への読み込み、識別子のない SVG を洗い出す |
-| `scripts/verify.mjs` | `registry.yaml` と `policy.md` に照らす。未登録・未承認・許可外のライセンス・版や sha256 の違い・`html-build/package.json` の未登録の依存・Tailwind の表記の欠けがあればエラー |
+| `scripts/verify.mjs` | `registry.yaml` と `policy.md` に照らす。未登録・未承認・許可外のライセンス・版や sha256 の違い・`package.json` の未登録の依存・Tailwind の表記の欠けがあればエラー |
 | `scripts/credits.mjs` | `registry.yaml` の値と `templates/` の本文から、credits スライドの行とライセンスの全文を作る |
 
 - 結果は `build/assets-manifest.yaml`（使った素材の一覧）と `build/build-log.md` の「ライセンス」の節に出る。

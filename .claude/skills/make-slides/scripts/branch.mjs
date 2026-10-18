@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 // ブランチ：デッキの作業をどのブランチで行うかを、git の状態だけから決める（スライド用リポジトリ）。
 // squash マージのあとは、元の feature ブランチが「マージ済み」に見えないため、AI の判断に任せると、
-// マージ済みのブランチで直しを始めてしまう（9a-3 の試行で起きた）。
+// マージ済みのブランチで直しを始めてしまう。
 // 使い方：node .claude/skills/make-slides/scripts/branch.mjs decks/<deck-id> [--json]
 // - 出力：するべきこと（使わない・続き・新規・直し・人間に聞く）、実行するコマンド、理由
 // - develop にあるデッキ（＝PR がマージ済み）より新しいコミットがあり、中身が develop と違うブランチを「作業中」とみなす
 // - 何も変えない（ブランチの切り替えは、出力のコマンドを AI が実行する）
 import { execFileSync } from "child_process";
 import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+import { isMain } from "../../../lib/common.mjs";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 const ok = (...args) => { try { git(...args); return true; } catch { return false; } };
@@ -54,7 +53,7 @@ export function deckBranch(deckDir) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const dir = process.argv[2];
   if (!dir) { console.error("使い方：node branch.mjs decks/<deck-id> [--json]"); process.exit(2); }
   const r = deckBranch(dir);

@@ -7,29 +7,26 @@
 // - 終了コード：0＝すべて埋まっている、1＝空の項目か確認したいことがある、2＝書式の誤り
 import fs from "fs";
 import path from "path";
-import { createRequire } from "module";
-import { fileURLToPath } from "url";
+import YAML from "yaml";
+import { DECK_ID, empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
-const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "html-build");
-const YAML = createRequire(path.join(HB, "package.json"))("yaml");
 
 export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf"];
 // 並びは questions.md の表の順・brief-template.md の見出しの順
 export const SECTIONS = ["目的・この資料で決めたいこと", "聞き手と前提知識", "伝えたい結論（1文）", "発表時間・枚数の目安", "調査が必要な項目", "必ず入れる要素・入れない要素", "構成の進め方"];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
 const NONE = "なし";
-const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 
 export function checkBrief(text) {
   const errors = [], missing = [], missingMeta = [];
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = frontMatter(text);
   let meta = {};
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id など）がない");
   else {
     try { meta = YAML.parse(m[1]) ?? {}; } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
   }
   for (const k of Object.keys(meta)) if (!META.includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
-  if (!empty(meta.deck_id) && !/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(meta.deck_id)) errors.push(`deck_id は YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）：${meta.deck_id}`);
+  if (!empty(meta.deck_id) && !DECK_ID.test(meta.deck_id)) errors.push(`deck_id は YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）：${meta.deck_id}`);
   if (meta.date === NONE) errors.push("date は必須（表紙の日付）。「なし」にはできない");
   for (const [k, keys] of [["author", ["org", "name"]], ["contact", ["text", "email"]]]) {
     const v = meta[k];
@@ -80,7 +77,7 @@ export function checkInputs(sections, deckDir) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-brief.mjs decks/<deck-id>/brief.md"); process.exit(2); }
   const r = checkBrief(fs.readFileSync(file, "utf8"));

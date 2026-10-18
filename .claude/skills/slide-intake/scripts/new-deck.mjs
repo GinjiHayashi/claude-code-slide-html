@@ -8,6 +8,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { META, SECTIONS } from "../../slide-hearing/scripts/check-brief.mjs";
+import { DECK_ID, isMain } from "../../../lib/common.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 
@@ -17,9 +18,9 @@ export function briefSkeleton(id) {
   return `---\n${meta}\n---\n\n${body}\n## 入力の一覧\n\n| ファイル | 中身 | 使う工程 |\n|---|---|---|\n\n## 出どころ\n\n| 項目 | 出どころ |\n|---|---|\n`;
 }
 
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const id = process.argv[2];
-  if (!id || !/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(id)) {
+  if (!id || !DECK_ID.test(id)) {
     console.error("使い方：node new-deck.mjs <deck-id>（YYYY-MM-DD-<短い英語名>。小文字・数字・ハイフン）");
     process.exit(2);
   }

@@ -58,3 +58,4 @@ CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/sc
 | `scripts/font-subset.py` | フォントのサブセット化（Python の fontTools と Brotli） |
 | `scripts/inspect.mjs` | ブラウザでの検査 |
 | `scripts/pdf.mjs` | PDF の書き出し |
+| `scripts/setup.mjs` | セットアップ（`npm run setup`。npm のパッケージ、Chromium、Python のパッケージ） |

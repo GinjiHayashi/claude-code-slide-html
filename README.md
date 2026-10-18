@@ -6,9 +6,9 @@ Claude Code で、構成の検討から HTML スライド（`deck.html`）の作
 
 ## クイックスタート
 
-必要なもの：Node.js 22 以上、Python 3、git、Claude Code。
+必要なもの：Node.js 22 以上、Python 3、git、Claude Code。GitHub CLI（`gh`）があると、リポジトリの作成まで自動で行えます。
 
-1. **スライド用の private リポジトリを作る**（初回だけ）：下の「[1. スライド用リポジトリを作る](#1-スライド用リポジトリを作る)」の手順で、このリポジトリを複製します。
+1. **スライド用の private リポジトリを作る**（初回だけ）：このリポジトリを clone し、`.env.sample` を `.env` に写して `SLIDE_REPO` を書き、`npm run create-slide-repo` を実行します（詳しくは「[1. スライド用リポジトリを作る](#1-スライド用リポジトリを作る)」）。
 2. **セットアップする**（初回だけ）：作ったリポジトリで実行し、見本のビルドが終了コード 0 で終われば準備完了です（`examples/sample-deck/build/deck.html` をブラウザで開けます）。
 
    ```sh
@@ -40,38 +40,34 @@ Claude Code で、構成の検討から HTML スライド（`deck.html`）の作
 
 ### 1. スライド用リポジトリを作る
 
-public リポジトリのフォークは private にできません。そのため、フォークではなく **複製** で private リポジトリを作ります（GitHub Docs「Duplicating a repository」の手順を、`main` と `develop` だけを送るように変えたもの）。
+public リポジトリのフォークは private にできません。そのため、フォークではなく **複製** で private リポジトリを作ります（GitHub Docs「Duplicating a repository」の手順を、`main` と `develop` だけを送るように変えたもの）。この手順は `npm run create-slide-repo` でまとめて行えます。
 
-1. GitHub で private の空リポジトリを作ります（例：`my-slides`。README やライセンスは追加しない）。
-2. このリポジトリの `main` と `develop` を、履歴ごと送ります。`--mirror` で送ると、ハーネスの作業用のブランチ（`feature/*`）まで複製されるため、2つだけを送ります。
-
-   ```sh
-   git clone --bare https://github.com/<owner>/claude-code-slide-html.git
-   cd claude-code-slide-html.git
-   git push https://github.com/<owner>/my-slides.git main develop
-   cd ..
-   rm -rf claude-code-slide-html.git
-   ```
-
-3. GitHub の `my-slides` の Settings → General → Default branch を `develop` にします。
-4. 手元に clone し、`decks/.gitignore` を消してコミットします。これで `decks/` も git で管理されます（承認の依頼の一時ファイル `approval-request.yaml` だけは、ルートの `.gitignore` で管理外のまま）。
+1. このリポジトリを手元に clone し、`.env.sample` を `.env` に写して、`SLIDE_REPO`（例：`your-name/my-slides`）を書きます。`.env` はコミットされません。トークンは書かず、GitHub へのログインは `gh auth login` で行います。
+2. 何をするかを確かめてから実行します。
 
    ```sh
-   git clone https://github.com/<owner>/my-slides.git
-   cd my-slides
-   git rm decks/.gitignore
-   git commit -m "chore: decks/ を git で管理する（スライド用リポジトリ）"
-   git push origin develop
+   npm run create-slide-repo -- --dry-run
+   npm run create-slide-repo
    ```
 
-   ルートの `.gitignore` は書き換えません。書き換えると、ハーネスが `.gitignore` を変えたときに、更新の取り込みで衝突するためです。
+スクリプトは次のことを行います。
+
+- GitHub に private の空リポジトリを作る（すでにあるときは、private で空であることを確かめる。中身があれば止める）
+- このリポジトリの `main` と `develop` を履歴ごと送る（`--mirror` にすると、ハーネスの作業用のブランチ `feature/*` まで送られるため）
+- 既定ブランチを `develop` にする
+- 手元（既定はこのリポジトリの隣）に clone し、`decks/.gitignore` を消してコミット・push する。これで `decks/` も git で管理されます（承認の依頼の一時ファイル `approval-request.yaml` だけは、ルートの `.gitignore` で管理外のまま）
+- ハーネスの更新を取り込むための remote `harness` を足す（下の「2. ハーネスの更新を取り込む」）
+
+`gh` を使わないときは、GitHub で private の空リポジトリ（README やライセンスは追加しない）を先に作ってから実行し、最後に Settings → General → Default branch を `develop` にします。
+
+ルートの `.gitignore` は書き換えません。書き換えると、ハーネスが `.gitignore` を変えたときに、更新の取り込みで衝突するためです。
 
 ### 2. ハーネスの更新を取り込む
 
 複製したリポジトリは履歴を引き継いでいるため、ハーネスの更新を merge で取り込めます。取り込むのはハーネスの `main`（区切りのよい完成版）です。
 
 ```sh
-# 初回だけ
+# 初回だけ（npm run create-slide-repo で作ったときは済んでいる）
 git remote add harness https://github.com/<owner>/claude-code-slide-html.git
 
 # 更新を取り込むとき

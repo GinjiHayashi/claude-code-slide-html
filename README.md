@@ -26,9 +26,10 @@ GitHub CLI がなくても進められますが、リポジトリの作成と設
 git clone https://github.com/GinjiHayashi/claude-code-slide-html.git
 cd claude-code-slide-html
 cp .env.sample .env        # .env を開き、SLIDE_REPO=自分のアカウント/my-slides のように書く
-npm run create-slide-repo -- --dry-run   # 何をするかを表示するだけ
 npm run create-slide-repo
 ```
+
+先に中身だけ確かめたいときは、`npm run create-slide-repo -- --dry-run` を実行します（何も作らず、することを表示するだけ）。
 
 これで GitHub に private リポジトリができ、このリポジトリの隣（`../my-slides`）に clone されます。このあとの作業はすべてそちらで行います。最初に clone したこのリポジトリは消してかまいません。
 

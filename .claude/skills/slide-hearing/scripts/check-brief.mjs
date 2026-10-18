@@ -2,6 +2,7 @@
 // brief.md のチェック：空の項目（まだ聞いていない）と、書式の誤りを出す。ヒアリングで聞く項目はここから決める（要求文書 6.2・6.3）。
 // 使い方：node .claude/skills/slide-hearing/scripts/check-brief.mjs decks/<deck-id>/brief.md
 // - 書式は slide-hearing/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
+// - デッキのフォルダに inputs/ があれば、その中のファイルがすべて「入力の一覧」の表に書かれているかも確かめる（漏れた資料は構成に使われないため）
 // - 戻り値：{ errors（書式の誤り）, missing（空の項目）, questions（「確認したいこと」に書かれた行）, meta, sections }
 // - 終了コード：0＝すべて埋まっている、1＝空の項目か確認したいことがある、2＝書式の誤り
 import fs from "fs";
@@ -59,11 +60,29 @@ export function checkBrief(text) {
   return { errors, missing, questions, meta, sections };
 }
 
+// inputs/ のファイルと「入力の一覧」の表を突き合わせる。表の1列目に inputs/ からのパスを書く
+export function checkInputs(sections, deckDir) {
+  const errors = [];
+  const dir = path.join(deckDir, "inputs");
+  if (!fs.existsSync(dir)) return errors;
+  if (!("入力の一覧" in sections)) return ["見出し「## 入力の一覧」がない"];
+  const files = fs.readdirSync(dir, { recursive: true })
+    .map((f) => `inputs/${String(f).split(path.sep).join("/")}`)
+    .filter((f) => !f.split("/").some((x) => x.startsWith(".")) && fs.statSync(path.join(deckDir, f)).isFile());
+  const listed = sections["入力の一覧"].split("\n").filter((l) => l.trim().startsWith("|"))
+    .map((l) => l.trim().replace(/^\|/, "").split("|")[0].trim().replace(/^`|`$/g, ""))
+    .filter((c) => c.startsWith("inputs/"));
+  for (const f of files) if (!listed.includes(f)) errors.push(`${f} が「入力の一覧」にない（読んで中身と使う工程を書く）`);
+  for (const f of listed) if (!files.includes(f)) errors.push(`「入力の一覧」の ${f} が inputs/ にない`);
+  return errors;
+}
+
 // コマンドとして呼ばれたとき
 if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-brief.mjs decks/<deck-id>/brief.md"); process.exit(2); }
   const r = checkBrief(fs.readFileSync(file, "utf8"));
+  r.errors.push(...checkInputs(r.sections, path.dirname(file)));
   for (const e of r.errors) console.log(`エラー  ${e}`);
   for (const k of r.missing) console.log(`空      ${k}`);
   for (const q of r.questions) console.log(`確認    ${q}`);

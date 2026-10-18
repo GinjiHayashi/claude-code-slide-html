@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 export function briefSkeleton(id) {
   const meta = META.map((k) => (k === "deck_id" ? `deck_id: ${id}` : `${k}:`)).join("\n");
   const body = [...SECTIONS, "構成で検討すること", "確認したいこと"].map((s) => `## ${s}\n`).join("\n");
-  return `---\n${meta}\n---\n\n${body}\n## 出どころ\n\n| 項目 | 出どころ |\n|---|---|\n`;
+  return `---\n${meta}\n---\n\n${body}\n## 入力の一覧\n\n| ファイル | 中身 | 使う工程 |\n|---|---|---|\n\n## 出どころ\n\n| 項目 | 出どころ |\n|---|---|\n`;
 }
 
 if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {

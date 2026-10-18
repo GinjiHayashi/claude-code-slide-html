@@ -9,6 +9,9 @@ node_modules/
 # 個人用の Claude Code 設定
 .claude/settings.local.json
 
+# Claude Code の作業用の worktree
+.claude/worktrees/
+
 # OS が作るファイル
 .DS_Store
 Thumbs.db

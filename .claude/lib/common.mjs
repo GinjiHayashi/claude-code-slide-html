@@ -1,6 +1,7 @@
 // スキルのスクリプトで共通に使う小さな処理
 import fs from "fs";
 import crypto from "crypto";
+import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
 
 // コマンドとして呼ばれたか（import されたときは false）。シンボリックリンク越しに呼ばれても判定できるよう、実体のパスで比べる
@@ -12,6 +13,21 @@ export const empty = (v) => v === undefined || v === null || (typeof v === "stri
 
 export const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
 export const sha256File = (file) => sha256(fs.readFileSync(file));
+
+// ハーネスの開発中か（true）、スライド作成中か（false）。ハーネスのファイルを守る hook が、開発中は確認を出さないために使う
+// - 環境変数 SLIDE_HARNESS_MODE が dev なら開発中、slides ならスライド作成中（人間が切り替えたいとき）
+// - それ以外は、decks/.gitignore が git で管理されていれば開発中（ハーネスのリポジトリ）。スライド用リポジトリでは消してある（README「1. スライド用リポジトリを作る」）
+//   git で管理されているものだけを見るので、AI がファイルを置くだけでは開発中にならない
+export function harnessDev(root) {
+  const mode = process.env.SLIDE_HARNESS_MODE;
+  if (mode === "dev" || mode === "slides") return mode === "dev";
+  try {
+    execFileSync("git", ["-C", root, "ls-files", "--error-unmatch", "decks/.gitignore"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // デッキの ID：YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）
 export const DECK_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/;

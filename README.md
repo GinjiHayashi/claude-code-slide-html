@@ -110,7 +110,7 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 
 承認の依頼中の一時ファイル（`approval-request.yaml`）はコミットされません。
 
-ハーネスのファイル（`.claude/` と `CLAUDE.md`）は、スライド作成中に AI が変えないよう `.claude/settings.json` で守っています（詳しくは `CLAUDE.md`「固定ファイル」）。ハーネスそのものを直すときは、Claude Code が変更のたびに確認を出すので、その場で許可してください。`.claude/settings.json` と `approvals.yaml` は AI からは変えられないので、直すときは手で編集します。
+ハーネスのファイル（`.claude/` と `CLAUDE.md`）は、スライド作成中に AI が変えないよう `.claude/settings.json` で守っています（詳しくは `CLAUDE.md`「固定ファイル」）。この確認はスライド用リポジトリ（`decks/.gitignore` を消したもの）でだけ出ます。ハーネスのリポジトリで開発するときは出ません（環境変数 `SLIDE_HARNESS_MODE=slides` で、ハーネスのリポジトリでも確認を出せます）。force push、`main` への push、`rm -rf` などの危ない操作は、どちらでも確認が出ます。`.claude/settings.json` と `approvals.yaml` は AI からは変えられないので、直すときは手で編集します。
 
 完成したスライドは `build/deck.html` の1ファイルを渡して共有します（外部から何も読み込まないので、そのままブラウザで開けます）。
 

@@ -52,6 +52,7 @@
 - `.claude/skills/html-build/` の `base.html`、`theme.css`、`components/`
 - `.claude/skills/slide-outline/` の `layout-catalog.md`、`diagram-catalog.md`
 - `.claude/skills/license-notice/` の `policy.md`、`registry.yaml`、`templates/`、`assets/`
+- `.claude/skills/research-standards/domains.md`（情報源のドメインの一覧）
 
 変更が必要なときは、人間に理由を報告して判断を仰ぐ。
 

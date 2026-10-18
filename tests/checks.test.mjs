@@ -23,6 +23,14 @@ test("brief.md：見出しが欠けるとエラー、空の項目は missing に
   assert.ok(r.missing.includes("title"));
 });
 
+test("brief.md：max_subagents は 1〜10 の整数", () => {
+  const brief = (v) => checkBrief(`---\ndeck_id: 2026-10-17-x\nmax_subagents: ${v}\n---\n`).errors.some((e) => e.includes("max_subagents"));
+  assert.equal(brief(3), false);
+  assert.equal(brief(0), true);
+  assert.equal(brief(11), true);
+  assert.equal(brief("おまかせ"), true);
+});
+
 test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
   const dir = tempDeck();
   fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
@@ -162,7 +170,7 @@ test("factcheck.md：「引用しない」のドメインを根拠にすると�
 
 test("brief のチェック：空の項目を questions.md の表の順に出す（deck_id は最後）", () => {
   const text =
-    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\n---\n\n" +
+    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\nmax_subagents:\n---\n\n" +
     [
       "目的・この資料で決めたいこと",
       "聞き手と前提知識",

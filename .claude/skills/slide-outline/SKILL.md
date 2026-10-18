@@ -17,7 +17,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - `research.md` があれば。
    - `design-reference` の基本方針（`principles.md`、`layout.md`、`charts.md`）。
 3. **構成を作る**：「構成の進め方」の1行目で分ける（下の「モードごとの動き方」）。草案があるときは、`outline-draft.md` を `outline.md` に写してから始める（`cp`）。
-4. **調べる**：「調査が必要な項目」と「構成で検討すること」のうち調べればわかるものを論点にし、`researcher` を論点ごとに並列で呼ぶ。呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」。構成を考える途中で新しい論点が出たときも同じ。
+4. **調べる**：「調査が必要な項目」と「構成で検討すること」のうち調べればわかるものを論点にし、`researcher` を並列で呼ぶ（数は `brief.md` の `max_subagents` まで）。呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」。構成を考える途中で新しい論点が出たときも同じ。
    - 調べた主張をスライドに使うときは、そのスライドの `claims` に主張の ID を書く。確度が「未確認」「矛盾あり」の主張を使うときは、人間に伝える。
    - research.md の主張を使わなくなったら、消さずに `dropped` を足し、そのスライドの `claims` からも外す（`research-template.md`）。
    - 検索語に機密の情報を入れない（CLAUDE.md）。

@@ -7,23 +7,22 @@
 // - 終了コード：0＝合格、1＝判断待ちの P0 がある、2＝エラーあり
 import fs from "fs";
 import path from "path";
-import { createRequire } from "module";
+import YAML from "yaml";
 import { fileURLToPath } from "url";
 import { checkSource, bannedDomains } from "../../research-standards/scripts/check-research.mjs";
+import { empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const YAML = createRequire(path.join(HERE, "..", "..", "html-build", "package.json"))("yaml");
 
 const LEVEL = ["P0", "P1", "要確認"];
 const DECISION = ["修正する", "残す", "削除する", "出典を足す"];
 const REQUIRED = ["slide", "claim_id", "target", "level", "problem"];
 const OPTIONAL = ["sources", "suggestion", "decision", "decision_note"];
 const OTHER = ["問題がなかった記述", "検索の記録"]; // 指摘以外の見出し（自由に書く）
-const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 
 export function checkFactcheck(text, banned = bannedDomains()) {
   const errors = [];
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = frontMatter(text);
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id）がない");
   else {
     try { if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない"); } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
@@ -72,7 +71,7 @@ export function checkFactcheck(text, banned = bannedDomains()) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-factcheck.mjs decks/<deck-id>/factcheck.md"); process.exit(2); }
   const r = checkFactcheck(fs.readFileSync(file, "utf8"));

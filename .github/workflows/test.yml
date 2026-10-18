@@ -15,25 +15,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: .claude/skills/html-build/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # README「3. セットアップ」と同じ手順
-      - name: npm のパッケージ
-        working-directory: .claude/skills/html-build
-        run: npm ci
-      - name: Chromium（検査と PDF）
-        working-directory: .claude/skills/html-build
-        run: node node_modules/playwright/cli.js install --with-deps chromium
-      - name: Python のパッケージ（フォントのサブセット化）
-        run: python3 -m pip install fonttools==4.67.0 brotli==1.2.0
+      # README「3. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
+      - name: セットアップ
+        run: npm run setup -- --with-deps
 
       - name: テスト
-        run: node --test "tests/*.test.mjs"
+        run: npm test
       - name: 見本のビルド（検査と PDF まで）
-        run: node .claude/skills/html-build/scripts/build.mjs examples/sample-deck
+        run: npm run build -- examples/sample-deck
       - name: ビルドの記録
         if: always()
         run: cat examples/sample-deck/build/build-log.md || true

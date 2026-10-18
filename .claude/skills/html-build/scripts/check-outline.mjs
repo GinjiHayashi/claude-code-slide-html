@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
+import { DECK_ID, isMain } from "../../../lib/common.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -53,7 +54,7 @@ export async function checkOutline(file) {
 
   // デッキ全体の設定
   if (!o.meta.deck_id) errors.push("先頭の設定に deck_id がない");
-  else if (!/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(o.meta.deck_id)) errors.push(`deck_id「${o.meta.deck_id}」は YYYY-MM-DD-<短い英語名> の形にする`);
+  else if (!DECK_ID.test(o.meta.deck_id)) errors.push(`deck_id「${o.meta.deck_id}」は YYYY-MM-DD-<短い英語名> の形にする`);
   if (!o.meta.title) errors.push("先頭の設定に title（デッキの題名）がない");
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
   if (!o.slides.length) errors.push("スライドが1枚もない");
@@ -196,7 +197,7 @@ export async function checkOutline(file) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) { // シンボリックリンク越しに呼ばれても判定できるよう、実体のパスで比べる
+if (isMain(import.meta.url)) {
   const file = process.argv[2];
   if (!file) { console.error("使い方：node check-outline.mjs <outline.md>"); process.exit(2); }
   const r = await checkOutline(file);

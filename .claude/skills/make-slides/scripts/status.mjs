@@ -7,12 +7,12 @@
 // - 承認の依頼が出ていれば、何より先に「人間の答え待ち」を返す
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest } from "./approvals.mjs";
 import { checkGate } from "./gate.mjs";
 import { checkBrief, checkInputs } from "../../slide-hearing/scripts/check-brief.mjs";
 import { checkStructure } from "../../slide-outline/scripts/check-structure.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
+import { frontMatter, isMain } from "../../../lib/common.mjs";
 
 const read = (f) => fs.readFileSync(f, "utf8");
 // 承認済みか：最後の承認の sha256 が今のファイルと同じ
@@ -76,7 +76,7 @@ export function deckStatus(deckDir) {
   if (!fs.existsSync(deckFile) || !manifest) return at("4 HTML 作成", "まだビルドしていない", "html-build");
   if (manifest.outline_sha256 !== outlineSha) return at("4 HTML 作成", "いまの outline.md でビルドしていない", "html-build");
   if (manifest.deck_sha256 !== sha256(fs.readFileSync(deckFile))) return at("4 HTML 作成", "deck.html がビルドのあとに変わった（手で直さない）", "html-build（ビルドし直す）");
-  const logMeta = log.match(/^---\n([\s\S]*?)\n---\n/);
+  const logMeta = frontMatter(log);
   if ((logMeta ? YAMLlib.parse(logMeta[1]) : {})?.ok !== true) return at("4 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
 
   // 6 最終確認
@@ -86,7 +86,7 @@ export function deckStatus(deckDir) {
 }
 
 // コマンドとして呼ばれたとき
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+if (isMain(import.meta.url)) {
   const dir = process.argv[2];
   if (!dir) { console.error("使い方：node status.mjs decks/<deck-id> [--json]"); process.exit(2); }
   const s = deckStatus(dir);

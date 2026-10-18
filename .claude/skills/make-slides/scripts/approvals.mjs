@@ -9,22 +9,20 @@
 // - approvals.yaml を書くのは hook だけ。AI は書かない（.claude/settings.json で禁止）
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
-import { createRequire } from "module";
-import { fileURLToPath } from "url";
+import YAML from "yaml";
+import { frontMatter, sha256 } from "../../../lib/common.mjs";
 
-const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "html-build");
-export const YAML = createRequire(path.join(HB, "package.json"))("yaml");
+export { YAML };
 
 // 承認できるもの（工程の順）
 export const TARGETS = ["brief.md", "outline-draft.md", "outline.md", "factcheck.md", "build/deck.html"]; // デッキのフォルダからの相対パス
 
-export const sha256 = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
+export { sha256 };
 
 // outline.md をスライドの見出し（## S01）ごとに分けて sha256 を取る。先頭の設定は「meta」
 export function slideHashes(text) {
   const out = {};
-  const m = text.match(/^---\n[\s\S]*?\n---\n/);
+  const m = frontMatter(text);
   out.meta = sha256(m ? m[0] : "");
   const body = m ? text.slice(m[0].length) : text;
   for (const part of body.split(/^(?=##\s+\S+\s*$)/m)) {

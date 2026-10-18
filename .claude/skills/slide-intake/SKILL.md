@@ -34,7 +34,7 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 | 形式 | 読み方 |
 |---|---|
 | Markdown・テキスト・CSV | そのまま読む |
-| Excel（.xlsx） | `python3 -I .claude/skills/slide-intake/scripts/xlsx.py <ファイル>` でシートの一覧を見て、必要な範囲を `xlsx.py <ファイル> <シート名> A1:D14` で表に出す。数値は自分で書き写さず、この出力から写す |
+| Excel（.xlsx） | `uv run python -I .claude/skills/slide-intake/scripts/xlsx.py <ファイル>` でシートの一覧を見て、必要な範囲を `xlsx.py <ファイル> <シート名> A1:D14` で表に出す。数値は自分で書き写さず、この出力から写す |
 | PDF・画像 | Read ツールで読む（ページが多いときは分けて読む） |
 | Word（.docx）・PowerPoint（.pptx）・古い Excel（.xls） | 直接は読まない。人間に PDF かテキストで書き出してもらう |
 

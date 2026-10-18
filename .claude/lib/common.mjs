@@ -1,5 +1,6 @@
 // スキルのスクリプトで共通に使う小さな処理
 import fs from "fs";
+import path from "path";
 import crypto from "crypto";
 import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -27,6 +28,14 @@ export function harnessDev(root) {
   } catch {
     return false;
   }
+}
+
+// Python：uv がリポジトリの直下に作る .venv の Python（npm run setup で uv sync して作る。パッケージは pyproject.toml と uv.lock）
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+export function python() {
+  const bin = path.join(ROOT, ".venv", ...(process.platform === "win32" ? ["Scripts", "python.exe"] : ["bin", "python"]));
+  if (!fs.existsSync(bin)) throw new Error(`${bin} がない。リポジトリの直下で npm run setup を実行する`);
+  return bin;
 }
 
 // デッキの ID：YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）

@@ -15,9 +15,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      # Python とそのパッケージは uv が入れる（.python-version・uv.lock）
+      - uses: astral-sh/setup-uv@v6
 
       # README「2. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
       - name: セットアップ

@@ -1,9 +1,9 @@
 """Excel（.xlsx）の中身を、Python の標準ライブラリだけで読み出す。
 
 使い方
-  python3 xlsx.py <file.xlsx>                         シートの一覧と、使っている範囲、先頭の5行
-  python3 xlsx.py <file.xlsx> <シート名> [A1:D14]      範囲を表（Markdown）で出す。範囲を省くとシート全体
-  python3 xlsx.py <file.xlsx> <シート名> A1:D14 --yaml  範囲を YAML（行ごとのリスト）で出す。outline.md の図のデータに写すとき
+  uv run python xlsx.py <file.xlsx>                         シートの一覧と、使っている範囲、先頭の5行
+  uv run python xlsx.py <file.xlsx> <シート名> [A1:D14]      範囲を表（Markdown）で出す。範囲を省くとシート全体
+  uv run python xlsx.py <file.xlsx> <シート名> A1:D14 --yaml  範囲を YAML（行ごとのリスト）で出す。outline.md の図のデータに写すとき
 
 - .xlsx は XML を zip にまとめたもの。追加のライブラリ（openpyxl など）を入れずに読む（ライセンスの登録が要らないようにするため）。
 - 数式のセルは、Excel が最後に保存した計算結果を出す。結果が保存されていないセルは「（数式：…）」と出す。

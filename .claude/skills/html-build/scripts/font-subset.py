@@ -1,6 +1,6 @@
 """Noto Sans JP と Roboto Mono（どちらも OFL-1.1）を、スライドで使っている文字だけにサブセット化し、@font-face の CSS を書き出す。
 
-使い方：python3 font-subset.py <スライドの HTML> <書き出す CSS>
+使い方：.venv/bin/python font-subset.py <スライドの HTML> <書き出す CSS>
 - フォントは npm の @fontsource/noto-sans-jp と @fontsource/roboto-mono（registry.yaml の noto-sans-jp・roboto-mono）。
   文字の範囲ごとに分かれた woff2 から、使う文字を含むものだけを選び、その中も使う文字だけに絞る。
 - Noto Sans JP はすべての文字が対象で、太さは 400（標準）と 700（太字）。Roboto Mono は <code> の中の文字だけで、太さは 400。

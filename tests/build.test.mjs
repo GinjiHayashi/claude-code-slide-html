@@ -6,6 +6,7 @@ import os from "os";
 import path from "path";
 import { execFileSync } from "child_process";
 import { SKILLS, tempDeck } from "./helpers.mjs";
+import { python } from "../.claude/lib/common.mjs";
 
 const { build } = await import(path.join(SKILLS, "html-build/scripts/build.mjs"));
 
@@ -25,7 +26,7 @@ test("フォントのサブセット化：同じ文字なら毎回同じバイ�
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-font-"));
   fs.writeFileSync(path.join(dir, "t.html"), "<p>同じ文字</p>");
   const run = (out) => {
-    execFileSync("python3", [path.join(SKILLS, "html-build/scripts/font-subset.py"), path.join(dir, "t.html"), path.join(dir, out)]);
+    execFileSync(python(), [path.join(SKILLS, "html-build/scripts/font-subset.py"), path.join(dir, "t.html"), path.join(dir, out)]);
     return fs.readFileSync(path.join(dir, out), "utf8");
   };
   const a = run("a.css");

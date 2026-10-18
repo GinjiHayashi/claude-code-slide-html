@@ -81,7 +81,7 @@ export function deckStatus(deckDir) {
     return at(
       "3 ファクトチェック",
       "構成とファクトチェックの承認待ち",
-      "slide-factcheck の手順 9（直したスライドを確かめ直し、outline.md と factcheck.md を一緒に承認してもらう）",
+      "slide-factcheck（直したスライドだけ手順 2〜5 でファクトチェックし直し、手順 9 で outline.md と factcheck.md を一緒に承認してもらう）",
       reasons,
     );
   }

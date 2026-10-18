@@ -1,6 +1,6 @@
 # スライド作成ハーネス（HTML版）
 
-構成の検討から、1ファイルで完結する HTML スライド（`decks/<deck-id>/build/deck.html`）の作成までを、工程ごとに人間の承認を挟みながら進める。入口は `/make-slides`。工程の順番、止まるところ、承認の頼み方、git の進め方は `.claude/skills/make-slides/SKILL.md` にある。
+構成の検討から、1ファイルで完結する HTML スライド（`decks/<deck-id>/build/deck.html`）の作成までを、工程ごとに人間の承認を挟みながら進める。入口は `/make-slides`。全体の流れ（工程の順番、止まるところ、承認の仕組み、直すときの戻り方）、承認の頼み方、git の進め方は `.claude/skills/make-slides/SKILL.md` にある。
 
 ## 原則
 

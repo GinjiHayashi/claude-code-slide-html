@@ -9,6 +9,9 @@ description: 承認済みの outline.md から、1ファイルで完結する de
 
 ## ビルドする
 
+1. 承認を確かめる：`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> build`。止められたら、ビルドせずに理由を人間に伝え、`make-slides` に戻る（ビルドのスクリプトはゲートで止まらず、注意として記録するだけなので、ここで確かめる）。
+2. ビルドする：
+
 ```
 npm run build -- decks/<deck-id>
 ```
@@ -60,6 +63,7 @@ Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入
 | `scripts/outline.mjs`・`check-outline.mjs` | outline.md の読み込みと書式チェック |
 | `scripts/build.mjs` | ビルドの入口 |
 | `scripts/font-subset.py` | フォントのサブセット化（Python の fontTools と Brotli） |
+| `scripts/make-japan-map.mjs` | 地図（map）の都道府県の境界を Natural Earth から作り直す。ハーネスを直すときだけ使う |
 | `scripts/inspect.mjs` | ブラウザでの検査 |
 | `scripts/pdf.mjs` | PDF の書き出し |
 | `scripts/setup.mjs` | セットアップ（`npm run setup`。npm のパッケージ、Chromium、Python のパッケージ） |

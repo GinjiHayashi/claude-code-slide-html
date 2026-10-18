@@ -1,174 +1,200 @@
 # claude-code-slide-html
 
-Claude Code で、構成の検討から HTML スライド（`deck.html`）の作成までを半自動化するハーネスです。
+Claude Code に、構成の検討から HTML スライド（`deck.html`）の作成までを任せるためのハーネスです。
 
-> 資料を Web で開いて確かめる調査（researcher・fact-checker）は、通信を許した環境ではまだ試していません。使い始めたら、出典が実際に開かれているかを確かめてください。
+> 調査とファクトチェック（Web で出典を開く部分）は、まだ実際のネットワークでは試していません。使い始めたら、出典が本当に開かれているかを確かめてください。
 
-## クイックスタート
+## 環境構築
 
-必要なもの：Node.js 22 以上、Python 3、git、Claude Code。GitHub CLI（`gh`）があると、リポジトリの作成まで自動で行えます。
+このリポジトリ（public）はそのまま使わず、**複製して自分用の private リポジトリを作り、そこでスライドを作ります**。スライドの中身を公開しないためです。
 
-1. **スライド用の private リポジトリを作る**（初回だけ）：このリポジトリを clone し、`.env.sample` を `.env` に写して `SLIDE_REPO` を書き、`npm run create-slide-repo` を実行します（詳しくは「[1. スライド用リポジトリを作る](#1-スライド用リポジトリを作る)」）。
-2. **セットアップする**（初回だけ）：作ったリポジトリで実行し、見本のビルドが終了コード 0 で終われば準備完了です（`examples/sample-deck/build/deck.html` をブラウザで開けます）。
+### 0. 必要なもの
 
-   ```sh
-   npm run setup
-   npm run build -- examples/sample-deck
-   ```
-
-3. **スライドを頼む**：Claude Code を起動し、`/make-slides` に続けて依頼を書きます。
-
-   ```text
-   /make-slides 新任職員向けに、行政のデジタル化の歩みを10分で話したい。
-   ```
-
-4. **質問と承認に答える**：AI が足りないことを質問し、3回（前提の `brief.md`、構成とファクトチェック、できあがった `deck.html`）承認を求めます。答えは自由な言葉で構いません。
-5. **受け取る**：`decks/<deck-id>/build/deck.html` ができます。1ファイルで完結しているので、そのまま渡して共有できます。
-
-途中で止まったときや、完成したスライドを直したいときも `/make-slides` で続きを頼めます。流れの全体は `.claude/skills/make-slides/SKILL.md` の「全体の流れ」にあります。
-
-## このリポジトリの位置づけ
-
-| リポジトリ | 公開範囲 | 置くもの |
+| ツール | 版 | 確かめ方 |
 |---|---|---|
-| このリポジトリ（ハーネス） | public | `CLAUDE.md`、`.claude/`、サンプル。スライドの中身は置かない |
-| スライド用リポジトリ（利用者が作る） | private | ハーネス一式 ＋ `decks/`（スライド1件ごとの作業フォルダ） |
+| Node.js | 22 以上 | `node -v` |
+| Python | 3（pip を含む） | `python3 -m pip --version` |
+| git | — | `git --version` |
+| Claude Code | — | `claude --version` |
+| GitHub CLI（推奨） | — | `gh auth status` |
 
-このリポジトリでは `decks/` を `.gitignore` で管理外にしています。スライドの中身が公開されないようにするためです。
-
-## 使い方
+GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。使うときは、先に `gh auth login` でログインしておきます。
 
 ### 1. スライド用リポジトリを作る
 
-public リポジトリのフォークは private にできません。そのため、フォークではなく **複製** で private リポジトリを作ります（GitHub Docs「Duplicating a repository」の手順を、`main` と `develop` だけを送るように変えたもの）。この手順は `npm run create-slide-repo` でまとめて行えます。
+```sh
+git clone https://github.com/GinjiHayashi/claude-code-slide-html.git
+cd claude-code-slide-html
+cp .env.sample .env        # .env を開き、SLIDE_REPO=自分のアカウント/my-slides のように書く
+npm run create-slide-repo
+```
 
-1. このリポジトリを手元に clone し、`.env.sample` を `.env` に写して、`SLIDE_REPO`（例：`your-name/my-slides`）を書きます。`.env` はコミットされません。トークンは書かず、GitHub へのログインは `gh auth login` で行います。
-2. 何をするかを確かめてから実行します。
+先に中身だけ確かめたいときは、`npm run create-slide-repo -- --dry-run` を実行します（何も作らず、することを表示するだけ）。
 
-   ```sh
-   npm run create-slide-repo -- --dry-run
-   npm run create-slide-repo
-   ```
+これで GitHub に private リポジトリができ、このリポジトリの隣（`../my-slides`）に clone されます。このあとの作業はすべてそちらで行います。最初に clone したこのリポジトリは消してかまいません。
 
-スクリプトは次のことを行います。
+<details>
+<summary>スクリプトがしていること・gh がないとき</summary>
 
-- GitHub に private の空リポジトリを作る（すでにあるときは、private で空であることを確かめる。中身があれば止める）
-- このリポジトリの `main` と `develop` を履歴ごと送る（`--mirror` にすると、ハーネスの作業用のブランチ `feature/*` まで送られるため）
+- private の空リポジトリを作る（すでにあれば、private で空であることを確かめる。中身があれば止める）
+- ハーネスの `main` と `develop` を履歴ごと送る（フォークは private にできないため複製する。GitHub Docs「Duplicating a repository」）
 - 既定ブランチを `develop` にする
-- 手元（既定はこのリポジトリの隣）に clone し、`decks/.gitignore` を消してコミット・push する。これで `decks/` も git で管理されます（承認の依頼の一時ファイル `approval-request.yaml` だけは、ルートの `.gitignore` で管理外のまま）
-- ハーネスの更新を取り込むための remote `harness` を足す
+- clone して `decks/.gitignore` を消し、`decks/` を git で管理する
+- 更新を取り込むための remote `harness` を足す
 
-`gh` を使わないときは、GitHub で private の空リポジトリ（README やライセンスは追加しない）を先に作ってから実行し、最後に Settings → General → Default branch を `develop` にします。
+gh がないときは、GitHub で private の空リポジトリ（README やライセンスは付けない）を先に作ってから実行し、最後に Settings → General → Default branch を `develop` にします。
 
-ルートの `.gitignore` は書き換えません。書き換えると、ハーネスが `.gitignore` を変えたときに、更新の取り込みで衝突するためです。
+</details>
 
-### 2. ハーネスの更新を取り込む
+### 2. セットアップ
 
-複製したリポジトリは履歴を引き継いでいるため、ハーネスの更新を merge で取り込めます。取り込むのはハーネスの `main`（区切りのよい完成版）です。
+```sh
+cd ../my-slides
+npm run setup                          # npm のパッケージ、Chromium、Python のパッケージを入れる
+npm run build -- examples/sample-deck  # 見本をビルドして確かめる
+```
 
-スライド用リポジトリの直下で実行します。
+エラーなく終わり、`examples/sample-deck/build/deck.html` をブラウザで開けば準備完了です。
+
+### 3. Claude Code を起動する
+
+```sh
+claude
+```
+
+`my-slides` の中で起動します。初回はログインと、フォルダを信頼するかの確認が出ます。
+
+## 使い方
+
+### 頼み方
+
+`my-slides` で Claude Code を起動し、`/make-slides` に続けて依頼を書きます。
+
+```text
+/make-slides 新任職員向けに、行政のデジタル化の歩みを10分で話したい。
+```
+
+資料があれば、チャットに貼るか、ファイルの場所を伝えます。AI がデッキのフォルダ（`decks/<deck-id>/inputs/`）に写して読みます。
+
+| 渡せるもの | 例 |
+|---|---|
+| チャットの文章 | 依頼、メモ、箇条書き、構成案 |
+| ファイル | Markdown・テキスト・CSV、Excel（.xlsx）、PDF、画像 |
+| 事前記入シート（任意） | `.claude/skills/slide-intake/intake-form.md`。目的・聞き手・長さなどを先に書いておくと、質問が減ります |
+
+Word と PowerPoint は直接読めないので、PDF かテキストに書き出して渡します。
+
+### 作成開始から完了までの流れ
+
+承認は3回（✅）です。承認されるまで、AI は次の工程に進みません。
+
+| # | 工程 | AI がすること | あなたがすること | できるもの |
+|---|---|---|---|---|
+| 1 | 始める | ブランチ `feature/<deck-id>` とデッキのフォルダを作る | `/make-slides` で依頼し、資料を渡す | `decks/<deck-id>/` |
+| 2 | 前提を固める | 資料を読んでまとめ、足りないことを質問する | 質問に答える | `brief.md` |
+| ✅ | 承認1 | 承認を頼む | 前提（目的・聞き手・長さなど）を確かめて答える | コミット |
+| 3 | 構成と調査 | スライドの並びと中身を書き、必要なことを Web で調べる | 構成の相談に答える（下の「構成の進め方」） | `outline.md`、`research.md` |
+| 4 | ファクトチェック | 書いた内容が事実と合うかを、出典で確かめる | 誤りの直し方を決める | `factcheck.md` |
+| ✅ | 承認2 | 承認を頼む | 構成とファクトチェックの結果を確かめて答える | コミット |
+| 5 | ビルド | HTML を作り、はみ出し・ライセンスなどを機械で検査する | なし | `build/deck.html`、`deck.pdf` |
+| 6 | 最終確認 | 見るときの確認表を示す | `deck.html` をブラウザで開いて見た目を確かめる | — |
+| ✅ | 承認3 | 承認を頼む | 仕上がりを確かめて答える | コミット |
+| 7 | 完成 | push して `develop` への PR を作る | PR を確かめて squash マージする | PR |
+
+- **承認の答え方**：「OK」「承認します」のように自由な言葉で答えます。直してほしいときは「3枚目の数字を直して」のように書けば、その工程に戻ります。
+- **AI がしないこと**：承認の記録（あなたの答えを受けて仕組みが記録します）、見た目や文章の良し悪しの判断、PR のマージ。
+- **途中で止まったとき**：`/make-slides 続き` のように頼めば、どこまで進んだかを AI が確かめて、続きから始めます。
+
+### 構成の進め方
+
+工程2で、構成をどう決めるかを聞かれます。
+
+| 選ぶもの | AI の動き方 |
+|---|---|
+| 決まっている | あなたの構成（並びと中身）を変えない。問題があれば報告だけし、直すかはあなたが決める |
+| たたき台がある | たたき台をもとに、調査に基づく修正案を出す。採用するかはあなたが決める |
+| 相談して決めたい | 目的と伝えたい結論から章立ての案を出し、相談しながら固める |
+
+### できあがったスライドを直すとき
+
+`/make-slides` で直したいことを伝えます。`deck.html` は直接直さず、元の `outline.md` を直してビルドし直します。
+
+| 直したいこと | 戻る工程 |
+|---|---|
+| 目的・聞き手・長さなどの前提 | 2（前提を固める）から |
+| 文・数値・スライドの並び、スライドの型や図の型 | 3（構成）から。変えたスライドだけファクトチェックし直す |
+| 色・フォント・部品の形 | 直せません（ハーネスで決まっているため。変えたいときはハーネスを直す） |
+
+直したあとは、戻った工程よりあとの承認をもう一度行います。
+
+### 発表した版を残すとき（任意）
+
+「発表した版を残して」と頼むと、AI が `develop` から `main` への PR を作ります。あなたがマージすると、AI が `main` にタグ（`<deck-id>`）を付けます。
+
+### できるファイル
+
+```text
+decks/<deck-id>/
+├── inputs/        渡した資料（AI は書き換えない）
+├── brief.md       前提
+├── outline.md     スライドの元ファイル（直すときはここ）
+├── research.md    調査の結果と出典
+├── factcheck.md   ファクトチェックの結果
+└── build/
+    ├── deck.html  完成したスライド（1ファイルで完結。そのまま渡せる）
+    └── deck.pdf
+```
+
+## ハーネスの更新を取り込む
+
+**何のため**：`my-slides` は、作った時点のハーネスの写しです。そのあとハーネス（このリポジトリ）に機能の追加や修正が入っても、`my-slides` には自動では反映されません。この手順で、ハーネスの新しい版を `my-slides` に取り込みます。スライド（`decks/`）はハーネスにないので、消えたり変わったりしません。
+
+**いつ**：ハーネスの `main` が新しくなったときです（ハーネスの更新は `main` に区切りよくまとめて入ります）。更新がなければ、実行しても何もしません。
+
+**やること**：`my-slides` の中で実行し、できた PR をマージします。
 
 ```sh
 npm run update-harness
 ```
 
-スクリプトは次のことを行います。
+スクリプトは次の順に進みます。
 
-- remote `harness` がなければ足す（`.env` の `HARNESS_REPO`。空ならこのリポジトリ）
-- `develop` から `feature/harness-update` を作り、`harness/main` を merge する（取り込む更新がなければ何もしない）
-- push して、`develop` への PR を作る（`gh` がないときは、GitHub で PR を作る）
+1. ハーネスの最新の `main` を取ってくる
+2. `develop` から取り込み用のブランチ `feature/harness-update` を作り、そこにハーネスの `main` を merge する
+3. push して、`develop` への PR を作る
 
-PR を確かめて、人間がマージします。
+PR で変わったファイル（`.claude/` や `CLAUDE.md` など）を確かめ、**マージコミット** でマージします。squash にすると「どこまで取り込んだか」の記録が残らず、次の取り込みで衝突します。
 
-- この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します。
-- `decks/` の中身はハーネスにないので、衝突しません。
-- 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。そのときスクリプトは merge の途中で止まり、衝突したファイルと続け方を表示します。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
-- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm run setup` をやり直します。
+- 衝突したときは、スクリプトが途中で止まり、衝突したファイルと続け方を表示します。衝突するのは `CLAUDE.md` や `.claude/` を `my-slides` の側で直していたときだけです。
+- `package-lock.json` が変わったときは、マージのあとで `npm run setup` をやり直します。
 
-### 3. セットアップ（初回だけ）
+## git の運用ルール
 
-コマンドは「クイックスタート」の 2 です。`npm run setup` は、npm のパッケージ（版は `package-lock.json` で固定）、検査と PDF に使うブラウザ（Chromium）、フォントのサブセット化に使う Python のパッケージをまとめて入れます。
+簡易 GitFlow です。ハーネスの開発でも、スライド用リポジトリでも同じルールを使います。
 
-- 使っているパッケージとその版は、すべて `.claude/skills/license-notice/registry.yaml` に登録しています。版を変えるとビルドの照合で止まります。
-- 見本のビルドでは、`examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
-
-### 4. スライドを作る
-
-頼み方は「クイックスタート」の 3〜5 です。ここでは、そのあいだに git で起きることを説明します。
-
-git は次のように進みます（AI が行うのは 1〜3 と、頼まれたときの 4。マージは人間）。
-
-| いつ | git でのこと |
-|---|---|
-| デッキを始めるとき | `develop` から `feature/<deck-id>` を作る（デッキ＝発表1回分のスライド一式） |
-| 承認するたび（brief、構成とファクトチェック、最終確認） | そのデッキのフォルダをコミットする。最終確認のコミットには `build/` の `deck.html`・`deck.pdf` も入る |
-| 完成したとき | push して `develop` への PR を作る。人間が確認して squash マージする |
-| 完成後に直すとき | `develop` から `feature/<deck-id>-fix` を作り、同じ流れで PR |
-| 発表した版を残すとき | 人間が頼むと `develop` → `main` の PR を作る。人間がマージしたあと、`main` に `<deck-id>` のタグを付けて push する（直したあと2回目の発表なら `<deck-id>-2`） |
-
-承認の依頼中の一時ファイル（`approval-request.yaml`）はコミットされません。
-
-ハーネスのファイル（`.claude/` と `CLAUDE.md`）は、スライド作成中に AI が変えないよう `.claude/settings.json` で守っています（詳しくは `CLAUDE.md`「固定ファイル」）。この確認はスライド用リポジトリ（`decks/.gitignore` を消したもの）でだけ出ます。ハーネスのリポジトリで開発するときは出ません（環境変数 `SLIDE_HARNESS_MODE=slides` で、ハーネスのリポジトリでも確認を出せます）。force push、`main` への push、`rm -rf` などの危ない操作は、どちらでも確認が出ます。`.claude/settings.json` と `approvals.yaml` は AI からは変えられないので、直すときは手で編集します。
-
-完成したスライドは `build/deck.html` の1ファイルを渡して共有します（外部から何も読み込まないので、そのままブラウザで開けます）。
-
-## git の運用ルール（簡易 GitFlow）
-
-ハーネスの開発と、スライド用リポジトリでの作業の両方で、このルールを使います。
-
-### ブランチ
-
-| ブランチ | 役割 | 切り元 | マージ先 |
+| ブランチ | 用途 | 切り元 → マージ先 | マージの方法 |
 |---|---|---|---|
-| `main` | 区切りのよい完成版だけを置く | — | — |
-| `develop` | 作業の統合先。GitHub の既定ブランチにする | `main` | `main` |
-| `feature/<短い英語>` | 1つの作業（例：`feature/claude-md`） | `develop` | `develop` |
-| `hotfix/<短い英語>` | `main` の緊急修正 | `main` | `main` と `develop` |
+| `main` | 区切りのよい完成版 | — | — |
+| `develop` | 作業の統合先（既定ブランチ） | `main` → `main` | マージコミット |
+| `feature/*` | 1つの作業（デッキ1件も1つ） | `develop` → `develop` | squash |
+| `feature/harness-update` | ハーネスの更新の取り込み | `develop` → `develop` | マージコミット |
+| `hotfix/*` | `main` の緊急修正 | `main` → `main` と `develop` | — |
 
-既定ブランチを `develop` にする方法（リポジトリの管理者が行う。どちらか1つ）：
-
-- 画面から：リポジトリの Settings → General → Default branch で、切り替えのボタン（⇄）を押して `develop` を選び、Update を押す。
-- コマンドから（gh で管理者としてログインしているとき）：
-
-  ```sh
-  gh api -X PATCH repos/<owner>/<repo> -f default_branch=develop
-  gh api repos/<owner>/<repo> --jq .default_branch   # develop と出れば完了
-  ```
-
-### マージ
-
-| 向き | 方法 | タイミング |
-|---|---|---|
-| `feature/*` → `develop` | PR を作り、確認してから **squash マージ**（1つの作業を1コミットにまとめる） | 作業が終わったとき |
-| `feature/harness-update` → `develop`（スライド用リポジトリ） | PR を作り、**マージコミット** で取り込む（squash にすると、次の取り込みで衝突する） | ハーネスの更新を取り込むとき |
-| `develop` → `main` | PR を作り、**マージコミット** で取り込む（ハーネスではタグは付けない。区切りは main のマージコミットで分かるため。スライド用リポジトリでは、発表した版に `<deck-id>` のタグを付ける） | 区切りのよいところ（ハーネスでは、まとまった変更が develop にそろったとき） |
-| `hotfix/*` → `main`、`develop` | PR を作り、両方に取り込む | 修正が終わったとき |
+スライド用リポジトリでは、発表した版の `main` に `<deck-id>` のタグを付けます。
 
 ### コミットメッセージ
 
-先頭に種類を付け、本文は日本語で書きます。
+`feat:`・`fix:`・`docs:`・`chore:` のどれかを付け、日本語で書きます（例：`docs: README を整理する`）。デッキのコミットにはデッキの ID を付けます（例：`feat(2026-10-17-data-platform): outline.md を承認`）。
 
-| 種類 | 使う場面 |
-|---|---|
-| `feat:` | 機能の追加（Skill、スクリプトなど） |
-| `fix:` | 不具合の修正 |
-| `docs:` | 文書だけの変更 |
-| `chore:` | 設定やフォルダ構成などの雑務 |
-
-例：`docs: README に git の運用ルールを追加`
-
-スライド用リポジトリのデッキのコミットは、種類の後ろにデッキの ID を付けます（例：`feat(2026-10-17-data-platform): outline.md と factcheck.md を承認`）。
-
-### 注意
-
-- このリポジトリは public です。トークン、パスワード、案件の情報をコミットしないでください。
+トークンやパスワードはコミットしないでください（このリポジトリは public です）。
 
 ## ハーネスを直すとき
 
-- `develop` から `feature/<短い英語>` を切って直し、`develop` への PR を作ります（上の「git の運用ルール」）。
-- テストは `npm test`、見本のビルドは `npm run build -- examples/sample-deck` です。PR では CI（GitHub Actions）が同じものを実行します。
-- コードの書式は Prettier でそろえています（設定は `.prettierrc.json`）。直したあとに `npx prettier@3.3.3 --write "**/*.mjs"` をかけます。Prettier はビルドに使わないので、`package.json` には入れていません。
-- スライドの型や図の部品の決まりは、コード（`.claude/skills/html-build/scripts/spec.mjs` と各部品の `schema`）が正です。文書には書き写さず、`node .claude/skills/html-build/scripts/schema.mjs` を参照します。
+- `develop` から `feature/*` を切り、`develop` への PR を作ります。
+- 確かめるコマンド：`npm test`、`npm run build -- examples/sample-deck`（PR では CI も同じものを実行します）。
+- 書式は `npx prettier@3.3.3 --write "**/*.mjs"` でそろえます。
+- スライドの型や部品の決まりはコードが正です：`node .claude/skills/html-build/scripts/schema.mjs`。
+- `.claude/` と `CLAUDE.md` は、スライド用リポジトリでは AI が変えるたびに確認が出ます。このリポジトリでは出ません（`SLIDE_HARNESS_MODE=slides` で出せます）。`.claude/settings.json` と `approvals.yaml` は AI からは変えられないので、手で編集します。
 
 ## ライセンス
 

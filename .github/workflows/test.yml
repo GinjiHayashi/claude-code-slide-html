@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      # README「3. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
+      # README「2. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
       - name: セットアップ
         run: npm run setup -- --with-deps
 

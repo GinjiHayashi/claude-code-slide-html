@@ -16,7 +16,7 @@ import { scanDeck } from "../../license-notice/scripts/scan.mjs";
 import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
-import { isMain } from "../../../lib/common.mjs";
+import { isMain, python } from "../../../lib/common.mjs";
 
 // ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
 // 使い方：node build.mjs decks/<deck-id>
@@ -144,7 +144,7 @@ function assemble(work, outline, slides, licenses) {
 
   // フォント：base.html の文字（ページ番号など）も含める。ライセンスの全文は画面に出さないので含めない
   fs.writeFileSync(path.join(work, "text.html"), slides + fs.readFileSync(path.join(HB, "base.html"), "utf8"));
-  const fontLog = execFileSync("python3", [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], {
+  const fontLog = execFileSync(python(), [path.join(HB, "scripts/font-subset.py"), path.join(work, "text.html"), path.join(work, "font.css")], {
     encoding: "utf8",
   }).trim();
   const font = fs.readFileSync(path.join(work, "font.css"), "utf8");

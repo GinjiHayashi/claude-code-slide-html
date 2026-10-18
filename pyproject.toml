@@ -1,0 +1,13 @@
+# ビルドに使う Python のパッケージ（フォントのサブセット化）。npm run setup の中で uv sync が .venv に入れる
+# 版は .claude/skills/license-notice/registry.yaml と同じにする（違うとビルドの照合で止まる）
+[project]
+name = "claude-code-slide-html"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fonttools==4.67.0",
+  "brotli==1.2.0",
+]
+
+[tool.uv]
+package = false

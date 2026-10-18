@@ -1,14 +1,34 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run build *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(git switch *)"
+    ],
     "deny": [
       "Edit(approvals.yaml)",
       "Edit(/.claude/settings.json)",
       "Bash(node *approve-hook.mjs*)"
     ],
     "ask": [
-      "Edit(/.claude/**)",
-      "Edit(/CLAUDE.md)"
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * main*)",
+      "Bash(git push *:main*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean *)",
+      "Bash(git branch -D *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)"
     ]
   },
   "hooks": {
@@ -39,6 +59,15 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-bash.mjs\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-edit.mjs\""
           }
         ]
       }

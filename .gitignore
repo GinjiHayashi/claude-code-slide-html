@@ -3,11 +3,18 @@
 # 承認の依頼（一時ファイル。hook が答えを受けて消す）
 decks/*/approval-request.yaml
 
-# ビルドで使う依存パッケージ
+# ビルドで使う依存パッケージ（npm と、uv が作る Python の環境）
 node_modules/
+.venv/
+
+# スライド用リポジトリを作る設定（.env.sample を写して書く。個人の設定なのでコミットしない）
+.env
 
 # 個人用の Claude Code 設定
 .claude/settings.local.json
+
+# Claude Code の作業用の worktree
+.claude/worktrees/
 
 # OS が作るファイル
 .DS_Store

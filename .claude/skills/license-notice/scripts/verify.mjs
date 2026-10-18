@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
 import YAML from "yaml";
-import { sha256File as sha256 } from "../../../lib/common.mjs";
+import { python, sha256File as sha256 } from "../../../lib/common.mjs";
 import { fileURLToPath } from "url";
 
 const LN = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,7 +48,7 @@ function installed(spec) {
   try {
     if (kind === "npm") have = JSON.parse(fs.readFileSync(path.join(ROOT, "node_modules", name, "package.json"), "utf8")).version;
     if (kind === "pypi")
-      have = execFileSync("python3", ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
+      have = execFileSync(python(), ["-c", `import importlib.metadata as m; print(m.version(${JSON.stringify(name)}))`], { encoding: "utf8" }).trim();
   } catch {
     have = null;
   }

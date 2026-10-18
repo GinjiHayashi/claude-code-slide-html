@@ -2,7 +2,7 @@
 // セットアップ：ビルドに要るものをまとめて入れる。リポジトリの直下で `npm run setup`（CI では `npm run setup -- --with-deps`）
 // 1. npm のパッケージ（版は package-lock.json で固定）
 // 2. 検査と PDF に使う Chromium（Playwright）。--with-deps なら OS のライブラリも入れる
-// 3. フォントのサブセット化に使う Python のパッケージ。版は license-notice/registry.yaml の package（pypi:）から読む
+// 3. フォントのサブセット化に使う Python とパッケージ。uv が .venv に入れる（版は pyproject.toml と uv.lock で固定。Python がなければ uv が入れる）
 import path from "path";
 import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -17,11 +17,11 @@ run(process.execPath, [
   ...(process.argv.includes("--with-deps") ? ["--with-deps"] : []),
   "chromium",
 ]);
-// registry.yaml を読むのに yaml が要るので、npm ci のあとで読み込む
-const { readRegistry } = await import("../../license-notice/scripts/verify.mjs");
-const pypi = readRegistry()
-  .flatMap((e) => String(e.package ?? "").split(/,\s*/))
-  .filter((s) => s.startsWith("pypi:"))
-  .map((s) => s.slice(5));
-run("python3", ["-m", "pip", "install", ...pypi]);
+try {
+  execFileSync("uv", ["--version"], { stdio: "ignore" });
+} catch {
+  console.error("uv が見つからない。README「0. 必要なツールを入れる」の手順で入れてから、もう一度 npm run setup を実行する");
+  process.exit(1);
+}
+run("uv", ["sync", "--locked"]);
 console.log("セットアップが済んだ。確かめるには：npm run build -- examples/sample-deck");

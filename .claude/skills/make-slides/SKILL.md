@@ -131,4 +131,7 @@ hook（`.claude/settings.json` から呼ばれる。AI は実行しない）：
 |---|---|---|
 | `scripts/approve-hook.mjs` | 人間が答えたとき（UserPromptSubmit） | 人間の答えを判定して approvals.yaml に記録する |
 | `scripts/protect-bash.mjs` | Bash を実行する前（PreToolUse） | approvals.yaml への書き込みを止め、ハーネスのファイル（`.claude/`・`CLAUDE.md`）への書き込みには確認を出す |
+| `scripts/protect-edit.mjs` | Edit・Write を実行する前（PreToolUse） | ハーネスのファイルの編集に確認を出す |
 | `scripts/protect-check.mjs` | 会話の始めと、ターンの終わり（SessionStart・Stop） | ハーネスのファイルの状態を覚え、すり抜けた変更を見つけて伝える |
+
+ハーネスの確認（protect-*）は、スライド作成中だけ出す。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は出さず、approvals.yaml と `.claude/settings.json` だけを守る。判定は `.claude/lib/common.mjs` の `harnessDev`。環境変数 `SLIDE_HARNESS_MODE`（`dev`・`slides`）で上書きできる。

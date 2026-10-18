@@ -6,11 +6,13 @@
 // - start：会話の始めに、ハーネスのファイルの sha256 を一時フォルダに控える
 // - stop：ターンの終わりに今の sha256 と比べ、変わったファイルがあれば、止めて（decision: block）理由を AI に返す。
 //   同じ中身の変更は一度だけ伝える（ハーネスを直す作業で、毎ターン止めないように）
-// - node_modules、settings.local.json、デザインの見本の元資料（git 管理外）は比べない
+// - node_modules、settings.local.json、worktrees（作業用の複製）、デザインの見本の元資料（git 管理外）は比べない
+// - ハーネスの開発中（common.mjs の harnessDev）は、.claude/settings.json だけを伝える（ほかのファイルは直すのが仕事なので伝えない）
 import fs from "fs";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
+import { harnessDev } from "../../../lib/common.mjs";
 
 const mode = process.argv[2];
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
@@ -21,7 +23,7 @@ const id = crypto
   .digest("hex")
   .slice(0, 16);
 const stateFile = path.join(os.tmpdir(), "slide-harness-protect", `${id}.json`);
-const SKIP = new Set(["node_modules", "settings.local.json", ".DS_Store"]);
+const SKIP = new Set(["node_modules", "settings.local.json", "worktrees", ".DS_Store"]);
 
 function snapshot() {
   const out = {};
@@ -51,7 +53,9 @@ if (mode !== "stop" || input.stop_hook_active) process.exit(0);
 
 const state = JSON.parse(fs.readFileSync(stateFile, "utf8"));
 const now = snapshot();
+const dev = harnessDev(root);
 const changed = [...new Set([...Object.keys(state.base), ...Object.keys(now)])]
+  .filter((f) => !dev || f === path.join(".claude", "settings.json"))
   .filter((f) => state.base[f] !== now[f] && state.told[f] !== (now[f] ?? "deleted"))
   .sort();
 if (!changed.length) process.exit(0);

@@ -6,15 +6,19 @@
 // - .claude/ と CLAUDE.md を書きうるコマンド → 人間に確認する（ask）。ハーネスを直すときは人間が許可する
 // 「書きうる」とみなすもの：リダイレクトの先、ファイルを変えるコマンド（cp・mv・rm・tee・sed -i など）の引数、
 // 書き込みの処理と対象のパスを含むその場のスクリプト（node -e、python3 -c、インタプリタに渡すヒアドキュメント）
+// ハーネスの開発中（common.mjs の harnessDev）は、.claude/ と CLAUDE.md に確認を出さない。approvals.yaml と .claude/settings.json は開発中も守る
 // 設定は .claude/settings.json の hooks.PreToolUse。
 import fs from "fs";
+import { harnessDev } from "../../../lib/common.mjs";
 
 const input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
 const cmd = String(input.tool_input?.command ?? "");
 if (!cmd) process.exit(0);
 
 const RECORD = /approvals\.yaml/;
-const HARNESS = /(^|[\s"'=/])(\.claude\/|CLAUDE\.md)/;
+const HARNESS = harnessDev(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd())
+  ? /(^|[\s"'=/])\.claude\/settings\.json/
+  : /(^|[\s"'=/])(\.claude\/|CLAUDE\.md)/;
 const kind = (s) => (RECORD.test(s) ? "record" : HARNESS.test(s) ? "harness" : null);
 
 const found = [];

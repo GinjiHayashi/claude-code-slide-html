@@ -23,7 +23,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 検索語に機密の情報を入れない（CLAUDE.md）。
 5. **outline.md を書く**：
    - 先頭の設定と表紙（S01）・締めは、`brief.md` の先頭の設定から写す（`brief-template.md` の対応表）。
-   - 型は `layout-catalog.md` から、図は `diagram-catalog.md` から選ぶ。目的に合う部品があれば必ず使い、似たものを独自に作らない。表しにくいものだけ独自の表現（`html-build/components.md` 4.1）。
+   - 型は `layout-catalog.md` から、図は `diagram-catalog.md` から選ぶ。書ける項目は `node .claude/skills/html-build/scripts/schema.mjs <型の名前>` で確かめる。目的に合う部品があれば必ず使い、似たものを独自に作らない。表しにくいものだけ独自の表現（`html-build/components.md` 4.1）。
    - 目次（`toc`）と章の扉（`section`）を入れるか、どこに入れるかは、枚数ではなく内容で決める。
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。
    - 出典は、そのスライドの `source` に書く。

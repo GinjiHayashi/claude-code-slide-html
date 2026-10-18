@@ -50,6 +50,21 @@ test("outline.md：一覧にない型・必須の項目の抜け・知らない�
   assert.ok(r.errors.some((e) => e.startsWith("S03") && e.includes("typo")));
 });
 
+test("outline.md：どの本文の型にも source を書ける。表紙の date は必須。checklist の知らない項目はエラー", async () => {
+  const dir = tempDeck();
+  fs.writeFileSync(path.join(dir, "outline.md"), outline(
+    ["## S01", "- layout: title", "- title: t"],
+    ["## S02", "- layout: do-dont", "- title: t", "- lead: false", "- source: s", "- do: {items: [a]}", "- dont: {items: [b]}"],
+    ["## S03", "- layout: grid-4", "- title: t", "- lead: false", "- source: s", "- items: [{heading: a, text: a}, {heading: b, text: b}, {heading: c, text: c}, {heading: d, text: d}]"],
+    ["## S04", "- layout: checklist", "- title: t", "- lead: false", "- source: s", "- items: [{text: a, done: true, note: x}]"],
+  ));
+  const r = await checkOutline(path.join(dir, "outline.md"));
+  assert.ok(r.errors.some((e) => e.startsWith("S01") && e.includes("date")));
+  assert.ok(!r.errors.some((e) => e.includes("source")), r.errors.join("\n"));
+  assert.ok(r.errors.some((e) => e.startsWith("S04") && e.includes("note")));
+  assert.equal(r.errors.filter((e) => /^S0[23]/.test(e)).length, 0, r.errors.join("\n"));
+});
+
 test("outline.md：html: のスクリプトはエラー", async () => {
   const dir = tempDeck();
   fs.writeFileSync(path.join(dir, "outline.md"), outline(["## S01", "- layout: title-diagram", "- title: t", "- lead: false", '- html: "<script>alert(1)</script>"']));

@@ -2,12 +2,13 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
+import { SLIDE, SPACE } from "./spec.mjs";
 
 // 機械的なチェック：deck.html をブラウザ（Playwright の Chromium）で開いて測る。
 // 内容を変える自動修正はしない。結果は build.mjs が build-log.md に書く。
 // - overflow  はみ出し：スライドの外、本文の枠（data-frame）の外に出た要素。部品・文章・独自の表現を区別しない（components.md 4.1）
 // - overlap   重なり：文字どうしが重なっている
-// - margin    余白不足：左右 54・上下 27 の余白に入り込んだ要素（表紙・扉の帯など、data-deco の飾りは除く）
+// - margin    余白不足：左右 slide-x・上下 slide-bottom（theme.css）の余白に入り込んだ要素（表紙・扉の帯など、data-deco の飾りは除く）
 // - color     トークン外の色：theme.css の色（--color-*）以外が使われている
 // - text      文字が小さすぎる：11px 未満（フッターの 11px が最小。図の中は 12px 以上）
 // - lead      説明文が3行を超えた
@@ -28,7 +29,7 @@ export function tokenColors() {
 export async function inspect(deckHtml, expectedSlides) {
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   try {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+    const ctx = await browser.newContext({ viewport: SLIDE });
     const network = [];
     await ctx.route("**/*", (r) => {
       const u = r.request().url();
@@ -41,7 +42,7 @@ export async function inspect(deckHtml, expectedSlides) {
     page.on("pageerror", (e) => script.push(e.message));
     await page.goto("file://" + path.resolve(deckHtml));
     await page.evaluate(() => document.fonts.ready);
-    const found = await page.evaluate(measure, tokenColors());
+    const found = await page.evaluate(measure, { tokens: tokenColors(), mx: SPACE.x, my: SPACE.bottom });
     const res = { network, script, ...found };
     res.count = found.slides === expectedSlides ? [] : [`deck.html は ${found.slides}枚、outline.md は ${expectedSlides}枚`];
     return res;
@@ -51,7 +52,7 @@ export async function inspect(deckHtml, expectedSlides) {
 }
 
 // ブラウザの中で動く。各スライドを測り、問題を種類ごとの配列で返す
-function measure(tokens) {
+function measure({ tokens, mx, my }) {
   const SVG = "http://www.w3.org/2000/svg";
   const SHAPES = new Set(["path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan"]);
   const ok = new Set([...tokens, "rgba(0, 0, 0, 0)"]);
@@ -103,7 +104,7 @@ function measure(tokens) {
       const q = box(e);
       if (!q.w || !q.h) continue;
       if (q.w >= S.width - 1 && q.h >= S.height - 1) continue;
-      if (q.l < 54 - 0.5 || q.r > S.width - 54 + 0.5 || q.t < 27 - 0.5 || q.b > S.height - 27 + 0.5) add("margin", `${name(e)} が余白（左右 54・上下 27）に入っている`);
+      if (q.l < mx - 0.5 || q.r > S.width - mx + 0.5 || q.t < my - 0.5 || q.b > S.height - my + 0.5) add("margin", `${name(e)} が余白（左右 ${mx}・上下 ${my}）に入っている`);
     }
     // 色と文字の大きさ
     const texts = [];

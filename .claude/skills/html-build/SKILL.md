@@ -63,6 +63,7 @@ Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入
 | `scripts/outline.mjs`・`check-outline.mjs` | outline.md の読み込みと書式チェック |
 | `scripts/build.mjs` | ビルドの入口 |
 | `scripts/font-subset.py` | フォントのサブセット化（Python の fontTools と Brotli） |
+| `scripts/icons.mjs` | アイコン集（Phosphor）から英語の語でアイコンを探す。構成（slide-outline）で使う |
 | `scripts/make-japan-map.mjs` | 地図（map）の都道府県の境界を Natural Earth から作り直す。ハーネスを直すときだけ使う |
 | `scripts/inspect.mjs` | ブラウザでの検査 |
 | `scripts/pdf.mjs` | PDF の書き出し |

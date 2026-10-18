@@ -78,7 +78,7 @@ d3・KaTeX は、license-notice の許可済み一覧に載っているものだ
 - 選択肢の比較 → `compare`。2つの軸で整理 → `matrix`
 - 流れ → `flowchart`（一列でも、枝分かれ・合流・戻りがあっても）。手順 → `steps`。日付がある → `timeline`、期間がある → `roadmap`
 - 人やシステムのやりとりの順番 → `sequence`。データの項目と関係 → `er`。組織や分類の階層 → `tree`。段階 → `pyramid`。集合の重なり → `venn`
-- 2つの分類の組み合わせごとの値 → `heatmap`。都道府県ごとの値 → `map`。式や定義 → `math`。プログラムのコード → `code`（文中の短いコードは `` `…` ``。`html-build/components.md` 4.3）
+- 2つの分類の組み合わせごとの値 → `heatmap`。都道府県ごとの値 → `map`。式や定義 → `math`。写真や画面 → `image`。プログラムのコード → `code`（文中の短いコードは `` `…` ``。`html-build/components.md` 4.3）
 
 ## 5. そのほかの型
 
@@ -89,6 +89,7 @@ d3・KaTeX は、license-notice の許可済み一覧に載っているものだ
 | `sequence` | やりとりの順番（シーケンス図） | 登場する人やシステムは5まで、やりとりは10まで | SVG/CSS |
 | `er` | データの項目と関係（ER 図） | 表は6まで | SVG/CSS |
 | `venn` | 2〜3つの集合の重なり | 集合は3つまで | SVG |
+| `image` | 写真・画面の写し・1色のアイコンを1つ置く | アイコンは `src: phosphor:<名前>`（`html-build/scripts/icons.mjs` で探す）。写真などは `outline.md` の先頭の `assets` にあるものだけ（`license-notice/policy.md` 5章）。角は半径 8 で切り抜き、薄い枠を付ける。`alt` は必須 | CSS |
 | `code` | プログラムのコードを見せる（コードブロック） | 枠に収まる行数と長さまで（長い行は折り返さない）。言語は部品の `LANGS` から選ぶ。色は GitHub Light Default、字は Roboto Mono | CSS |
 
 部品は `html-build/components/` の同名のファイル。`venn` は highlight で全部が重なる部分だけを塗り、`sequence` は応答（reply）を点線、`er` は表の見出しを塗って両端に多重度（1・N）を書く。`map` は style: shape（既定。境界は Natural Earth）と tile（タイルグリッド地図）の2通り。`math` は KaTeX の HTML 出力だけを使う（MathML 出力は環境によって組版が崩れるため）。`code` はビルド時に shiki で色を付ける。KaTeX・Natural Earth・d3-geo・shiki・Roboto Mono は registry.yaml に登録済み。

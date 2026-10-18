@@ -13,6 +13,7 @@ export function tempDeck(id = "2026-10-17-report-automation", files = ["brief.md
   const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "harness-test-")), "decks", id);
   fs.mkdirSync(dir, { recursive: true });
   for (const f of files) fs.copyFileSync(path.join(SAMPLE, f), path.join(dir, f));
+  fs.cpSync(path.join(SAMPLE, "inputs"), path.join(dir, "inputs"), { recursive: true }); // 画像・アイコン（outline.md の assets）
   return dir;
 }
 

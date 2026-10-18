@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import YAML from "yaml";
 import { frontMatter } from "../../../lib/common.mjs";
 
@@ -60,7 +61,8 @@ export const leadWidth = (text) => {
 // 幅いっぱいでも3行に収まらない長さ（全角）
 export const LEAD_LIMIT = Math.floor(LEAD.max / LEAD.px - 2) * LEAD.lines;
 
-export const readOutline = (file) => parseOutline(fs.readFileSync(file, "utf8"), file);
+// dir：デッキのフォルダ（画像などの素材の src はここからのパス）
+export const readOutline = (file) => ({ ...parseOutline(fs.readFileSync(file, "utf8"), file), dir: path.dirname(path.resolve(file)) });
 
 function load(src, where) {
   try {

@@ -12,7 +12,6 @@ contact:
   text: 問い合わせ先：データ活用推進本部　データ管理部
   email: data@example.jp
 pdf: true
-distribution: 社内のみ
 ---
 
 ## 目的・この資料で決めたいこと
@@ -44,10 +43,6 @@ distribution: 社内のみ
 ## 構成の進め方
 
 たたき台がある（outline.md）
-
-## 締切・提出先
-
-2026年10月24日の部長会
 
 ## 確認したいこと
 

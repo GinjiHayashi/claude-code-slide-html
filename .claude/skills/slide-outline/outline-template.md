@@ -10,7 +10,7 @@
 ---
 deck_id: 2026-10-17-report-automation   # YYYY-MM-DD-<短い英語名>。decks/ のフォルダ名と同じ
 title: 月次レポート作成の自動化           # デッキの題名（ブラウザのタブに出る）
-pdf: false                              # PDF も書き出すか（ヒアリングで決める）
+pdf: false                              # PDF も書き出すか（brief.md から写す）
 ---
 
 ## S01
@@ -58,7 +58,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 
 | 型 | 必須 | 任意 | 書き方 |
 |---|---|---|---|
-| `title` | title, date | subtitle, author | title は2行まで（1行 22字）。author は `{org: 所属, name: 氏名}`（片方でもよい。両方なら2行）。日付と発表者は構成のときに人間に聞く |
+| `title` | title, date | subtitle, author | title は2行まで（1行 22字）。author は `{org: 所属, name: 氏名}`（片方でもよい。両方なら2行）。日付と発表者は brief.md から写す |
 | `toc` | — | title | 項目は書かない。後ろの `section` の title から自動で作る。7章以上は2列。12章まで |
 | `section` | title | description, topics | title は 16字。topics は箇条書き 3〜6項目（各 20字）。章番号と進み具合の点は自動 |
 | `title-body` | title, body | breadcrumb, source | body は箇条書き 1〜5項目（各 110字） |
@@ -68,7 +68,7 @@ pdf: false                              # PDF も書き出すか（ヒアリン�
 | `do-dont` | title, do, dont | breadcrumb | do・dont は two-column と同じ形 |
 | `grid-4` | title, items | breadcrumb | items はちょうど4つ。各 `{heading: 15字まで, text: 3行まで, icon: 任意}` |
 | `checklist` | title, items | breadcrumb | items は 1〜8項目。各 `{text: 項目, done: true か false}` |
-| `closing` | — | contact, email | 問い合わせ先とメール。構成のときに人間に聞き、なければ書かない |
+| `closing` | — | contact, email | 問い合わせ先とメール。brief.md から写し、「なし」なら書かない |
 
 「図」は `diagram`・`diagrams`・`html` のどれか1つ。
 

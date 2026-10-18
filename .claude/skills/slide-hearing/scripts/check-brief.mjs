@@ -12,9 +12,8 @@ import { fileURLToPath } from "url";
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "html-build");
 const YAML = createRequire(path.join(HB, "package.json"))("yaml");
 
-export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf", "distribution"];
-export const SECTIONS = ["目的・この資料で決めたいこと", "聞き手と前提知識", "伝えたい結論（1文）", "発表時間・枚数の目安", "調査が必要な項目", "必ず入れる要素・入れない要素", "構成の進め方", "締切・提出先"];
-const DIST = ["社内のみ", "社外提出", "公開"];
+export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf"];
+export const SECTIONS = ["目的・この資料で決めたいこと", "聞き手と前提知識", "伝えたい結論（1文）", "発表時間・枚数の目安", "調査が必要な項目", "必ず入れる要素・入れない要素", "構成の進め方"];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
 const NONE = "なし";
 const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
@@ -39,7 +38,6 @@ export function checkBrief(text) {
     if (keys.every((x) => empty(v[x]))) missing.push(k);
   }
   if (!empty(meta.pdf) && typeof meta.pdf !== "boolean") errors.push("pdf は true か false");
-  if (!empty(meta.distribution) && !DIST.includes(meta.distribution)) errors.push(`distribution は ${DIST.join("・")} のどれか`);
 
   // 本文：見出しごとの文章。（ ）だけの説明書きは空とみなす
   const body = m ? text.slice(m[0].length) : text;

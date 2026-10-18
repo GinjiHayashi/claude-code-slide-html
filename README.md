@@ -105,6 +105,16 @@ python3 -m pip install fonttools==4.67.0 brotli==1.2.0
 | `feature/<短い英語>` | 1つの作業（例：`feature/claude-md`） | `develop` | `develop` |
 | `hotfix/<短い英語>` | `main` の緊急修正 | `main` | `main` と `develop` |
 
+既定ブランチを `develop` にする方法（リポジトリの管理者が行う。どちらか1つ）：
+
+- 画面から：リポジトリの Settings → General → Default branch で、切り替えのボタン（⇄）を押して `develop` を選び、Update を押す。
+- コマンドから（gh で管理者としてログインしているとき）：
+
+  ```sh
+  gh api -X PATCH repos/<owner>/<repo> -f default_branch=develop
+  gh api repos/<owner>/<repo> --jq .default_branch   # develop と出れば完了
+  ```
+
 ### マージ
 
 | 向き | 方法 | タイミング |

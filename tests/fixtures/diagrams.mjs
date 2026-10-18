@@ -102,4 +102,5 @@ export const DIAGRAMS = {
   compare: { options: ["案A", "案B"], criteria: ["費用"], values: [["◯", "×"]] },
   venn: { sets: [{ label: "A" }, { label: "B" }] },
   math: { tex: "E = mc^2" },
+  code: { lang: "python", code: "print(1)\n" },
 };

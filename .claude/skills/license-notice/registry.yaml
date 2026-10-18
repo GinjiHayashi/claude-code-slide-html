@@ -28,6 +28,26 @@
   verified_at: 2026-10-17
   verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
 
+- id: roboto-mono
+  name: Roboto Mono
+  type: font
+  scope: distributed                # コードのあるデッキだけ、<code> の中の文字にサブセット化して埋め込む
+  version: "5.3.0"                  # npm パッケージ @fontsource/roboto-mono の版（フォント自体は Version 3.001）
+  license: OFL-1.1
+  copyright: "Copyright 2015 The Roboto Mono Project Authors (https://github.com/googlefonts/robotomono)"
+  source: https://github.com/googlefonts/robotomono
+  package: "npm:@fontsource/roboto-mono@5.3.0"
+  files: []                         # 使う文字だけにサブセット化してビルド時に埋め込むため、実体は npm から取得する
+  commercial_use: true
+  notice_required: true             # OFL 条件2：著作権表示とライセンス全文を配布物に含める
+  conditions:
+    - 著作権表示と OFL-1.1 の全文を deck.html に含める
+  notes:
+    - 著作権表示はフォントファイルの name テーブル（ID 0）と、Fontsource の LICENSE の1行目から取った（両者は同じ）。予約フォント名はない
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-18
+  verification: AI がパッケージ同梱の LICENSE（とフォントの name テーブル）から転記した内容を、チャットで承認した
+
 - id: katex
   name: KaTeX（数式の組版。CSS とフォントを埋め込む）
   type: library
@@ -208,3 +228,21 @@
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
   verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
+- id: shiki
+  name: shiki（コードの色付け）
+  type: library
+  scope: build-only
+  version: "4.5.0"
+  license: MIT
+  copyright: "Copyright (c) 2021 Pine Wu, Copyright (c) 2023 Anthony Fu <https://github.com/antfu>"
+  source: https://github.com/shikijs/shiki
+  package: "npm:shiki@4.5.0"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - html-build/components/code.mjs だけで使う。色は github-light-default テーマ（@shikijs/themes）の値を theme.css のトークンに置き換えて出すので、配布物には shiki のコードもテーマも入らない
+    - 依存（@shikijs/*、oniguruma-to-es、regex など）もすべて MIT（package-lock.json で確認）
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-18
+  verification: AI がパッケージ同梱の LICENSE（とフォントの name テーブル）から転記した内容を、チャットで承認した

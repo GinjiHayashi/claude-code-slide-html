@@ -45,7 +45,10 @@ export function parseOutline(text, file = "outline.md") {
 
 // 全角を1、半角を0.5として数える（layout-catalog の「文字数の数え方」）
 export const width = (s) => [...String(s)].reduce((a, c) => a + (c.charCodeAt(0) < 0x80 || (c >= "\uff61" && c <= "\uff9f") ? 0.5 : 1), 0);
-export const plain = (s) => String(s).replace(/\*\*(.+?)\*\*/g, "$1");
+export const plain = (s) =>
+  String(s)
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1"); // 太字とコードの印を除いた文字
 
 // 説明文（lead）の幅：640 を基本に、3行を超える長さなら3行に収まるまで広げる（最大 1172）。
 // 16px の文字を全角1字＝16px とみなし、禁則や句読点のずれの分として1行に2字の余裕をみる。

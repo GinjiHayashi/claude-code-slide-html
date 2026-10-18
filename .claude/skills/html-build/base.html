@@ -67,6 +67,13 @@ body.present .slide.active { display: block; }
   .slide:last-of-type { break-after: auto; }
 }
 
+/* コード（components.md 4.3）：<code> は、文中（`…`）でも code の部品でも独自の表現でも、同じ字と背景にする */
+.slide code {
+  font-family: var(--font-mono); color: var(--color-code-text);
+  background: var(--color-code-bg); border-radius: var(--radius-inline); padding: 0 0.3em;
+}
+.slide pre code { background: none; border-radius: 0; padding: 0; } /* コードブロックの背景と角は code の部品の枠が持つ */
+
 /* ライセンスの全文（画面にも印刷にも出さない） */
 #licenses { display: none; }
 </style>

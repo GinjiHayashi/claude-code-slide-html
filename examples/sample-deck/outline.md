@@ -101,6 +101,30 @@ pdf: true
     items: [全部門が同じ入力の画面を使う, 集計とグラフは自動で作られる, 作成に **6時間／月**]
 
 ## S10
+- layout: text-diagram
+- title: 集計は短いスクリプトで自動にした
+- lead: 部門の表を読み込んで合計する処理を、`monthly.py` にまとめました。毎月の作業は、このスクリプトを実行するだけです。
+- body:
+    - 部門の表は `inputs/` に置くだけで読み込まれる
+    - 合計とグラフの元になる表を、**1回の実行**で作る
+    - 前月との差が大きい数字は、実行のときに知らせる
+- diagram:
+    kind: code
+    lang: python
+    file: monthly.py
+    code: |
+      import pandas as pd
+
+      # 部門ごとの表を読み込んで、1つにまとめる
+      def load(paths: list[str]) -> pd.DataFrame:
+          frames = [pd.read_excel(p) for p in paths]
+          return pd.concat(frames, ignore_index=True)
+
+      def summarize(df: pd.DataFrame) -> pd.DataFrame:
+          total = df.groupby("部門")["時間"].sum()
+          return total.reset_index()
+
+## S11
 - layout: grid-4
 - title: 展開の4つの原則
 - lead: 全部門に広げるときは、次の4つを守ります。
@@ -110,7 +134,7 @@ pdf: true
     - {heading: 自動で確かめる, text: 前月との差が大きい数字は、入力のときに知らせる}
     - {heading: 小さく始める, text: 部門ごとに順に広げ、問題があれば手順を直す}
 
-## S11
+## S12
 - layout: do-dont
 - title: レポートの書き方
 - lead: レポートの作り方をそろえるため、書き方の良い例と悪い例を示します。
@@ -121,7 +145,7 @@ pdf: true
     heading: 悪い例
     items: [タイトルが「月次の実績」だけ, すべての棒を色分けしている, 出典と時点がない]
 
-## S12
+## S13
 - layout: checklist
 - title: 公開前の確認
 - lead: レポートを配る前に、次の6項目を確かめます。
@@ -133,7 +157,7 @@ pdf: true
     - {text: 文字は 12px 以上にした, done: false}
     - {text: 発表者ノートを書いた, done: false}
 
-## S13
+## S14
 - layout: closing
 - contact: 問い合わせ先：データ活用推進本部　データ管理部
 - email: data@example.jp

@@ -51,6 +51,7 @@ export const KINDS = [
   "er",
   "map",
   "math",
+  "code",
 ];
 
 // ---- スライドの型 ----

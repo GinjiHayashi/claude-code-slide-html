@@ -17,29 +17,35 @@ Claude Code で、構成の検討から HTML スライド（`deck.html`）の作
 
 ### 1. スライド用リポジトリを作る
 
-public リポジトリのフォークは private にできません。そのため、フォークではなく **複製** で private リポジトリを作ります。
+public リポジトリのフォークは private にできません。そのため、フォークではなく **複製** で private リポジトリを作ります（GitHub Docs「Duplicating a repository」の手順を、`main` と `develop` だけを送るように変えたもの）。
 
 1. GitHub で private の空リポジトリを作ります（例：`my-slides`。README やライセンスは追加しない）。
-2. このリポジトリを履歴ごと複製します。
+2. このリポジトリの `main` と `develop` を、履歴ごと送ります。`--mirror` で送ると、ハーネスの作業用のブランチ（`feature/*`）まで複製されるため、2つだけを送ります。
 
    ```sh
    git clone --bare https://github.com/<owner>/claude-code-slide-html.git
    cd claude-code-slide-html.git
-   git push --mirror https://github.com/<owner>/my-slides.git
+   git push https://github.com/<owner>/my-slides.git main develop
    cd ..
    rm -rf claude-code-slide-html.git
    ```
 
-3. 複製したリポジトリを手元に clone し、`.gitignore` から次の2行を削除してコミットします。これで `decks/` も git で管理されます。
+3. GitHub の `my-slides` の Settings → General → Default branch を `develop` にします。
+4. 手元に clone し、`decks/.gitignore` を消してコミットします。これで `decks/` も git で管理されます（承認の依頼の一時ファイル `approval-request.yaml` だけは、ルートの `.gitignore` で管理外のまま）。
 
-   ```gitignore
-   decks/*
-   !decks/.gitkeep
+   ```sh
+   git clone https://github.com/<owner>/my-slides.git
+   cd my-slides
+   git rm decks/.gitignore
+   git commit -m "chore: decks/ を git で管理する（スライド用リポジトリ）"
+   git push origin develop
    ```
+
+   ルートの `.gitignore` は書き換えません。書き換えると、ハーネスが `.gitignore` を変えたときに、更新の取り込みで衝突するためです。
 
 ### 2. ハーネスの更新を取り込む
 
-複製したリポジトリは履歴を引き継いでいるため、ハーネスの更新を merge で取り込めます。
+複製したリポジトリは履歴を引き継いでいるため、ハーネスの更新を merge で取り込めます。取り込むのはハーネスの `main`（区切りのよい完成版）です。
 
 ```sh
 # 初回だけ
@@ -47,10 +53,15 @@ git remote add harness https://github.com/<owner>/claude-code-slide-html.git
 
 # 更新を取り込むとき
 git fetch harness
+git switch -c feature/harness-update develop
 git merge harness/main
+git push -u origin feature/harness-update
+# develop への PR を作って取り込む
 ```
 
-> この手順は、構築の後半で実際に動くことを確認します。
+- `decks/` の中身はハーネスにないので、衝突しません。
+- 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
+- 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm ci` をやり直します。
 
 ### 3. セットアップ（初回だけ）
 

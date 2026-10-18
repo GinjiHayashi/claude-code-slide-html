@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createHighlighter } from "shiki";
-import { esc, check, R, O } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // code：プログラムのコード（コードブロック）。ビルド時に shiki で色を付け、HTML にする。表示するときに何も読み込まない。
 // data: { lang, code, file? }
@@ -11,6 +11,7 @@ import { esc, check, R, O } from "./_util.mjs";
 // - file：コードの上に出すファイル名など（任意）
 // - 色は GitHub Light Default（shiki の github-light-default テーマ）。テーマの色を theme.css の --color-code-* に置き換えて出すので、
 //   トークンにない色が出たら止まる。太字・斜体（テーマの fontStyle）は使わない
+// - 枠は白の背景に、フローチャートなどの図と同じ紺の線（_util.mjs の LINE、2px）
 // - 字は Roboto Mono（theme.css の font-mono・text-code）。長い行は折り返さない。枠からはみ出したら、ビルド後の検査で止まる
 // - 文中のコード（`…`）や独自の表現の <code> も同じ字と背景になる（base.html。components.md 4.3）
 // ライセンス：shiki は MIT（ビルド時だけ使う）、Roboto Mono は OFL-1.1。registry.yaml に登録済み（id: shiki・roboto-mono）。
@@ -80,8 +81,8 @@ export default function code(data) {
     for (const t of l)
       if (t.color && !TOKEN.has(t.color.toLowerCase()))
         throw new Error(`code: テーマの色 ${t.color} に当たるトークンが theme.css にない（「${t.content.trim()}」）`);
-  const file = data.file ? `<div class="border-b border-line px-[20px] py-[8px] font-mono text-caption text-label">${esc(data.file)}</div>` : "";
-  return `<figure class="m-0 rounded-panel bg-code-bg" data-kind="code">${file}<pre class="m-0 px-[20px] py-[16px] font-mono text-code text-code-text"><code>${lines
+  const file = data.file ? `<div class="border-b-2 ${LINE.border} px-[20px] py-[8px] font-mono text-caption text-label">${esc(data.file)}</div>` : "";
+  return `<figure class="m-0 rounded-panel border-2 ${LINE.border} bg-canvas" data-kind="code">${file}<pre class="m-0 px-[20px] py-[16px] font-mono text-code text-code-text"><code>${lines
     .map((l) => l.map(span).join(""))
     .join("\n")}</code></pre></figure>`;
 }

@@ -5,6 +5,8 @@
 //   - 承認ではない（直す・待つ・疑問など）：記録せず、依頼を消す
 //   - 判断できない：記録せず、依頼を残す（AI がもう一度聞く）
 // - 結果は AI に伝える（additionalContext）。承認者は git config user.name
+// - 依頼は同時に1つのデッキだけ（request.mjs がほかのデッキの依頼を消す）。複数残っていたら、いちばん新しい依頼だけを見て、ほかは消す
+//   （「OK」の一言が、別のデッキの古い依頼まで承認してしまわないように）
 // - 予約したタスクやサブエージェントの報告など、Claude Code が自分で始めるターンにも hook は動く。それらは「<」で始まる
 //   タグに包まれて届くので、「<」で始まるプロンプトは見ない（推測。公式ドキュメントに形の記載はない）
 // 設定は .claude/settings.json の hooks.UserPromptSubmit。
@@ -20,13 +22,18 @@ if (!prompt || prompt.startsWith("<")) process.exit(0);
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const decks = path.join(root, "decks");
 if (!fs.existsSync(decks)) process.exit(0);
-const pending = fs.readdirSync(decks).map((d) => path.join(decks, d)).filter((d) => fs.existsSync(path.join(d, REQUEST)));
+let pending = fs.readdirSync(decks).map((d) => path.join(decks, d)).filter((d) => fs.existsSync(path.join(d, REQUEST)));
 if (!pending.length) process.exit(0);
+const lines = [];
+if (pending.length > 1) {
+  pending.sort((a, b) => String(readRequest(b).requested_at).localeCompare(String(readRequest(a).requested_at)));
+  for (const dir of pending.slice(1)) { fs.rmSync(path.join(dir, REQUEST)); lines.push(`decks/${path.basename(dir)}：古い承認の依頼が残っていたので消した（記録していない）。必要なら依頼し直す`); }
+  pending = pending.slice(0, 1);
+}
 
 let by = "";
 try { by = execFileSync("git", ["-C", root, "config", "user.name"], { encoding: "utf8" }).trim(); } catch {}
 const verdict = judge(prompt);
-const lines = [];
 for (const dir of pending) {
   const id = path.basename(dir);
   const req = readRequest(dir);

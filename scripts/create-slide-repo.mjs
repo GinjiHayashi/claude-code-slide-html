@@ -34,7 +34,9 @@ export function readConfig(env = process.env) {
   if (!slideRepo || slideRepo === "your-name/my-slides") throw new Error("SLIDE_REPO が未設定（.env.sample を .env に写し、owner/リポジトリ名 を書く）");
   const harnessRepo = (env.HARNESS_REPO ?? "").trim() || DEFAULT_HARNESS;
   const name = path.basename(slideRepo).replace(/\.git$/, "");
-  const dir = path.resolve(ROOT, (env.SLIDE_REPO_DIR ?? "").trim() || path.join("..", name));
+  // ~/ はホームのフォルダに直す（.env では ~ が展開されないため）
+  const dirSetting = (env.SLIDE_REPO_DIR ?? "").trim().replace(/^~(?=\/|$)/, os.homedir());
+  const dir = path.resolve(ROOT, dirSetting || path.join("..", name));
   return { slideRepo, harnessRepo, slideUrl: toUrl(slideRepo), harnessUrl: toUrl(harnessRepo), dir };
 }
 

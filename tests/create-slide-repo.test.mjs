@@ -45,6 +45,8 @@ test("readConfig：owner/name を URL に直し、clone 先の既定は隣のフ
   assert.throws(() => readConfig({}), /SLIDE_REPO/);
   assert.throws(() => readConfig({ SLIDE_REPO: "your-name/my-slides" }), /SLIDE_REPO/);
   assert.equal(toUrl("/tmp/a.git"), "/tmp/a.git");
+  assert.equal(toUrl("git@github.com:me/my-slides.git"), "git@github.com:me/my-slides.git");
+  assert.equal(readConfig({ SLIDE_REPO: "me/my-slides", SLIDE_REPO_DIR: "~/work/s" }).dir, path.join(os.homedir(), "work/s"));
 });
 
 test("main と develop だけを送り、decks/ を管理対象にして、remote harness を足す", () => {

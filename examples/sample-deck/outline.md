@@ -2,6 +2,8 @@
 deck_id: 2026-10-17-report-automation
 title: 月次レポート作成の自動化
 pdf: true
+assets:
+  - {src: inputs/screen-entry.png, credit: 見本のために作成した画面の例, license: 自作（見本用）}
 ---
 
 ## S01
@@ -102,6 +104,20 @@ pdf: true
 
 ## S10
 - layout: text-diagram
+- title: 入力の画面を全部門でそろえた
+- lead: 試行では、すべての部門が同じ入力の画面を使いました。前月との差が大きい数字は、その場で知らせます。
+- body:
+    - 指標の名前と並びを、全部門で同じにした
+    - 前月の値を横に出し、**差が大きい数字**に印を付ける
+    - 保存すると、本部の集計にそのまま入る
+- diagram:
+    kind: image
+    src: inputs/screen-entry.png
+    alt: 月次実績の入力の画面。問い合わせ件数の行に「前月の2倍」と印が付いている
+    fit: contain
+
+## S11
+- layout: text-diagram
 - title: 集計は短いスクリプトで自動にした
 - lead: 部門の表を読み込んで合計する処理を、`monthly.py` にまとめました。毎月の作業は、このスクリプトを実行するだけです。
 - body:
@@ -124,17 +140,17 @@ pdf: true
           total = df.groupby("部門")["時間"].sum()
           return total.reset_index()
 
-## S11
+## S12
 - layout: grid-4
 - title: 展開の4つの原則
 - lead: 全部門に広げるときは、次の4つを守ります。
 - items:
-    - {heading: 入力は1回だけ, text: 同じ数字を2回入力しない。部門の表をそのまま取り込む}
-    - {heading: 定義をそろえる, text: 指標の名前と計算のしかたを、全部門で同じにする}
-    - {heading: 自動で確かめる, text: 前月との差が大きい数字は、入力のときに知らせる}
-    - {heading: 小さく始める, text: 部門ごとに順に広げ、問題があれば手順を直す}
+    - {heading: 入力は1回だけ, icon: phosphor:pencil-line, text: 同じ数字を2回入力しない。部門の表をそのまま取り込む}
+    - {heading: 定義をそろえる, icon: phosphor:file-text, text: 指標の名前と計算のしかたを、全部門で同じにする}
+    - {heading: 自動で確かめる, icon: phosphor:shield-check, text: 前月との差が大きい数字は、入力のときに知らせる}
+    - {heading: 小さく始める, icon: phosphor:steps, text: 部門ごとに順に広げ、問題があれば手順を直す}
 
-## S12
+## S13
 - layout: do-dont
 - title: レポートの書き方
 - lead: レポートの作り方をそろえるため、書き方の良い例と悪い例を示します。
@@ -145,7 +161,7 @@ pdf: true
     heading: 悪い例
     items: [タイトルが「月次の実績」だけ, すべての棒を色分けしている, 出典と時点がない]
 
-## S13
+## S14
 - layout: checklist
 - title: 公開前の確認
 - lead: レポートを配る前に、次の6項目を確かめます。
@@ -157,7 +173,7 @@ pdf: true
     - {text: 文字は 12px 以上にした, done: false}
     - {text: 発表者ノートを書いた, done: false}
 
-## S14
+## S15
 - layout: closing
 - contact: 問い合わせ先：データ活用推進本部　データ管理部
 - email: data@example.jp

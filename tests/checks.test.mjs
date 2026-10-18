@@ -25,7 +25,7 @@ test("brief.md：見出しが欠けるとエラー、空の項目は missing に
 
 test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
   const dir = tempDeck();
-  fs.mkdirSync(path.join(dir, "inputs"));
+  fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
   fs.writeFileSync(path.join(dir, "inputs", "memo.txt"), "メモ");
   const r = checkBrief(fs.readFileSync(path.join(dir, "brief.md"), "utf8"));
   assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("inputs/memo.txt")));
@@ -35,6 +35,16 @@ test("見本の outline.md は書式の誤りがない", async () => {
   const r = await checkOutline(path.join(tempDeck(), "outline.md"));
   assert.deepEqual(r.errors, []);
   assert.ok(r.slides > 0);
+});
+
+test("outline.md：grid-4 の icon は、アイコン集の名前がないとエラー", async () => {
+  const f = path.join(tempDeck(), "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("icon: phosphor:steps", "icon: phosphor:no-such-icon"));
+  const r = await checkOutline(f);
+  assert.ok(
+    r.errors.some((e) => e.includes("items の4つ目の") && e.includes("phosphor:no-such-icon")),
+    r.errors.join("\n"),
+  );
 });
 
 test("outline.md：一覧にない型・必須の項目の抜け・知らない項目はエラー", async () => {

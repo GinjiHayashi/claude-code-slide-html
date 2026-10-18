@@ -6,6 +6,7 @@ import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
 import { KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
+import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -37,7 +38,24 @@ export async function checkOutline(file) {
   if (!o.meta.deck_id) errors.push("先頭の設定に deck_id がない");
   else if (!DECK_ID.test(o.meta.deck_id)) errors.push(`deck_id「${o.meta.deck_id}」は YYYY-MM-DD-<短い英語名> の形にする`);
   if (!o.meta.title) errors.push("先頭の設定に title（デッキの題名）がない");
-  for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
+  for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf", "assets"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
+  // デッキの素材（画像・アイコン）：license-notice/policy.md 5章
+  const assets = o.meta.assets ?? [];
+  const deck = { dir: o.dir, assets: Array.isArray(assets) ? assets : [] };
+  const usedAssets = new Set();
+  if (!Array.isArray(assets)) errors.push("assets は素材の並び（- で始まる行）にする");
+  else
+    assets.forEach((a, n) => {
+      const where = `assets の${n + 1}つ目`;
+      if (!a || typeof a !== "object" || Array.isArray(a)) return errors.push(`${where} は { src, credit, license, url? } の形にする`);
+      for (const k of Object.keys(a))
+        if (!["src", "credit", "license", "url"].includes(k)) errors.push(`${where} に知らない項目「${k}」がある（src・credit・license・url）`);
+      for (const k of ["src", "credit", "license"]) if (!a[k]) errors.push(`${where} に ${k} がない（出どころとライセンスを書く）`);
+      if (!a.src) return;
+      if (!/^inputs\/[^/].*/.test(a.src) || a.src.includes("..")) errors.push(`${where} の src「${a.src}」は inputs/ の中のファイルにする`);
+      else if (!fs.existsSync(path.join(o.dir, a.src))) errors.push(`${where} の src「${a.src}」のファイルがない`);
+      if (assets.findIndex((x) => x?.src === a.src) !== n) errors.push(`${where} の src「${a.src}」が重複している`);
+    });
   if (!o.slides.length) errors.push("スライドが1枚もない");
   const nch = o.slides.filter((s) => s.fields.layout === "section").length;
   if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc"))
@@ -132,7 +150,18 @@ export async function checkOutline(file) {
       else
         f.items.forEach((it, n) => {
           if (!it?.heading || !it?.text) return err(s, `items の${n + 1}つ目に heading（小見出し）と text（説明）が要る`);
-          for (const x of Object.keys(it)) if (!["heading", "text"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+          for (const x of Object.keys(it)) if (!["heading", "text", "icon"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+          if (it.icon !== undefined && isIconRef(it.icon)) {
+            try {
+              readIcon("grid-4", it.icon);
+            } catch (e) {
+              err(s, `items の${n + 1}つ目の${e.message.replace(/^grid-4: /, " ")}`);
+            }
+          } else if (it.icon !== undefined) {
+            usedAssets.add(it.icon);
+            if (!deck.assets.some((a) => a?.src === it.icon)) err(s, `items の${n + 1}つ目の icon「${it.icon}」が先頭の assets にない`);
+            else if (!/\.svg$/i.test(it.icon)) err(s, `items の${n + 1}つ目の icon は SVG にする（色を theme.css の色に差し替えるため）`);
+          }
           if (width(it.heading) > G.heading) warn(s, `items の${n + 1}つ目の heading が全角${G.heading}字を超えている`);
           if (width(plain(it.text)) > G.text) warn(s, `items の${n + 1}つ目の text が3行の目安（全角${G.text}字）を超えている`);
           bullets.push(it.text);
@@ -172,7 +201,8 @@ export async function checkOutline(file) {
         const { kind, ...data } = d;
         try {
           comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
-          comps[kind](data);
+          if (kind === "image") usedAssets.add(data.src);
+          comps[kind](data, { deck });
         } catch (e) {
           err(s, `図 ${kind} のデータが決まりに合わない：${e.message}`);
         }
@@ -207,6 +237,7 @@ export async function checkOutline(file) {
       }
     }
   }
+  for (const a of deck.assets) if (a?.src && !usedAssets.has(a.src)) warnings.push(`assets の ${a.src} はどのスライドでも使っていない`);
   return { errors, warnings, slides: o.slides.length };
 }
 

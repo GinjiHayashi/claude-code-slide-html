@@ -103,4 +103,5 @@ export const DIAGRAMS = {
   venn: { sets: [{ label: "A" }, { label: "B" }] },
   math: { tex: "E = mc^2" },
   code: { lang: "python", code: "print(1)\n" },
+  image: { src: "inputs/screen-entry.png", alt: "画面" },
 };

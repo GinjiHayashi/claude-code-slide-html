@@ -73,6 +73,27 @@
   verified_at: 2026-10-17
   verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
 
+- id: phosphor
+  name: Phosphor Icons（アイコン集。塗りのアイコン）
+  type: icon
+  scope: distributed                # outline.md で使ったアイコン（phosphor:<名前>）だけ、SVG を deck.html に埋め込む
+  version: "2.1.1"
+  license: MIT
+  copyright: "Copyright (c) 2023 Phosphor Icons"
+  source: https://github.com/phosphor-icons/core
+  package: "npm:@phosphor-icons/core@2.1.1"
+  files: []                         # SVG は npm から取得し、塗りの色を currentColor（theme.css の色）に置き換えて埋め込む
+  commercial_use: true
+  notice_required: true             # MIT：著作権表示とライセンス全文を含める
+  conditions:
+    - アイコンを1つでも使ったデッキには、MIT の表記を載せる
+  notes:
+    - 著作権表示は npm の @phosphor-icons/core@2.1.1 同梱の LICENSE から取った
+    - AI が scripts/icons.mjs で英語のタグから探して選ぶ（ユーザーの決定、2026-10-18）。人間が素材を用意しなくてよい
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-18
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を、チャットで承認した
+
 - id: natural-earth
   name: Natural Earth（都道府県の境界）
   type: map-data

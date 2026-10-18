@@ -52,13 +52,14 @@ export const KINDS = [
   "map",
   "math",
   "code",
+  "image",
 ];
 
 // ---- スライドの型 ----
 // required・optional：書ける項目。visual：図（diagram・diagrams・html のどれか1つ）が必須。lead：説明文が必須（要らないなら lead: false）
 // text：1行の文字数の目安（全角）。list：箇条書きの [最少, 最多, 1項目の文字数の目安]
 // columns：{ heading, items } の枠（項目の名前、箇条書きの数、1項目と小見出しの文字数）
-// grid：{ heading, text } をちょうど count 個。checks：{ text, done } を min〜max 個
+// grid：{ heading, text, icon? } をちょうど count 個（icon は phosphor:<名前> か先頭の assets の SVG。番号の丸の代わりに出す）。checks：{ text, done } を min〜max 個
 // author：{ org, name } の文字数の目安。chapters：目次に載せられる章の数
 // 文字数は目安で、超えると注意。最後はビルド後の検査で、実際の行数をブラウザで測る
 const BODY = ["breadcrumb", "source"];
@@ -101,7 +102,8 @@ export function describeLayout(name) {
     }
     if (L.columns?.keys.includes(k))
       return `${k}（{ heading?: ${L.columns.heading}字, items: 箇条書き ${L.columns.items[0]}〜${L.columns.items[1]}項目、各${L.columns.each}字 }）`;
-    if (k === "items" && L.grid) return `items（ちょうど${L.grid.count}つ。各 { heading: ${L.grid.heading}字, text: ${L.grid.text}字 }）`;
+    if (k === "items" && L.grid)
+      return `items（ちょうど${L.grid.count}つ。各 { heading: ${L.grid.heading}字, text: ${L.grid.text}字, icon?: phosphor:<名前> か assets の SVG }）`;
     if (k === "items" && L.checks) return `items（${L.checks.min}〜${L.checks.max}項目。各 { text: ${L.checks.text}字, done: true か false }）`;
     if (k === "author") return `author（{ org?: ${L.author.org}字, name?: ${L.author.name}字 }）`;
     return k;

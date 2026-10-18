@@ -46,8 +46,15 @@
 | 対象 | 扱い（`.claude/settings.json` と hook） |
 |---|---|
 | `approvals.yaml`、`.claude/settings.json` | 変えられない（deny。`approvals.yaml` は、Bash のその場のスクリプトの中の書き込みも hook が止める） |
-| `.claude/` の中、`CLAUDE.md` | 変えるたびに人間の確認が出る。ハーネスを直すときは人間が許可する |
+| `.claude/` の中、`CLAUDE.md` | スライド作成中は、変えるたびに人間の確認が出る。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は、確認を出さない |
 | すり抜けた変更 | ターンの終わりに hook が見つけて伝える。そのときは、変えたことと理由を人間に伝え、戻すかを聞く |
+| 危ない git・削除（force push、`main` への push、`git reset --hard`、`rm -rf` など） | いつでも人間の確認が出る（ask） |
+
+ハーネスを直すときのコマンドの書き方（確認を増やさないため）：
+
+- ファイルの編集は Edit を使う。1つの Bash に、ファイルの書き込みとほかの処理をつなげない。
+- 別のフォルダの git は `cd <パス> && git …` ではなく `git -C <パス> …` で行う（`cd` と `git` の組み合わせは Claude Code が確認を出す）。
+- worktree を作るときは `.claude/worktrees/` に作る（Claude Code の保護の例外）。`node_modules` をシンボリックリンクで外から借りない（作業フォルダの外として確認が出る）。
 
 ## 調査とセキュリティ
 

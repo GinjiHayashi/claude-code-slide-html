@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { esc } from "./components/_util.mjs";
+import { loadAsset, inlineSvg } from "./components/_asset.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 import { SLIDE, SPACE } from "./scripts/spec.mjs";
 
@@ -17,7 +18,12 @@ const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01�
 const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む // text-body（16px）の1行の高さ（行の高さ 1.7）
 
 // ---- 文字 ----
-const strong = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>'); // **語句** → 太字（components.md 4.2）
+// **語句** → 太字（components.md 4.2）、`コード` → 文中のコード（4.3）。コードの中の ** は太字にしない
+const strong = (s) =>
+  String(s ?? "")
+    .split(/(`[^`]+`)/)
+    .map((p, i) => (i % 2 ? `<code>${esc(p.slice(1, -1))}</code>` : esc(p).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')))
+    .join("");
 const TITLE = `m-0 flex items-center gap-[24px] text-title font-bold text-primary before:block before:h-[1.25em] before:w-[8px] before:shrink-0 before:translate-y-[0.06em] before:bg-primary before:content-['']`;
 const STRIP_LEFT = `<div data-deco class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
 const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;
@@ -55,13 +61,14 @@ ${inner}${s.fields.notes ? `\n<aside class="notes">${esc(s.fields.notes)}</aside
 </section>`;
 
 // ---- 図 ----
-async function diagram(d, w, h, comps) {
+// env：{ comps（読み込んだ部品）, deck（デッキのフォルダと素材の一覧。画像の部品が使う） }
+async function diagram(d, w, h, env) {
   const { kind, ...data } = d;
-  comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
-  return comps[kind](data, { width: Math.floor(w), height: Math.floor(h) });
+  env.comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
+  return env.comps[kind](data, { width: Math.floor(w), height: Math.floor(h), deck: env.deck });
 }
 // 図の枠：diagram（1つ）・diagrams（左右に2つ）・html（独自の表現）。caption は図の下に書く
-async function visual(f, w, h, comps) {
+async function visual(f, w, h, env) {
   const cap = f.caption ? `<div class="mt-[8px] text-caption text-label">${esc(f.caption)}</div>` : "";
   const H = f.caption ? h - 26 : h;
   let v;
@@ -71,13 +78,13 @@ async function visual(f, w, h, comps) {
     const [a, b] = f.diagrams;
     if (a.kind === "kpi") {
       // kpi を左に縦に積み、もう1つを右に置く（components.md 4章）
-      const stack = (await Promise.all(a.items.map((it) => diagram({ kind: "kpi", items: [it] }, 360, H, comps)))).join('<div class="h-[16px]"></div>');
-      v = `<div class="flex h-full gap-[48px]"><div class="flex w-[360px] shrink-0 flex-col justify-center">${stack}</div><div class="min-w-0 flex-1">${await diagram(b, w - 408, H, comps)}</div></div>`;
+      const stack = (await Promise.all(a.items.map((it) => diagram({ kind: "kpi", items: [it] }, 360, H, env)))).join('<div class="h-[16px]"></div>');
+      v = `<div class="flex h-full gap-[48px]"><div class="flex w-[360px] shrink-0 flex-col justify-center">${stack}</div><div class="min-w-0 flex-1">${await diagram(b, w - 408, H, env)}</div></div>`;
     } else {
       const half = (w - 48) / 2;
-      v = `<div class="flex h-full gap-[48px]"><div class="min-w-0 flex-1">${await diagram(a, half, H, comps)}</div><div class="min-w-0 flex-1">${await diagram(b, half, H, comps)}</div></div>`;
+      v = `<div class="flex h-full gap-[48px]"><div class="min-w-0 flex-1">${await diagram(a, half, H, env)}</div><div class="min-w-0 flex-1">${await diagram(b, half, H, env)}</div></div>`;
     }
-  } else v = await diagram(f.diagram, w, H, comps);
+  } else v = await diagram(f.diagram, w, H, env);
   return `<div class="flex h-full flex-col"><div class="min-h-0 flex-1">${v}</div>${cap}</div>`;
 }
 
@@ -138,7 +145,7 @@ ${topics}</div>`,
   "text-diagram": async (s, ctx) => {
     let out;
     const html = page(s, ctx, (w, h) => ((out = { w, h }), "@@VISUAL@@"));
-    const v = await visual(s.fields, out.w - SPACE.column - 40, out.h, ctx.comps);
+    const v = await visual(s.fields, out.w - SPACE.column - 40, out.h, ctx.env);
     return html.replace(
       "@@VISUAL@@",
       `<div class="flex h-full gap-[40px]"><div class="w-column shrink-0">${bullets(s.fields.body, "text-body")}</div><div class="min-w-0 flex-1">${v}</div></div>`,
@@ -147,7 +154,7 @@ ${topics}</div>`,
   "title-diagram": async (s, ctx) => {
     let out;
     const html = page(s, ctx, (w, h) => ((out = { w, h }), "@@VISUAL@@"));
-    return html.replace("@@VISUAL@@", await visual(s.fields, out.w, out.h, ctx.comps));
+    return html.replace("@@VISUAL@@", await visual(s.fields, out.w, out.h, ctx.env));
   },
   "two-column": (s, ctx) =>
     page(
@@ -179,7 +186,7 @@ ${topics}</div>`,
       s,
       ctx,
       () =>
-        `<div class="grid h-full grid-cols-2 grid-rows-2 gap-[24px]">${s.fields.items.map((it, i) => `<div class="rounded-panel bg-panel p-[24px]"><div class="flex items-center gap-[12px] text-heading font-bold text-ink"><span class="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-primary text-body text-on-primary">${i + 1}</span>${esc(it.heading)}</div><p class="m-0 mt-[12px] text-body text-ink">${strong(it.text)}</p></div>`).join("")}</div>`,
+        `<div class="grid h-full grid-cols-2 grid-rows-2 gap-[24px]">${s.fields.items.map((it, i) => `<div class="rounded-panel bg-panel p-[24px]"><div class="flex items-center gap-[12px] text-heading font-bold text-ink">${it.icon ? `<span class="flex shrink-0 text-primary">${inlineSvg(loadAsset("grid-4", it.icon, ctx.env.deck), it.icon, 32)}</span>` : `<span class="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-primary text-body text-on-primary">${i + 1}</span>`}${esc(it.heading)}</div><p class="m-0 mt-[12px] text-body text-ink">${strong(it.text)}</p></div>`).join("")}</div>`,
     ),
   // チェックリスト：済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）
   checklist: (s, ctx) => {
@@ -214,7 +221,8 @@ ${topics}</div>`,
 /** outline（parseOutline の戻り値）から、スライドの HTML を順に返す */
 export async function renderDeck(outline) {
   const chapters = outline.slides.filter((s) => s.fields.layout === "section").map((s) => s.fields.title);
-  const ctx = { chapters, chapter: null, chapterNo: 0, comps: {} };
+  const deck = { dir: outline.dir, assets: outline.meta.assets ?? [] }; // 画像・アイコンの素材（outline.md の先頭の assets）
+  const ctx = { chapters, chapter: null, chapterNo: 0, env: { comps: {}, deck } };
   const out = [];
   for (const s of outline.slides) {
     if (s.fields.layout === "section") {

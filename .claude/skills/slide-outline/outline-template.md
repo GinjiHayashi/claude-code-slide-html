@@ -11,6 +11,8 @@
 deck_id: 2026-10-17-report-automation   # YYYY-MM-DD-<短い英語名>。decks/ のフォルダ名と同じ
 title: 月次レポート作成の自動化           # デッキの題名（ブラウザのタブに出る）
 pdf: false                              # PDF も書き出すか（brief.md から写す）
+assets:                                 # 写真などを使うときだけ。人間が inputs/ に置いたもの（license-notice/policy.md 5章）。アイコン集のアイコンは書かない
+  - {src: inputs/screen.png, credit: 自組織で撮影, license: 自組織の素材}
 ---
 
 ## S01
@@ -75,8 +77,16 @@ pdf: false                              # PDF も書き出すか（brief.md か�
 - 1枚の図は2つまで。kpi は図として数えない（`components.md` 4章）。
 - 強調する値（`callout`、kpi の値）も outline に書く。部品は計算しない（承認とファクトチェックの対象にするため）。
 
+## 4.1 画像とアイコン
+
+- アイコンは、アイコン集から `node .claude/skills/html-build/scripts/icons.mjs <英語の語>` で探し、`phosphor:<名前>` と書く（`assets` には書かない）。
+- 写真・画面の写しなど、人間が用意する素材は、先頭の `assets` に書いたものだけ使える。`src`・`credit`・`license` は必須、`url` は任意。出どころとライセンスは人間に聞いて書き、推測で書かない。
+- 画像は `diagram: {kind: image, src: inputs/screen.png, alt: 何が写っているか}`。`grid-4` のカードの印は items に `icon: phosphor:check-circle`。大きなアイコンは `diagram: {kind: image, src: phosphor:users, alt: …}`。
+- 書式チェックが、ファイルがあるか、`assets` にあるか、使っていない素材がないかを確かめる。
+
 ## 5. 文章
 
 - 特に伝えたい語句は `**語句**` で太字にする。1項目に1か所、1枚に3か所まで（`components.md` 4.2）。
+- 関数名・コマンド・ファイル名などの短いコードは `` `…` `` で囲む。複数行のコードは `code` の図にする（`components.md` 4.3）。
 - タイトルは結論を1文で書く（`design-reference`）。
 - 説明文（`lead`）は、タイトルを補う2〜3行の平文。図や箇条書きの内容を繰り返さず、何を見てほしいかを書く。

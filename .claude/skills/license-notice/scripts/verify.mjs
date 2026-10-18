@@ -7,6 +7,7 @@
 // - 実体ファイルの sha256 の不一致（registry.yaml の files）
 // - package.json の依存に、登録のないものがある
 // - Tailwind の CSS の先頭のライセンス表記が消えている、または版が違う
+// - デッキの素材（data-deck-asset）が outline.md の先頭の assets にない（policy.md 5章）
 // 注意（人が確認する）
 // - 識別子（data-origin・data-asset-id）のない SVG
 import fs from "fs";
@@ -75,7 +76,8 @@ function checkEntry(e, policy, err) {
   }
 }
 
-export function verify(scan) {
+// assets：outline.md の先頭の assets（デッキの素材の出どころとライセンス）
+export function verify(scan, assets = []) {
   const errors = [],
     warnings = [];
   const err = (m) => errors.push(m);
@@ -94,6 +96,11 @@ export function verify(scan) {
   }
   for (const x of scan.external) err(`外部への読み込み：${x}`);
   for (const x of scan.unknown) err(x);
+  for (const src of scan.deckAssets ?? []) {
+    const a = assets.find((x) => x?.src === src);
+    if (!a) err(`デッキの素材 ${src} が outline.md の先頭の assets にない`);
+    else if (!a.credit || !a.license) err(`デッキの素材 ${src} の credit（出どころ）か license がない`);
+  }
 
   // 道具も含めて、登録の中身を確かめる（ビルドに使ったものはすべて）
   const used = new Set([...scan.assets.map((a) => a.id), ...reg.filter((e) => e.scope === "build-only").map((e) => e.id)]);

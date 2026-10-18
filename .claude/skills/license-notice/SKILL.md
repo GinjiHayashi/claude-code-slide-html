@@ -22,7 +22,7 @@ description: スライドに使う素材（フォント・アイコン・ライ�
 
 ## 素材を新しく使いたいとき
 
-`policy.md` 4章の「登録の手順」に従う。AI は調べて `registry.yaml` に書き、人間に根拠を示して承認を求める。`verified_by`・`verified_at`・`verification` は、人間の承認の言葉がない限り書かない。
+`registry.yaml` は固定ファイルなので、スライド作成中は変えない。素材が要るときは、人間に理由を伝えて判断を仰ぐ。人間がハーネスを直すと決めたら、`policy.md` 4章の「登録の手順」に従う。AI は調べて `registry.yaml` に書き、人間に根拠を示して承認を求める。`verified_by`・`verified_at`・`verification` は、人間の承認の言葉がない限り書かない。
 
 - `policy.md`、`templates/`、`assets/` は人間が管理する固定ファイル。変える必要があれば人間に理由を伝える。
 - ライセンスの文面（credits スライドや全文）を自分で書かない。

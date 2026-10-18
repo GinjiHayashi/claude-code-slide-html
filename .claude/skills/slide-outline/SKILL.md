@@ -27,6 +27,8 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 目次（`toc`）と章の扉（`section`）を入れるか、どこに入れるかは、枚数ではなく内容で決める。
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。
    - 出典は、そのスライドの `source` に書く。
+   - アイコンは、アイコン集から選ぶ。スライドの意味を英語の語（同じ意味の語を2〜3個）にして `node .claude/skills/html-build/scripts/icons.mjs <語>` で探し、カテゴリとタグを見て合うものを `phosphor:<名前>` と書く。人間に素材を頼まない。
+   - 写真・画面の写しと、アイコン集にないアイコンは、人間が `inputs/` に置いたものだけを使い、先頭の `assets` に出どころとライセンスを書く（`outline-template.md` 4.1）。出どころやライセンスが分からなければ人間に聞く。AI がネットから素材を取ってこない（`license-notice/policy.md` 5章）。
 6. **チェック**：`node .claude/skills/html-build/scripts/check-outline.mjs decks/<deck-id>/outline.md`。
    - エラーは直して、もう一度チェックする。エラーが0件になってから人間に見せる。`claims` の ID が research.md にない、使わなくなった主張を指している、もエラーになる。
    - 「決まっている」のとき、直すのに人間の文を変える必要があるエラー（字数の上限など）は、自分で直さずに人間に聞く。

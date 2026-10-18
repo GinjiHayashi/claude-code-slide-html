@@ -3,7 +3,7 @@
 // 使い方：node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>
 // - deck-id は YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）。decks/<deck-id>/ と、その中の inputs/（人間が渡した元の資料）・build/（ビルドが作るもの）を作る
 // - brief.md は deck_id だけを入れ、ほかの項目は空（＝まだ聞いていない）。項目と見出しは check-brief.mjs と同じ
-// - すでにフォルダがあれば何もしない（上書きしない）
+// - すでにフォルダがあれば何も作らず、終了コード 1 で終わる（上書きしない。呼び出し元はそのフォルダを使う）
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";

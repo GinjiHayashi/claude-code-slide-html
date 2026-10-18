@@ -61,7 +61,7 @@ const html = bar(data, { width: 1172, height: 440 });
 - 目的に合う部品があるときは、独自の表現を作らない。部品では表しにくいときだけ、枠の中に入れる HTML として書き、次を守る。
   - 色・文字の大きさ・余白は `theme.css` のトークンだけを使う（トークン外の色の検査で止まる）。
   - 枠の大きさを超えない（はみ出しの検査で止まる）。
-  - 画像やアイコンを埋め込まない（登録のない素材としてライセンスの照合で止まる）。SVG を手で書いたときは、識別子（`data-origin`）がないので注意として報告され、人が素材を写していないかを確かめる。部品が作る SVG には `data-origin="generated"`、登録した素材には `data-asset-id="<registry の id>:<名前>"` が付いている。
+  - 画像やアイコンを埋め込まない（登録のない素材としてライセンスの照合で止まる）。画像とアイコンは 4.4 の部品で使う。SVG を手で書いたときは、識別子（`data-origin`）がないので注意として報告され、人が素材を写していないかを確かめる。部品が作る SVG には `data-origin="generated"`、登録した素材には `data-asset-id="<registry の id>:<名前>"` が付いている。
   - スクリプト（script タグ・on〜 属性・javascript:）は書かない。スライドに動く処理は要らない（書式チェックのエラーで止まる）。
   - `build-log.md` に「独自の表現」と記録し、人間の確認で見てもらう。よく使うものは、あとで正式な部品にするかを人間が決める。
 
@@ -71,12 +71,42 @@ const html = bar(data, { width: 1172, height: 440 });
 - 目安：1つの箇条書きに1か所まで、1枚のスライドに3か所まで。数字や結論の語句を優先する。太字ばかりにすると強調にならないため。
 - 太字にした語句は、構成の確認（承認ゲート）で人間が見られるよう、`outline.md` にそのまま残る。
 
+## 4.3 コード
+
+コードの見た目は1つに決めてあり、どこに書いても同じになる。
+
+| 書く場所 | 書き方 | 見た目 |
+|---|---|---|
+| 複数行のコード | `code` の部品（`diagram: {kind: code, lang, code, file?}`）。`code: \|` に続けて字下げして書く | エディタのウィンドウ風。白の背景に `line` の色の 1px の角の丸い（`rounded-panel`、8）枠。上の帯の左に3つの丸、中央にファイル名（`file`。黒の太字）、右端に言語の名前の丸いラベル。GitHub Light Default の色、Roboto Mono の `text-code`（14px） |
+| 文中の短いコード（関数名、コマンド、ファイル名） | 本文・箇条書き・説明文で `` `…` `` で囲む | Roboto Mono。背景は `code-bg`、角は `radius-inline`（4）。字の大きさは周りの文と同じ |
+| 独自の表現（`html:`）の中 | `<code>…</code>` と書くだけ。クラスで色や字を指定しない | 文中のコードと同じ（`base.html` がすべての `<code>` に当てる） |
+
+- コードの色・字・背景は `theme.css` の `--font-mono`・`--color-code-*`・`--text-code`・`--radius-inline` だけで決める。値を変えるときは `theme.css` を直す（部品と `base.html` はトークンを参照するだけ）。
+- コードの中の `**` は太字にしない。コードブロックの中で強調したい行があっても、色や太字を手で付けない。
+- Roboto Mono にない文字（日本語のコメントなど）は Noto Sans JP で出る。
+
+## 4.4 画像とアイコン
+
+| 使い方 | 書き方 | 見た目 |
+|---|---|---|
+| 写真・画面の写し | `image` の部品（`diagram: {kind: image, src, alt, fit?}`） | 角を `rounded-panel`（8）で切り抜き、`line` の色の 1px の枠を付ける。`cover`（既定）は枠いっぱいに広げてはみ出す分を切る。`contain` は切らずに比を保って収める |
+| 1色のアイコンを大きく1つ | `image` の部品の `src` に `phosphor:<名前>`。または人間の SVG に `icon: true` | 色を `primary` に差し替え、枠の中央に置く |
+| カードの見出しの印 | `grid-4` の items に `icon: phosphor:<名前>`（または `inputs/….svg`） | 番号の丸の代わりに、32px のアイコンを `primary` の色で置く |
+
+- アイコンは、まずアイコン集（Phosphor の塗り。`registry.yaml` の id: phosphor）から選ぶ。AI が `node .claude/skills/html-build/scripts/icons.mjs <英語の語>` でタグから探し、`phosphor:<名前>` と書く。`assets` には書かない。
+- 写真・画面の写しと、アイコン集にないアイコンは、人間が `inputs/` に置き、`outline.md` の先頭の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。
+- アイコンの SVG は、塗りと線の色を `currentColor` に置き換え、スクリプトや外部の参照を外して埋め込む。色は `theme.css` のトークンになる。
+- 画像の大きさ（px）は部品が枠の大きさと画像の比から計算する。`outline.md` に寸法を書かない。
+
 ## 5. 部品が使う素材
 
 | 部品 | 素材 | 扱い |
 |---|---|---|
 | `math` | KaTeX の CSS とフォント | 数式のあるデッキだけ、`katexCss()` の CSS を `deck.html` に入れる。クレジットに MIT と OFL-1.1 を載せる |
 | `map`（shape） | `license-notice/assets/natural-earth/japan-prefectures.json` | 部品が読み込む。作り直すときは `scripts/make-japan-map.mjs`。クレジットに「Made with Natural Earth.」 |
+| `code`・文中のコード | Roboto Mono。shiki（ビルド時だけ） | `<code>` の中の文字だけにサブセット化して埋め込む。コードのないデッキには入らない。クレジットに OFL-1.1 |
+| `image`・`grid-4` の icon | Phosphor Icons（`phosphor:<名前>`） | 使ったアイコンの SVG だけを埋め込む。MIT |
+| `image`・`grid-4` の icon | デッキの素材（`inputs/` の画像・アイコン） | `outline.md` の `assets` に書いたものだけ。credits スライドに出どころとライセンス |
 | すべて | Noto Sans JP | 使う文字だけにサブセット化して埋め込む |
 
 素材はすべて `license-notice/registry.yaml` に登録済みのものだけを使う。

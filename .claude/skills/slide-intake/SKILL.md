@@ -9,7 +9,7 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 
 ## 手順
 
-1. **デッキのフォルダ**：`node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>` で `decks/<deck-id>/` と空の `brief.md`、`inputs/`、`build/` を作る（フォルダの中の分け方は CLAUDE.md の「フォルダ」）。`deck-id` は `YYYY-MM-DD-<短い英語名>`。日付は発表日（わからなければ今日）、名前は内容から AI が付け、brief の確認のときに人間に見せる。フォルダがもうあれば、作らずにそのフォルダを使う。
+1. **デッキのフォルダ**：スライド用リポジトリでは、先に `make-slides` の「git」の 1（ブランチ）を行う。そのあと `node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>` で `decks/<deck-id>/` と空の `brief.md`、`inputs/`、`build/` を作る（フォルダの中の分け方は CLAUDE.md の「フォルダ」）。`deck-id` は `YYYY-MM-DD-<短い英語名>`。日付は発表日（わからなければ今日）、名前は内容から AI が付け、brief の確認のときに人間に見せる。フォルダがもうあれば、スクリプトは何も作らずに終了コード 1 で終わる。そのときはそのフォルダを使う（エラーではない）。
 2. **入力を集める**（人間が渡した資料は `decks/<deck-id>/inputs/` に置く。外に置かれた資料は `inputs/` にコピーしてから読む。元のファイルは消さない。`inputs/` の中身は書き換えない）：
    - これまでのチャットのやり取り（依頼文、箇条書きのメモ、貼り付けられた文章）。スライドに関わる人間の発言は、言葉を変えずに `inputs/chat-YYYY-MM-DD.md` に書き写す（日付はやり取りの日。同じ日のものは同じファイルに足す）。チャットの原文を残し、ほかの資料と同じように読み返せるようにするため
    - `decks/<deck-id>/inputs/intake.md`（事前記入シート。ひな形は `intake-form.md`）

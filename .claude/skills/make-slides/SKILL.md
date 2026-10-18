@@ -7,10 +7,29 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 人間の依頼から `decks/<deck-id>/build/deck.html` の完成までを、工程ごとのスキルをつないで進める。どこまで進んだかは自分で覚えて判断せず、毎回 `scripts/status.mjs` で確かめる。会話が途切れても、同じデッキで `status.mjs` を実行すれば続きから始められる。
 
+## 全体の流れ
+
+ワークフローの全体像はこの節にまとめてある（工程ごとの細かい手順は各スキル）。人間の承認は3回。
+
+```
+依頼 → 1a 取り込み（slide-intake） → 1b ヒアリング（slide-hearing）
+     → 承認1：brief.md（構成の草案があれば outline-draft.md も）
+     → 2 構成と調査（slide-outline、researcher） → 3 ファクトチェック（slide-factcheck、fact-checker）
+     → 承認2：outline.md と factcheck.md（まとめて1回）
+     → 4・5 ビルド（html-build。検査とライセンスの照合を含む） → 6 最終確認
+     → 承認3：build/deck.html → 完成（スライド用リポジトリなら develop への PR）
+
+直すとき：中身・見た目 → 2 に戻る（変えたスライドだけ 3 をやり直し、承認2から）。前提 → 1b に戻る（下の「直すとき」）
+```
+
+- **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が自由な言葉で答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
+- **誰が何をするか**：AI は資料を読み、質問し、`brief.md`・`outline.md`・`research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする。
+- **AI がしないこと**：承認の記録、`deck.html` を読む・直す、見た目や文章の良し悪しの判定、ハーネス（`.claude/`・`CLAUDE.md`）の変更。
+
 ## 手順
 
 1. **デッキを決める**：
-   - 新しいスライドの依頼なら、`slide-intake` から始める（デッキのフォルダもそこで作る）。
+   - 新しいスライドの依頼なら、`slide-intake` から始める（デッキのフォルダもそこで作る）。スライド用リポジトリでは、`deck-id` を決めたら、フォルダを作る前に下の「git」の 1（ブランチ）を行う（先にフォルダを作ると、未コミットの変更があるとして `branch.mjs` が止まるため）。
    - 続きや直しの依頼なら、`ls decks/` で対象のデッキを探す。どれか分からなければ、候補（`deck-id` の一覧）を見せて人間に聞く。推測で選ばない。
    - `deck-id` が決まったら、下の「git」の 1（ブランチ）を行う。
 2. **現在地を確かめる**：`node .claude/skills/make-slides/scripts/status.mjs decks/<deck-id>`。出力の「工程」「状態」「次に」「理由」を読む。
@@ -33,13 +52,15 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 - **承認を頼むとき**は、下の「承認の頼み方」に従う。答えが「直して」なら、そのスキルの手順に戻って直す。
 - **ビルドの前**には `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> build` を実行し、通ったときだけ `html-build` でビルドする。止められたら理由を人間に伝え、`status.mjs` の「次に」に戻る。
-- **ビルドが不合格**のときは、`html-build` の「不合格のとき」に従う。字数や改行など、内容を変えない直しは `outline.md` を直してビルドし直してよい。ただし `outline.md` を変えたので、承認とファクトチェックをやり直す（手順の「直すとき」）。内容を変える直しは人間に報告して判断を仰ぐ。
+- **ビルドが不合格**のときは、`html-build` の「不合格のとき」に従う。内容を変えない直し（改行や太字の位置、図のラベルの略し方など、主張・数値・順序が変わらないもの）は `outline.md` を直してビルドし直してよい。ただし `outline.md` を変えたので、承認とファクトチェックをやり直す（下の「直すとき」）。
+  - 内容を変える直し、内容を変えるかどうか迷う直しは、人間に報告して判断を仰ぐ。
+  - brief.md の「構成の進め方」が「決まっている」なら、人間が書いた文は字数のためでも変えず、どこが収まらないかを伝えて人間に聞く（`slide-outline`）。
 
 ## 承認の頼み方
 
 1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`）。依頼は `approval-request.yaml` に書かれる。
 2. そのあとで「outline.md と factcheck.md を承認しますか？」のように聞く。人間は自由な言葉で答えてよい。
-3. 答えは hook が判定して記録し、結果を伝えてくる。AI は記録しない。
+3. 答えは hook が判定して記録し、結果を伝えてくる。AI は記録しない。承認した人として、git の `user.name` が記録される（空なら記録されない）。人間が自分の名前を設定した環境で使う。
 4. 承認されたかは自分で判断せず、`status.mjs` か `gate.mjs decks/<deck-id> <outline|factcheck|build>` で確かめる。
 
 ## 最終確認（工程6）
@@ -74,8 +95,9 @@ description: スライド作成の全体の入口。新しいデッキを始め�
    - 「人間に聞く」なら、理由を伝えて答えを待つ。コミットしていない変更は消さない。
    - squash マージのあとは、元のブランチも残っている。そこで直しを始めない（マージ済みの古い中身のため）。
 2. **コミット**：承認が記録されるたびに、そのデッキのフォルダだけをコミットする（承認の記録 `approvals.yaml` と、承認された内容が同じコミットに入るように）。
-   - `git add decks/<deck-id> && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md と factcheck.md を承認`、`build/deck.html を承認（最終確認）`）。
-   - ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）は、最終確認のコミットに入れる（承認した成果物そのものを残すため）。
+   - 最終確認より前：`git add decks/<deck-id> ':(exclude)decks/<deck-id>/build' && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md と factcheck.md を承認`）。直しの途中でビルドした `build/` は入れない。
+   - 最終確認：`git add decks/<deck-id> && git commit -m "feat(<deck-id>): build/deck.html を承認（最終確認）"`。ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）を入れる（承認した成果物そのものを残すため）。
+   - 種類の後ろの `(<deck-id>)` は、どのデッキのコミットかを示すため（README「コミットメッセージ」）。
    - 今いるブランチが `feature/<deck-id>`（か `-fix`）であることを、コミットの前に確かめる。違えば止めて人間に伝える。
    - `approval-request.yaml` は `.gitignore` で管理外。
 3. **PR**：「完成」になったら、`git push -u origin <ブランチ>` のあと、develop への PR を作る（`gh pr create --base develop`）。PR の本文には、デッキの題名、枚数、ファクトチェックの要確認の数、ビルドの注意を書く。マージは人間が行う（squash マージ）。AI はマージしない。

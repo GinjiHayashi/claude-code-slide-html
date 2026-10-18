@@ -58,10 +58,12 @@ export async function build(deckDir) {
     // 1回目：スライドだけで組み立て、使った素材を走査して照合する（license-notice）。不合格なら deck.html を書かずに止める
     const first = assemble(work, outline, slides, "");
     const scan1 = scanDeck(first.html);
-    const lic = verify(scan1);
+    const assets = outline.meta.assets ?? [];
+    const lic = verify(scan1, assets);
     const cr = credits(
       scan1.assets.map((a) => a.id),
       lic.registry,
+      { used: scan1.deckAssets, assets },
     );
     lic.errors.push(...cr.errors);
     if (lic.errors.length) {
@@ -86,6 +88,7 @@ export async function build(deckDir) {
         deck_sha256: crypto.createHash("sha256").update(html).digest("hex"),
         distributed: scan.assets.map((a) => ({ id: a.id, version: reg.get(a.id)?.version, license: reg.get(a.id)?.license, found: a.found })),
         build_only: [...reg.values()].filter((e) => e.scope === "build-only").map((e) => ({ id: e.id, version: e.version, license: e.license })),
+        deck_assets: scan.deckAssets.map((src) => ({ src, ...assets.find((a) => a.src === src) })),
         svg_without_id: scan.untaggedSvg,
       }),
     ].join("\n");

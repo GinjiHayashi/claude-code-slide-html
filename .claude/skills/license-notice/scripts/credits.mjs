@@ -4,6 +4,7 @@
 // - 行：素材ごとに1行。追加のライセンス（additional_licenses）も1行ずつ（例：KaTeX のフォント）
 // - 全文：templates/<SPDX ID>.txt の {{copyright}} に registry.yaml の copyright を差し込む。
 //   テンプレートがないライセンスは、表記が必要（notice_required）ならエラー、不要（パブリックドメインなど）なら行だけ載せる
+// - デッキの素材（画像・アイコン。policy.md 5章）：outline.md の assets の credit と license を、出どころとライセンスが同じものごとに1行にまとめる。全文は入れない
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -18,7 +19,7 @@ const short = (s) =>
     .trim(); // 名前の末尾の（説明）を外す
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function credits(assetIds, registry) {
+export function credits(assetIds, registry, deck = { used: [], assets: [] }) {
   const rows = [],
     texts = [],
     errors = [];
@@ -40,6 +41,22 @@ export function credits(assetIds, registry) {
         texts.push({ id, name: p.name, license: p.license, text: fs.readFileSync(tpl, "utf8").replace("{{copyright}}", () => p.copyright) });
       else if (e.notice_required) errors.push(`${id}：${p.license} のテンプレート（templates/${p.license}.txt）がない`);
     }
+  }
+  const groups = new Map();
+  for (const src of deck.used) {
+    const a = deck.assets.find((x) => x?.src === src);
+    if (!a) continue; // 照合（verify.mjs）でエラーにしている
+    const key = `${a.credit}\u0000${a.license}`;
+    groups.set(key, [...(groups.get(key) ?? []), { src, a }]);
+  }
+  for (const list of groups.values()) {
+    const { a } = list[0];
+    rows.push({
+      id: "deck",
+      name: `画像：${list.map((x) => path.basename(x.src)).join("、")}`,
+      license: a.license,
+      copyright: a.url ? `${a.credit}（${a.url}）` : a.credit,
+    });
   }
   return { rows, texts, errors };
 }

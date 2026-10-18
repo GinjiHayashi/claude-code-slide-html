@@ -64,7 +64,22 @@ deny:
 5. 人間が承認したら、AI が `verified_by`（承認した人）・`verified_at`（承認した日）・`verification`（何を承認したか）を書く。**人間の承認の言葉がない限り、AI はこの3つを書かない。**
 6. 条件付き（`conditional`）のライセンスは、人間が使うかどうかを個別に判断する。AI は判断の材料（守る条件）を `conditions` に書いて示す。
 
-## 5. 出典
+## 5. デッキの素材（画像・アイコン）
+
+アイコンは、まず `registry.yaml` に登録したアイコン集（Phosphor、id: phosphor）から AI が選ぶ（`html-build/components.md` 4.4）。登録済みなので、この章の手順は要らない。
+
+写真、画面の写し、アイコン集にないアイコンなど、デッキごとに違う素材は `registry.yaml` に登録しない（固定ファイルをデッキのたびに変えないため）。代わりに次のように扱う。
+
+1. **人間が用意する**：素材は人間が入手し、`decks/<deck-id>/inputs/` に置く。AI はネットから素材を取ってこない（配布元が直リンクや自動の取得を禁じていることが多いため）。
+2. **出どころを outline.md に書く**：`outline.md` の先頭の `assets` に、素材ごとに `src`（`inputs/…`）・`credit`（作者や配布元）・`license`（利用規約の名前や「自組織で撮影」など）・`url`（任意。利用規約のページ）を書く。書き方は `slide-outline/outline-template.md`。
+3. **人間が確かめる**：`assets` は `outline.md` の一部なので、構成とファクトチェックの承認（承認2）で人間が見る。商用・改変・クレジットの要否などの利用条件を確かめるのは人間。AI は、利用規約を読んだ範囲で分かったことを伝える。
+4. **ビルドが照合する**：部品は素材に `data-deck-asset="<src>"` を付けて埋め込む。走査は、`assets` にない素材が入っていたらエラーにする。credits スライドには、出どころとライセンスが同じものごとに1行で載せる（全文は入れない）。
+
+- `assets` の `license` は SPDX の ID でなくてよい。1章の許可の一覧とは照らさない（判断は人間）。
+- 再配布が禁じられた素材（多くの無料アイコンのサイト）は、ハーネスのリポジトリ（公開）にも `examples/` にも入れない。private のスライド用リポジトリの `decks/` に置くのは、本人が使うためなので再配布にあたらないと考える（推測。規約に GitHub の扱いの記述はない）。
+- 独自の表現（`html:`）に画像やアイコンを埋め込まない。画像は `image` の部品、カードのアイコンは `grid-4` の `icon` で使う。
+
+## 6. 出典
 
 - SPDX License List：https://spdx.org/licenses/
 - SPDX の `LicenseRef-` の書き方（SPDX Specification 2.3.1、Other licensing information detected）：https://spdx.github.io/spdx-spec/v2.3.1/other-licensing-information-detected/

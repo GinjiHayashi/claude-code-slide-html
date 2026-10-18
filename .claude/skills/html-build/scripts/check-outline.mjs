@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
+import { KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -14,31 +15,10 @@ import { DECK_ID, isMain } from "../../../lib/common.mjs";
 //   図が3つ以上、太字の数、独自の表現（html:）を使った。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
-// 型の決まりは slide-outline/layout-catalog.md、図は diagram-catalog.md と html-build/components.md。
+// 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
 // 終了コード：0＝エラーなし（注意はあってもよい）、2＝エラーあり（ほかのチェックと同じ）
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
-export const KINDS = ["kpi", "bar", "hbar", "table", "stacked-bar", "line", "area", "combo", "donut", "scatter", "steps", "flowchart", "timeline", "roadmap", "matrix", "pyramid", "tree", "compare", "heatmap", "venn", "sequence", "er", "map", "math"];
-
-// 型ごとの項目。text：1行の文字数の目安。list：箇条書きの数の上限と、1項目の文字数の目安（最後はブラウザで実際の行数を測る）
-const BODY = ["breadcrumb", "source"];
-export const LAYOUTS = {
-  title: { required: ["title", "date"], optional: ["subtitle", "author"], text: { title: 44, subtitle: 50, date: 20 } },
-  toc: { required: [], optional: ["title"], text: { title: 30 } },
-  section: { required: ["title"], optional: ["description", "topics"], text: { title: 16, description: 120 }, list: { topics: [3, 6, 20] } },
-  "title-body": { required: ["title", "body"], optional: BODY, text: { title: 30 }, list: { body: [1, 5, 110] } },
-  "text-diagram": { required: ["title", "body"], visual: true, optional: [...BODY, "caption"], text: { title: 30 }, list: { body: [1, 4, 68] } },
-  "title-diagram": { required: ["title"], visual: true, optional: [...BODY, "caption"], text: { title: 30 } },
-  "two-column": { required: ["title", "left", "right"], optional: BODY, text: { title: 30 }, columns: ["left", "right"] },
-  "do-dont": { required: ["title", "do", "dont"], optional: ["breadcrumb"], text: { title: 30 }, columns: ["do", "dont"] },
-  "grid-4": { required: ["title", "items"], optional: ["breadcrumb"], text: { title: 30 } },
-  checklist: { required: ["title", "items"], optional: ["breadcrumb"], text: { title: 30 } },
-  closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
-};
-const COMMON = ["layout", "notes", "claims", "html"];
-// 説明文（lead）が必須の型（本文のある型）。要らないスライドだけ lead: false
-export const WITH_LEAD = ["title-body", "text-diagram", "title-diagram", "two-column", "do-dont", "grid-4", "checklist"];
-const VISUAL = ["diagram", "diagrams"]; // 図の型を使う項目。html: と合わせて、図のある型ではどれか1つが必須
 
 export async function checkOutline(file) {
   const errors = [], warnings = [];
@@ -59,7 +39,7 @@ export async function checkOutline(file) {
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
   if (!o.slides.length) errors.push("スライドが1枚もない");
   const nch = o.slides.filter((s) => s.fields.layout === "section").length;
-  if (nch > 12 && o.slides.some((s) => s.fields.layout === "toc")) errors.push(`章が${nch}ある。目次（toc）に載せられるのは12章まで`);
+  if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc")) errors.push(`章が${nch}ある。目次（toc）に載せられるのは${LAYOUTS.toc.chapters}章まで`);
 
   const seen = new Set();
   const comps = {};
@@ -76,8 +56,8 @@ export async function checkOutline(file) {
     if (i === 0 && f.layout !== "title") warn(s, "1枚目が表紙（title）ではない");
 
     // 項目の有無
-    const lead = WITH_LEAD.includes(f.layout);
-    const allowed = new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(lead ? ["lead"] : [])]);
+    const lead = !!L.lead;
+    const allowed = allowedFields(L);
     for (const k of Object.keys(f)) if (!allowed.has(k)) err(s, `${f.layout} に項目「${k}」は書けない（書けるもの：${[...allowed].filter((x) => x !== "layout").join("・")}）`);
     for (const k of L.required) if (f[k] === undefined || f[k] === null || f[k] === "") err(s, `${f.layout} に必須の項目「${k}」がない`);
     if (L.visual && !f.diagram && !f.diagrams && !f.html) err(s, `${f.layout} には diagram・diagrams・html のどれかが必要`);
@@ -95,7 +75,10 @@ export async function checkOutline(file) {
     }
     if (f.layout === "title" && f.author != null) {
       if (typeof f.author !== "object" || Array.isArray(f.author)) err(s, "author は { org: 所属, name: 氏名 } の形にする（どちらか片方でもよい）");
-      else for (const k of Object.keys(f.author)) if (!["org", "name"].includes(k)) err(s, `author に知らない項目「${k}」がある（org・name）`);
+      else for (const [k, v] of Object.entries(f.author)) {
+        if (!(k in L.author)) err(s, `author に知らない項目「${k}」がある（org・name）`);
+        else if (width(String(v)) > L.author[k]) warn(s, `author.${k} が全角${L.author[k]}字の目安を超えている`);
+      }
     }
 
     // 箇条書き（太字を数えるため、説明文もここに入れる）
@@ -120,30 +103,33 @@ export async function checkOutline(file) {
       });
     };
     for (const [k, rule] of Object.entries(L.list ?? {})) list(k, rule);
-    for (const k of L.columns ?? []) {
-      const c = f[k];
+    for (const k of L.columns?.keys ?? []) {
+      const c = f[k], C = L.columns;
       if (c == null) continue;
       if (typeof c !== "object" || Array.isArray(c)) { err(s, `${k} は { heading: 小見出し, items: [箇条書き] } の形にする`); continue; }
       for (const x of Object.keys(c)) if (!["heading", "items"].includes(x)) err(s, `${k} に知らない項目「${x}」がある（heading・items）`);
       if (!c.items) err(s, `${k} に items（箇条書き）がない`);
-      list(`${k}.items`, [1, 4, f.layout === "two-column" ? 40 : 34], c.items);
-      if (c.heading && width(c.heading) > 20) warn(s, `${k}.heading が全角20字の目安を超えている`);
+      list(`${k}.items`, [...C.items, C.each], c.items);
+      if (c.heading && width(c.heading) > C.heading) warn(s, `${k}.heading が全角${C.heading}字の目安を超えている`);
     }
-    if (f.layout === "grid-4" && f.items != null) {
-      if (!Array.isArray(f.items) || f.items.length !== 4) err(s, "grid-4 の items はちょうど4つ");
+    if (L.grid && f.items != null) {
+      const G = L.grid;
+      if (!Array.isArray(f.items) || f.items.length !== G.count) err(s, `${f.layout} の items はちょうど${G.count}つ`);
       else f.items.forEach((it, n) => {
         if (!it?.heading || !it?.text) return err(s, `items の${n + 1}つ目に heading（小見出し）と text（説明）が要る`);
         for (const x of Object.keys(it)) if (!["heading", "text"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
-        if (width(it.heading) > 15) warn(s, `items の${n + 1}つ目の heading が全角15字を超えている`);
-        if (width(plain(it.text)) > 75) warn(s, `items の${n + 1}つ目の text が3行の目安（全角75字）を超えている`);
+        if (width(it.heading) > G.heading) warn(s, `items の${n + 1}つ目の heading が全角${G.heading}字を超えている`);
+        if (width(plain(it.text)) > G.text) warn(s, `items の${n + 1}つ目の text が3行の目安（全角${G.text}字）を超えている`);
         bullets.push(it.text);
       });
     }
-    if (f.layout === "checklist" && f.items != null) {
-      if (!Array.isArray(f.items) || f.items.length < 1 || f.items.length > 8) err(s, "checklist の items は1〜8項目");
+    if (L.checks && f.items != null) {
+      const K = L.checks;
+      if (!Array.isArray(f.items) || f.items.length < K.min || f.items.length > K.max) err(s, `${f.layout} の items は${K.min}〜${K.max}項目`);
       else f.items.forEach((it, n) => {
         if (typeof it?.text !== "string" || typeof it?.done !== "boolean") return err(s, `items の${n + 1}つ目は { text: 項目, done: true か false } の形にする`);
-        if (width(it.text) > 24) warn(s, `items の${n + 1}つ目が全角24字の目安を超えている`);
+        for (const x of Object.keys(it)) if (!["text", "done"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+        if (width(it.text) > K.text) warn(s, `items の${n + 1}つ目が全角${K.text}字の目安を超えている`);
       });
     }
 

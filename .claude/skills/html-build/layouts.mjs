@@ -2,15 +2,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { esc } from "./components/_util.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
+import { SLIDE, SPACE } from "./scripts/spec.mjs";
 
 // スライドの型（slide-outline/layout-catalog.md）を HTML にする。運用時は固定。
 // renderDeck(outline) が、outline.md の各スライドを1つの <section class="slide"> にして返す。
-// - 寸法・色・文字の大きさは layout-catalog の値。Tailwind が読み取れるよう、クラス名は省略せずに書く。
+// - 色・文字の大きさは theme.css のトークン。Tailwind が読み取れるよう、クラス名は省略せずに書く。枠の計算に使う寸法は spec.mjs（theme.css から読む）。
 // - 図は components/ の部品に outline のデータと枠の大きさを渡して作る。
 // - 自動で入れるもの：表紙以外のページ番号（base.html）、パンくず（直前の章の扉の title）、章の番号と進み具合の点、目次の項目。
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "components");
-const SLIDE_W = 1280, SLIDE_H = 720, X = 54, BODY_W = SLIDE_W - 2 * X; // BODY_W = 1172
+const BODY_W = SLIDE.width - 2 * SPACE.x; // 1172
 const LINE = 27.2;
 const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01）
 const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む // text-body（16px）の1行の高さ（行の高さ 1.7）
@@ -27,17 +28,17 @@ const bullets = (items, size = "text-heading") =>
 const leadLines = (t) => Math.ceil(width(plain(t)) / (leadWidth(t) / LEAD.px - 2));
 
 // ---- 本文のある型の枠：パンくず・タイトル・説明文・本文・出典 ----
-// 本文の枠の高さを計算し、inner(w, h) に渡す。下端は出典の上（720 − 64）
+// 本文の枠の高さを計算し、inner(w, h) に渡す。下端は出典の上（スライドの下端 − 64）
 function page(s, ctx, inner) {
   const f = s.fields;
   const crumb = f.breadcrumb ?? (ctx.chapter && `CHAPTER ${NN(ctx.chapterNo)}: ${ctx.chapter}`); // 書かなければ「CHAPTER 01: 章の名前」
-  let top = 63 + (crumb ? 22 + 8 : 0) + 47; // 余白の上端 slide-top ＋ パンくず ＋ タイトル（36px × 1.3）
+  let top = SPACE.top + (crumb ? 22 + 8 : 0) + 47; // 余白の上端 slide-top ＋ パンくず ＋ タイトル（36px × 1.3）
   let lead = "";
   if (typeof f.lead === "string") {
     lead = `<p class="m-0 mt-[32px] text-body text-ink" data-lead style="width:${leadWidth(f.lead)}px">${strong(f.lead)}</p>`;
     top += 32 + leadLines(f.lead) * LINE + 32;
-  } else top += 50; // 説明文がないときは title-gap
-  const h = Math.floor(SLIDE_H - 64 - top);
+  } else top += SPACE.titleGap; // 説明文がないときは title-gap
+  const h = Math.floor(SLIDE.height - 64 - top);
   const body = inner(BODY_W, h);
   return section(s, ctx, `<div class="px-slide-x pt-slide-top">
 ${crumb ? `<div class="mb-[8px] text-breadcrumb font-bold text-primary">${esc(crumb)}</div>` : ""}<h2 class="${TITLE}">${esc(f.title)}</h2>${lead}
@@ -105,7 +106,7 @@ ${topics}</div>`);
   "text-diagram": async (s, ctx) => {
     let out;
     const html = page(s, ctx, (w, h) => (out = { w, h }, "@@VISUAL@@"));
-    const v = await visual(s.fields, out.w - 560 - 40, out.h, ctx.comps);
+    const v = await visual(s.fields, out.w - SPACE.column - 40, out.h, ctx.comps);
     return html.replace("@@VISUAL@@", `<div class="flex h-full gap-[40px]"><div class="w-column shrink-0">${bullets(s.fields.body, "text-body")}</div><div class="min-w-0 flex-1">${v}</div></div>`);
   },
   "title-diagram": async (s, ctx) => {

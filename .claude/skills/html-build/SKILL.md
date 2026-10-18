@@ -59,4 +59,5 @@ CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/sc
 | `scripts/inspect.mjs` | ブラウザでの検査 |
 | `scripts/pdf.mjs` | PDF の書き出し |
 | `scripts/setup.mjs` | セットアップ（`npm run setup`。npm のパッケージ、Chromium、Python のパッケージ） |
-| `scripts/schema.mjs` | 図の部品に書ける項目を出す（`node .claude/skills/html-build/scripts/schema.mjs [kind]`。正は各部品の `schema`） |
+| `scripts/spec.mjs` | スライドの型の決まり（書ける項目・数・文字数）、図の型の一覧、寸法（余白は theme.css から読む） |
+| `scripts/schema.mjs` | スライドの型と図の部品に書ける項目を出す（`node .claude/skills/html-build/scripts/schema.mjs [型の名前]`。正は spec.mjs と各部品の `schema`） |

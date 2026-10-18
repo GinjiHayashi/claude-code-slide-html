@@ -11,7 +11,7 @@
 | 要素 | 決まり |
 |---|---|
 | 余白 | 左右 `slide-x`（54）、タイトルの上端 `slide-top`（63）、下端 `slide-bottom`（27） |
-| タイトル | 左上。`text-title`（36px）・太字・`primary`。前に縦長の帯（幅 8px、高さは文字の 1.25 倍、タイトルとの間 24px、帯と文字の中心を揃える）。**1行のみ、全角30字まで** |
+| タイトル | 左上。`text-title`（36px）・太字・`primary`。前に縦長の帯（幅 8px、高さは文字の 1.25 倍、タイトルとの間 24px、帯と文字の中心を揃える）。**1行のみ** |
 | パンくず（任意） | 書かなければ「CHAPTER 01: 章の名前」の形で自動で入る。タイトルの上に、所属する章の名前を `text-breadcrumb`（16px）・太字・`primary` で書く |
 | 説明文（lead） | 本文のある型（表紙・目次・章の扉・締め以外）では、タイトルの下 32 の位置に固定で置く。`text-body`（16px）・`ink`。幅は 640 を基本にし、3行を超える長さなら、3行に収まるまで幅を広げる（最大 1172＝本文の幅いっぱい）。それでも3行を超える長さ（全角およそ210字）は書式チェックのエラー。**必須**で、説明文の要らないスライドだけ `lead: false` と書いて外す |
 | 本文の開始位置 | 説明文の下 32。説明文がないときはタイトルの下 `title-gap`（50） |
@@ -23,20 +23,22 @@
 
 ## 2. 型の一覧
 
-| 型の名前 | 用途 | 枠（必須） | 枠（任意） | 制約 |
-|---|---|---|---|---|
-| `title` | 表紙 | title | subtitle, date, author | 下の 3.1 |
-| `toc` | 目次 | — | title | 項目は書かない。後ろの `section` の title から自動で作る。6章までは1列、7章以上は2列（1列目を埋めてから2列目へ）。章の数は12まで |
-| `section` | 章の扉 | title | description, topics | 下の 3.2 |
-| `title-body` | 文章中心 | title, body | breadcrumb, source | 箇条書きは5項目まで、各項目は2行まで |
-| `text-diagram` | 左に文章・右に図 | title, body, diagram | breadcrumb, caption, source | 文章の列は幅 `column`（560）。箇条書きは4項目まで |
-| `title-diagram` | 図が中心 | title, diagram | breadcrumb, caption, source | 図は高さ 500 まで（画面の約 70%） |
-| `two-column` | 2つを比べる | title, left, right | breadcrumb, source | 左右とも、小見出し1つと箇条書き4項目まで |
-| `do-dont` | 良い例と悪い例 | title, do, dont | breadcrumb | `do` は上端に `success` の帯、`dont` は上端に `error` の帯。緑と赤はこの型だけで使う |
-| `grid-4` | 原則や要点を4つ並べる | title, items（4つ） | breadcrumb | 2×2。各項目は小見出し（全角15字まで）と説明（3行まで） |
-| `checklist` | 確認する項目の一覧 | title, items（text, done） | breadcrumb | 2列。済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）。8項目まで |
-| `closing` | 締め | — | contact, email | 表紙と同じく白地＋下端の横の帯（表紙に合わせる）。「ありがとうございました」。問い合わせ先とメールは構成を決めるときに人間に聞く。なければ書かず、お礼だけを縦の中央に置く |
-| `credits` | ライセンス表記 | — | — | license-notice のスクリプトだけが作る。outline.md には書かない |
+書ける項目（必須・任意）と、文字数・項目数の上限は、この一覧には書き写さない。`node .claude/skills/html-build/scripts/schema.mjs [型の名前]` で出す（正は `html-build/scripts/spec.mjs`）。
+
+| 型の名前 | 用途 | 見た目 |
+|---|---|---|
+| `title` | 表紙 | 下の 3.1 |
+| `toc` | 目次 | 項目は書かない。後ろの `section` の title から自動で作る。6章までは1列、7章以上は2列（1列目を埋めてから2列目へ） |
+| `section` | 章の扉 | 下の 3.2 |
+| `title-body` | 文章中心 | 箇条書き。各項目は2行までに収める |
+| `text-diagram` | 左に文章・右に図 | 文章の列は幅 `column`（560）。図は右に置く |
+| `title-diagram` | 図が中心 | 図は高さ 500 まで（画面の約 70%）。`diagrams` なら左右に2つ |
+| `two-column` | 2つを比べる | 左右に小見出しと箇条書き。左は灰色、右は淡い青の地 |
+| `do-dont` | 良い例と悪い例 | `do` は上端に `success` の帯、`dont` は上端に `error` の帯。緑と赤はこの型だけで使う |
+| `grid-4` | 原則や要点を4つ並べる | 2×2。各項目は番号・小見出し・説明（3行まで） |
+| `checklist` | 確認する項目の一覧 | 2列。済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する） |
+| `closing` | 締め | 表紙と同じく白地＋下端の横の帯（表紙に合わせる）。「ありがとうございました」。問い合わせ先とメールは構成を決めるときに人間に聞く。なければ書かず、お礼だけを縦の中央に置く |
+| `credits` | ライセンス表記 | license-notice のスクリプトだけが作る。outline.md には書かない |
 
 ## 3. 表紙と章の扉
 
@@ -46,13 +48,13 @@
 
 下端に横の帯を置く。章の扉（左端の縦の帯）と形を変え、一目で区別できるようにする。
 
-| 枠 | 書き方 | 上限 |
-|---|---|---|
-| title | `text-cover`（48px）・太字・`primary` | 2行まで、1行あたり全角22字 |
-| subtitle | `text-heading`（20px）・`ink` | 1行、全角50字 |
-| date | **必須**。右下に `text-body`（16px）・`label` | 1行。例「2026年10月17日」 |
-| author.org | 所属。左下に `text-body`（16px）・`label`（日付と同じ） | 1行、全角40字 |
-| author.name | 氏名。所属と同じ `text-body`（16px）・`label`。太字にしない | 1行、全角20字 |
+| 枠 | 書き方 |
+|---|---|
+| title | `text-cover`（48px）・太字・`primary` |
+| subtitle | `text-heading`（20px）・`ink` |
+| date | **必須**。右下に `text-body`（16px）・`label` |
+| author.org | 所属。左下に `text-body`（16px）・`label`（日付と同じ） |
+| author.name | 氏名。所属と同じ `text-body`（16px）・`label`。太字にしない |
 
 - 下端に横の帯（`primary`、高さ `strip`＝20）を引く。左端の縦の帯は使わない。
 - title と subtitle をひとまとまりにし、左揃え（x=80）で縦の中央に揃える。文字の見た目の中心を合わせるため、0.04 文字分だけ上にずらす（Noto Sans JP での実測）。title と subtitle の間は 16。
@@ -66,13 +68,13 @@
 
 左に章の番号・タイトル・説明、右にその章のトピックを置く。
 
-| 枠 | 書き方 | 上限 |
-|---|---|---|
-| 章番号 | 「CHAPTER 01」の形（2桁）。`text-heading`（20px）・太字・`blue-600`。**自動で付ける**（outline.md には書かない） | — |
-| 進み具合 | 章番号の右に、章の数だけ小さな点（8px）を並べ、今の章を `primary`、ほかを `gray-200` で塗る。**自動で付ける**。章が増えても潰れない | — |
-| title | `text-section`（64px）・太字・`primary` | 1行、全角16字 |
-| description | その章で話すことの説明。`text-body`（16px）・`ink` | 3行まで |
-| topics | 右の列（幅 400）。見出し「トピック」（`text-body`・太字・`label`）と番号付きの一覧（`text-body`・`ink`）。左に細い線（2px、`line`） | 3〜6項目、各全角20字 |
+| 枠 | 書き方 |
+|---|---|
+| 章番号 | 「CHAPTER 01」の形（2桁）。`text-heading`（20px）・太字・`blue-600`。**自動で付ける**（outline.md には書かない） |
+| 進み具合 | 章番号の右に、章の数だけ小さな点（8px）を並べ、今の章を `primary`、ほかを `gray-200` で塗る。**自動で付ける**。章が増えても潰れない |
+| title | `text-section`（64px）・太字・`primary` |
+| description | その章で話すことの説明。`text-body`（16px）・`ink` |
+| topics | 右の列（幅 400）。見出し「トピック」（`text-body`・太字・`label`）と番号付きの一覧（`text-body`・`ink`）。左に細い線（2px、`line`） |
 
 - 左右の列をそれぞれ縦の中央に揃える。「この章のゴール」の枠は使わない。
 - 章の扉をどこに入れるかは、枚数で固定せず、構成（outline.md）を作るときに内容に合わせて決める。

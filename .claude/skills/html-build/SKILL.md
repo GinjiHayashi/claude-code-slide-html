@@ -13,8 +13,8 @@ description: 承認済みの outline.md から、1ファイルで完結する de
 CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/scripts/build.mjs decks/<deck-id>
 ```
 
-- 終了コードが 0 なら合格。1 なら不合格で、理由は `decks/<deck-id>/build-log.md` に書かれている。
-- 書き出すもの：`deck.html`、`assets-manifest.yaml`、`build-log.md`。`outline.md` が `pdf: true` で合格したときは `deck.pdf` も。
+- 終了コードが 0 なら合格。1 なら不合格で、理由は `decks/<deck-id>/build/build-log.md` に書かれている。
+- 書き出すもの（すべて `decks/<deck-id>/build/` の中）：`deck.html`、`assets-manifest.yaml`、`build-log.md`。`outline.md` が `pdf: true` で合格したときは `deck.pdf` も。
 - 初めて使う環境では、README の「セットアップ」を先に行う。
 
 ビルドの中でやること（順番どおり）：

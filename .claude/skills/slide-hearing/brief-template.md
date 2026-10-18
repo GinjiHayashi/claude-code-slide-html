@@ -85,7 +85,7 @@ pdf: false                               # PDF も作るか
 | 5. 調べてほしいこと | 調査が必要な項目 |
 | 6. 必ず入れるもの・入れないもの | 必ず入れる要素・入れない要素 |
 | 7-1. 進め方 | 構成の進め方 |
-| 7-2. 構成の中身 | `outline.md` の草案（slide-intake が写す） |
+| 7-2. 構成の中身 | `outline-draft.md`（構成の草案。slide-intake が言葉を変えずに写す） |
 | 8-1〜8-3. タイトル・副題・日付 | title・subtitle・date |
 | 8-4・8-5. 所属・氏名 | author の org・name |
 | 8-6・8-7. 問い合わせ先・メール | contact の text・email |

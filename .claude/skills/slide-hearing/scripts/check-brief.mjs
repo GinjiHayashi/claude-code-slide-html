@@ -19,7 +19,7 @@ const NONE = "なし";
 const empty = (v) => v === undefined || v === null || (typeof v === "string" && !v.trim());
 
 export function checkBrief(text) {
-  const errors = [], missing = [];
+  const errors = [], missing = [], missingMeta = [];
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
   let meta = {};
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id など）がない");
@@ -27,7 +27,6 @@ export function checkBrief(text) {
     try { meta = YAML.parse(m[1]) ?? {}; } catch (e) { errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`); }
   }
   for (const k of Object.keys(meta)) if (!META.includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
-  for (const k of META) if (empty(meta[k])) missing.push(k);
   if (!empty(meta.deck_id) && !/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(meta.deck_id)) errors.push(`deck_id は YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）：${meta.deck_id}`);
   if (meta.date === NONE) errors.push("date は必須（表紙の日付）。「なし」にはできない");
   for (const [k, keys] of [["author", ["org", "name"]], ["contact", ["text", "email"]]]) {
@@ -35,8 +34,10 @@ export function checkBrief(text) {
     if (empty(v) || v === NONE) continue;
     if (typeof v !== "object" || Array.isArray(v)) { errors.push(`${k} は ${keys.join("・")} を書くか「なし」`); continue; }
     for (const x of Object.keys(v)) if (!keys.includes(x)) errors.push(`${k} に知らない項目「${x}」がある（${keys.join("・")}）`);
-    if (keys.every((x) => empty(v[x]))) missing.push(k);
+    for (const x of keys) if (v[x] === NONE) errors.push(`${k}.${x} に「なし」は書かない。出さない方は項目ごと消す（${k} 全体を出さないなら ${k}: なし）`);
+    if (keys.every((x) => empty(v[x]))) missingMeta.push(k);
   }
+  for (const k of META) if (empty(meta[k])) missingMeta.push(k);
   if (!empty(meta.pdf) && typeof meta.pdf !== "boolean") errors.push("pdf は true か false");
 
   // 本文：見出しごとの文章。（ ）だけの説明書きは空とみなす
@@ -46,10 +47,12 @@ export function checkBrief(text) {
     const h = part.match(/^## (.+)\n?/);
     if (h) sections[h[1].trim()] = part.slice(h[0].length).replace(/^（[^）]*）$/gm, "").trim();
   }
+  // 空の項目は、ヒアリングで聞く順（questions.md の表の順：本文の見出し → 先頭の設定）に並べる
   for (const s of SECTIONS) {
     if (!(s in sections)) errors.push(`見出し「## ${s}」がない`);
     else if (!sections[s]) missing.push(s);
   }
+  missing.push(...META.filter((k) => missingMeta.includes(k)));
   const plan = sections["構成の進め方"];
   if (plan && !PLAN.some((p) => plan.replace(/^[-*]\s*/, "").startsWith(p))) errors.push(`「構成の進め方」の1行目は ${PLAN.join("・")} のどれかで始める`);
   const questions = (sections["確認したいこと"] ?? "").split("\n").map((l) => l.replace(/^[-*]\s*/, "").trim()).filter(Boolean);

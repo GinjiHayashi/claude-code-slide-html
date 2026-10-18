@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -13,7 +13,8 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない。
+// match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
 // 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
@@ -209,7 +210,23 @@ export async function checkOutline(file) {
       }
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
-    if (f.html) warn(s, "独自の表現（html:）を使っている。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る");
+    // 図のイメージ（slide-outline の手順 5）：先に idea で絵を書き、match で部品で描けるかを決める
+    const hasFigure = !!(f.diagram || f.diagrams || f.html);
+    const match = f.match == null ? null : String(f.match).trim();
+    const matchKind = match && MATCHES.find((x) => match.startsWith(x));
+    if (hasFigure && !f.idea) warn(s, "図のイメージ（idea）がない。部品を選ぶ前に、見せたい絵を1〜3行で書く");
+    if (hasFigure && match == null) warn(s, `match がない（${MATCHES.join("・")}）`);
+    if (!hasFigure && (f.idea || match != null)) warn(s, "idea・match があるのに図がない");
+    if (match != null && !matchKind) err(s, `match は ${MATCHES.join("・")} のどれかで始める`);
+    else if (matchKind && matchKind !== MATCHES[0] && !/^[^：:]+[：:]\s*\S/.test(match))
+      err(s, `match が「${matchKind}」のときは「：」のあとに、何が欠けるか・なぜ描けないかを書く`);
+    if (matchKind === MATCHES[0] && f.html && !f.diagram && !f.diagrams) warn(s, "match が「そのまま」なのに独自の表現（html:）で描いている。部品を使う");
+    if (matchKind && matchKind !== MATCHES[0] && !f.html) warn(s, `match が「${matchKind}」なのに部品で描いている。独自に描く`);
+    if (f.html)
+      warn(
+        s,
+        `独自の表現（html:）を使っている${matchKind && matchKind !== MATCHES[0] ? `（match：${matchKind}）` : ""}。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る`,
+      );
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");

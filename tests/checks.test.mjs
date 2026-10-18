@@ -55,6 +55,31 @@ test("outline.md：grid-4 の icon は、アイコン集の名前がないとエ
   );
 });
 
+test("outline.md：図のイメージ（idea・match）。match の書き方の誤りはエラー、描き方との食い違いは注意", async () => {
+  const f = path.join(tempDeck(), "outline.md");
+  const src = fs.readFileSync(f, "utf8");
+  const run = async (from, to) => {
+    fs.writeFileSync(f, src.replace(from, to));
+    return checkOutline(f);
+  };
+  // S06 は flowchart（部品）で描いている
+  let r = await run("- match: そのまま\n- lead: 月次レポートは", "- match: たぶん合う\n- lead: 月次レポートは");
+  assert.ok(
+    r.errors.some((e) => e.startsWith("S06") && e.includes("match は")),
+    r.errors.join("\n"),
+  );
+  r = await run("- match: そのまま\n- lead: 月次レポートは", "- match: 意味が欠ける\n- lead: 月次レポートは");
+  assert.ok(
+    r.errors.some((e) => e.startsWith("S06") && e.includes("「：」のあと")),
+    r.errors.join("\n"),
+  );
+  r = await run("- match: そのまま\n- lead: 月次レポートは", "- match: 意味が欠ける：貼り合わせの手間が伝わらない\n- lead: 月次レポートは");
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.warnings.some((w) => w.startsWith("S06") && w.includes("部品で描いている")));
+  r = await run(/- idea: 部門の表が[^\n]*\n- match: そのまま\n/, "");
+  assert.ok(r.warnings.some((w) => w.startsWith("S06") && w.includes("idea")));
+});
+
 test("outline.md：一覧にない型・必須の項目の抜け・知らない項目はエラー", async () => {
   const dir = tempDeck();
   fs.writeFileSync(

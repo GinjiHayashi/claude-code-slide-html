@@ -37,7 +37,7 @@ Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入
 - **部品にはデータだけを渡す。** 棒の長さや座標などの寸法は部品とビルドが計算し、AI は書かない。強調する数値（「約1/7」など）も `outline.md` に書き、承認とファクトチェックの対象にする。部品に計算で増やさせない。
 - 出典はスライドごとに `source:`（スライドの下部に出る）、発表者ノートは `notes:` に書く。
 - 書き方は `slide-outline/outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md` と `components.md`。
-- 目的に合う部品があれば必ず使う。部品で表しにくいときだけ `html:` に独自の表現を書く（`components.md` 4.1：トークンだけ、枠に収める、画像やスクリプトを入れない）。
+- 図は `idea`・`match` に従う。`match: そのまま` なら部品を使い、「意味が欠ける」「描けない」なら `html:` に独自の表現を書く（`components.md` 4.1：トークンだけ、枠に収める、画像やスクリプトを入れない）。
 - 承認済みかどうかは自分で判断しない。`make-slides/scripts/gate.mjs` で確かめる。
 
 ## 不合格のとき

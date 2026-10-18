@@ -83,8 +83,10 @@ export const LAYOUTS = {
   checklist: { required: ["title", "items"], optional: BODY, lead: true, text: { title: 30 }, checks: { min: 1, max: 8, text: 24 } },
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
-// どの型にも書ける項目
-export const COMMON = ["layout", "notes", "claims", "html"];
+// どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
+export const COMMON = ["layout", "notes", "claims", "html", "idea", "match"];
+// match：idea の絵を部品で描けるか。そのまま＝部品を使う。意味が欠ける・描けない＝独自に描く（「：」のあとに理由）
+export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
 // 図を書く項目（visual の型だけ）
 export const VISUAL = ["diagram", "diagrams"];
 
@@ -110,5 +112,5 @@ export function describeLayout(name) {
   };
   const req = [...L.required.map(limit), ...(L.visual ? ["diagram・diagrams・html のどれか"] : []), ...(L.lead ? ["lead（要らないなら false）"] : [])];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
-  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"])].join(", ")}${extra}`;
+  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match"].join(", ")}${extra}`;
 }

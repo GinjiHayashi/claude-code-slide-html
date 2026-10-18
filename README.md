@@ -104,9 +104,11 @@ gh がないときは、GitHub で private の空リポジトリ（README やラ
 
 ```sh
 cd ../my-slides                        # SLIDE_REPO_DIR を書いたときは、その場所
-npm run setup                          # npm のパッケージ、Chromium、Python とそのパッケージ（uv）を入れる
+npm run setup                          # npm のパッケージ、Chromium と OS のライブラリ、Python とそのパッケージ（uv）を入れる
 npm run build -- examples/sample-deck  # 見本をビルドして確かめる
 ```
+
+`npm run setup` の途中で sudo のパスワードを聞かれます。Chromium が使う OS のライブラリ（`libnss3` など）を apt で入れるためです。最後に Chromium が起動するかを確かめ、足りないものがあればそこで止まって、入れ方を表示します。
 
 エラーなく終わり、`examples/sample-deck/build/deck.html` をブラウザで開けば準備完了です。
 
@@ -221,6 +223,7 @@ PR で変わったファイル（`.claude/` や `CLAUDE.md` など）を確か�
 
 - 衝突したときは、スクリプトが途中で止まり、衝突したファイルと続け方を表示します。衝突するのは `CLAUDE.md` や `.claude/` を `my-slides` の側で直していたときだけです。
 - `package-lock.json` が変わったときは、マージのあとで `npm run setup` をやり直します。
+- ビルドが「Host system is missing dependencies」や `libnss3.so` などのライブラリがないことで止まったときは、`npx playwright install-deps chromium` を実行します（sudo のパスワードを聞かれます）。`sudo npx …` とすると、nvm で入れた npx が見つからないことがあります。
 
 ## git の運用ルール
 

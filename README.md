@@ -8,17 +8,37 @@ Claude Code に、構成の検討から HTML スライド（`deck.html`）の作
 
 このリポジトリ（public）はそのまま使わず、**複製して自分用の private リポジトリを作り、そこでスライドを作ります**。スライドの中身を公開しないためです。
 
-### 0. 必要なもの
+### 0. 必要なツールを入れる
 
-| ツール | 版 | 確かめ方 |
-|---|---|---|
-| Node.js | 22 以上 | `node -v` |
-| Python | 3（pip を含む） | `python3 -m pip --version` |
-| git | — | `git --version` |
-| Claude Code | — | `claude --version` |
-| GitHub CLI（推奨） | — | `gh auth status` |
+| ツール | 版 | 何に使うか | 確かめ方 |
+|---|---|---|---|
+| Node.js | 22 以上 | ビルドと各スクリプト | `node -v` |
+| uv | — | Python とそのパッケージ（フォントの処理）。Python は uv が入れるので、別に入れなくてよい | `uv --version` |
+| git | — | 版の管理 | `git --version` |
+| Claude Code | — | スライドを作る AI | `claude --version` |
+| GitHub CLI（推奨） | — | リポジトリと PR の作成 | `gh auth status` |
 
-GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。使うときは、先に `gh auth login` でログインしておきます。
+**macOS**（[Homebrew](https://brew.sh) を使う）
+
+```sh
+brew install node git gh uv
+curl -fsSL https://claude.ai/install.sh | bash   # Claude Code
+gh auth login                                    # GitHub にログイン（ブラウザが開く）
+```
+
+**Linux（Ubuntu）・Windows（WSL の Ubuntu）**
+
+```sh
+sudo apt update && sudo apt install -y git curl
+curl -LsSf https://astral.sh/uv/install.sh | sh   # uv
+curl -fsSL https://claude.ai/install.sh | bash    # Claude Code
+```
+
+- Node.js は、[公式のダウンロードページ](https://nodejs.org/ja/download) の手順（nvm など）で 22 以上を入れます。apt の Node.js は古いことがあります。
+- GitHub CLI は、[公式の手順](https://github.com/cli/cli/blob/trunk/docs/install_linux.md) で入れてから `gh auth login` でログインします。
+- Windows では WSL の中で使ってください（Windows のまま動かすことは試していません）。
+
+入れたら、新しいターミナルを開き、表の「確かめ方」のコマンドで版が出ることを確かめます。GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。
 
 ### 1. スライド用リポジトリを作る
 
@@ -50,7 +70,7 @@ gh がないときは、GitHub で private の空リポジトリ（README やラ
 
 ```sh
 cd ../my-slides
-npm run setup                          # npm のパッケージ、Chromium、Python のパッケージを入れる
+npm run setup                          # npm のパッケージ、Chromium、Python とそのパッケージ（uv）を入れる
 npm run build -- examples/sample-deck  # 見本をビルドして確かめる
 ```
 

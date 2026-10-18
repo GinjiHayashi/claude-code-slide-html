@@ -22,13 +22,7 @@ description: スライドに使う素材（フォント・アイコン・ライ�
 
 ## 素材を新しく使いたいとき
 
-`policy.md` 4章の手順に従う。要点：
-
-1. 公式の配布物（パッケージ同梱の LICENSE、公式の利用条件）でライセンスと著作権者を調べる。
-2. `registry.yaml` に項目を書く。`verified_by`・`verified_at`・`verification` は空のまま。
-3. 配布物に入る素材（`scope: distributed`）は、実体を `assets/` に置いて sha256 を書く。部品から埋め込むときは `data-asset-id="<id>:<名前>"` を付ける。
-4. 人間に、追加した項目と根拠（URL、LICENSE の該当箇所）を示して承認を求める。
-5. 人間がチャットで承認したら、`verified_by`・`verified_at`・`verification` を書く。**承認の言葉がない限り書かない。**
+`policy.md` 4章の「登録の手順」に従う。AI は調べて `registry.yaml` に書き、人間に根拠を示して承認を求める。`verified_by`・`verified_at`・`verification` は、人間の承認の言葉がない限り書かない。
 
 - `policy.md`、`templates/`、`assets/` は人間が管理する固定ファイル。変える必要があれば人間に理由を伝える。
 - ライセンスの文面（credits スライドや全文）を自分で書かない。

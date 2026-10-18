@@ -13,7 +13,7 @@ description: slide-intake で作った brief.md の空の項目、不備や不�
    - 終了コード 2（書式の誤り）なら、先に `brief-template.md` に合わせて直す。
    - 埋まっている項目を `questions.md` の「埋まっていても聞くとき」で見直し、当てはまるものを「確認したいこと」に書く。
    - 「空」の項目と「確認したいこと」の行が、聞くことのすべて。それ以外は聞かない。
-2. **聞く**：`questions.md` の順番で、1回に3問まで。「確認したいこと」の行も同じ枠で聞く。4問以上あるときも一度に並べず、「ほかに◯問あります」とだけ伝える。
+2. **聞く**：`questions.md` の順番と聞き方（1回に聞く数を含む）で聞く。
    - スライドの中身の材料（数値の根拠、展開案の詳細など）は聞かない。「構成で検討すること」に書く。
 3. **答えを書く**：答えをもらうたびに brief.md を書き換える。
    - 答えの言葉をなるべくそのまま書く。言い換えや補足を足さない。
@@ -24,9 +24,8 @@ description: slide-intake で作った brief.md の空の項目、不備や不�
 4. **もう一度チェック**して、1 に戻る。終了コード 0 で、見直しでも何も出なければ 5 に進む。空の項目と確認したいことがなくなるか、人間が「これで進めて」と言うまで続ける。
 5. **brief の確認を頼む**：
    1. brief.md の要点（目的、聞き手、結論、長さ、構成の進め方）と、まだ空の項目・「未定」の項目を人間に見せる。`deck_id` もここで見せる。構成の草案（`outline-draft.md`）があれば、スライドごとの番号とタイトルも見せ、人間の構成のとおりかを確かめてもらう。
-   2. `node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> brief.md` で承認を依頼する。草案があれば一緒に依頼する（`request.mjs decks/<deck-id> brief.md outline-draft.md`）。
-   3. 人間の答えは hook が記録する。承認されたかは `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> outline` で確かめる。
-   4. 直してほしいと言われたら、直して 5 をやり直す。
+   2. `make-slides` の「承認の頼み方」で、`brief.md`（草案があれば `outline-draft.md` も一緒に）の承認を頼む。構成に進めるかは `gate.mjs decks/<deck-id> outline` で確かめる。
+   3. 直してほしいと言われたら、直して 5 をやり直す。
 
 ## 調査が要るとき
 

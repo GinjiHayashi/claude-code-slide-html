@@ -56,7 +56,7 @@ public リポジトリのフォークは private にできません。そのた�
 - このリポジトリの `main` と `develop` を履歴ごと送る（`--mirror` にすると、ハーネスの作業用のブランチ `feature/*` まで送られるため）
 - 既定ブランチを `develop` にする
 - 手元（既定はこのリポジトリの隣）に clone し、`decks/.gitignore` を消してコミット・push する。これで `decks/` も git で管理されます（承認の依頼の一時ファイル `approval-request.yaml` だけは、ルートの `.gitignore` で管理外のまま）
-- ハーネスの更新を取り込むための remote `harness` を足す（下の「2. ハーネスの更新を取り込む」）
+- ハーネスの更新を取り込むための remote `harness` を足す
 
 `gh` を使わないときは、GitHub で private の空リポジトリ（README やライセンスは追加しない）を先に作ってから実行し、最後に Settings → General → Default branch を `develop` にします。
 
@@ -66,21 +66,23 @@ public リポジトリのフォークは private にできません。そのた�
 
 複製したリポジトリは履歴を引き継いでいるため、ハーネスの更新を merge で取り込めます。取り込むのはハーネスの `main`（区切りのよい完成版）です。
 
-```sh
-# 初回だけ（npm run create-slide-repo で作ったときは済んでいる）
-git remote add harness https://github.com/<owner>/claude-code-slide-html.git
+スライド用リポジトリの直下で実行します。
 
-# 更新を取り込むとき
-git fetch harness
-git switch -c feature/harness-update develop
-git merge harness/main
-git push -u origin feature/harness-update
-# develop への PR を作り、マージコミットで取り込む（squash にしない）
+```sh
+npm run update-harness
 ```
+
+スクリプトは次のことを行います。
+
+- remote `harness` がなければ足す（`.env` の `HARNESS_REPO`。空ならこのリポジトリ）
+- `develop` から `feature/harness-update` を作り、`harness/main` を merge する（取り込む更新がなければ何もしない）
+- push して、`develop` への PR を作る（`gh` がないときは、GitHub で PR を作る）
+
+PR を確かめて、人間がマージします。
 
 - この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します。
 - `decks/` の中身はハーネスにないので、衝突しません。
-- 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
+- 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。そのときスクリプトは merge の途中で止まり、衝突したファイルと続け方を表示します。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
 - 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm run setup` をやり直します。
 
 ### 3. セットアップ（初回だけ）

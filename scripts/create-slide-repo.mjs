@@ -13,7 +13,7 @@ import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DEFAULT_HARNESS = "GinjiHayashi/claude-code-slide-html";
+export const DEFAULT_HARNESS = "GinjiHayashi/claude-code-slide-html";
 
 // owner/name は GitHub の URL に直す。URL や手元のパス（テスト用）はそのまま使う
 const isGitHubName = (v) => /^[\w.-]+\/[\w.-]+$/.test(v);

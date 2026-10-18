@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 
-// 機械的なチェック：deck.html をブラウザ（Playwright の Chromium）で開いて測る（要求文書 11章）。
+// 機械的なチェック：deck.html をブラウザ（Playwright の Chromium）で開いて測る。
 // 内容を変える自動修正はしない。結果は build.mjs が build-log.md に書く。
 // - overflow  はみ出し：スライドの外、本文の枠（data-frame）の外に出た要素。部品・文章・独自の表現を区別しない（components.md 4.1）
 // - overlap   重なり：文字どうしが重なっている

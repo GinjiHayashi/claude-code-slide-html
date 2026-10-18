@@ -5,7 +5,7 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 
 # 事前情報の取り込み（slide-intake）
 
-どんな形の入力でも、内容を `decks/<deck-id>/brief.md` に集約する（要求文書 6.2）。足りないことは推測で埋めず、`slide-hearing` で聞く。
+どんな形の入力でも、内容を `decks/<deck-id>/brief.md` に集約する。足りないことは推測で埋めず、`slide-hearing` で聞く。
 
 ## 手順
 

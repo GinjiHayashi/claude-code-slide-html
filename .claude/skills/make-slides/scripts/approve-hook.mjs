@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する（要求文書 4章）。
+// 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する。
 // - 答えは自由な言葉でよい（「OK」「問題ないです」「承認します」など）。判定は approvals.mjs の judge()（決まった語で判定。AI は使わない）
 //   - 承認：依頼のときから変わっていない対象を approvals.yaml に、答えの原文ごと記録する。依頼は消す
 //   - 承認ではない（直す・待つ・疑問など）：記録せず、依頼を消す

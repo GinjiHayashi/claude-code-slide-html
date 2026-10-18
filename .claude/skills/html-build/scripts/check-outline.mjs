@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 
-// 書式チェック：outline.md をビルドの前に検査する（要求文書 7.2・11章）。
+// 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
@@ -19,7 +19,7 @@ import { checkResearch } from "../../research-standards/scripts/check-research.m
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "../components");
 export const KINDS = ["kpi", "bar", "hbar", "table", "stacked-bar", "line", "area", "combo", "donut", "scatter", "steps", "flowchart", "timeline", "roadmap", "matrix", "pyramid", "tree", "compare", "heatmap", "venn", "sequence", "er", "map", "math"];
 
-// 型ごとの項目。text：1行の文字数の目安。list：箇条書きの数の上限と、1項目の文字数の目安（推測。5-4 のブラウザの検査で見直す）
+// 型ごとの項目。text：1行の文字数の目安。list：箇条書きの数の上限と、1項目の文字数の目安（最後はブラウザで実際の行数を測る）
 const BODY = ["breadcrumb", "source"];
 export const LAYOUTS = {
   title: { required: ["title", "date"], optional: ["subtitle", "author"], text: { title: 44, subtitle: 50, date: 20 } },

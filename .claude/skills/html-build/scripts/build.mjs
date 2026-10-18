@@ -17,7 +17,7 @@ import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
 
-// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る（要求文書 11章）。書き出すものはすべて decks/<deck-id>/build/ に置く。
+// ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
 // 使い方：node build.mjs decks/<deck-id>
 // 1. 書式チェック（check-outline.mjs）。エラーがあれば止める。承認ゲート（gate.mjs）が通らなければ注意として記録する
 // 2. スライドを組み立てる（layouts.mjs と components/）
@@ -25,7 +25,7 @@ import { checkGate } from "../../make-slides/scripts/gate.mjs";
 // 4. Noto Sans JP を使っている文字だけにサブセット化して埋め込む（font-subset.py）
 // 5. 数式があれば KaTeX の CSS とフォントを埋め込む
 // 6. 組み立てたものを走査し、registry.yaml・policy.md と照合する（license-notice）。不合格なら止める
-// 7. 合格した素材の credits スライドとライセンスの全文を入れて組み立て直し、deck.html と assets-manifest.yaml を書き出す。外部から何も読み込まない（D8）
+// 7. 合格した素材の credits スライドとライセンスの全文を入れて組み立て直し、deck.html と assets-manifest.yaml を書き出す。外部から何も読み込まない
 // 8. ブラウザで開いて機械的に検査し（inspect.mjs）、結果を build-log.md に書く。問題があれば失敗として返す
 // 9. 合格し、outline.md が pdf: true なら deck.pdf も作る（pdf.mjs）
 
@@ -37,7 +37,7 @@ const OUTPUTS = ["deck.html", "deck.pdf", "assets-manifest.yaml"];
 export async function build(deckDir) {
   const outlineFile = path.join(deckDir, "outline.md");
   const chk = await checkOutline(outlineFile);
-  // 承認ゲート：単独で呼んだときは止めずに注意として記録する（要求文書 11章。止めるのは make-slides が gate.mjs で行う）
+  // 承認ゲート：単独で呼んだときは止めずに注意として記録する
   chk.warnings.unshift(...checkGate(deckDir, "build").errors.map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）

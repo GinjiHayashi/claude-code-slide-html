@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 書き込みの検査の hook（PreToolUse・Bash）：ハーネスのファイルと承認の記録を、Bash 経由で書き換えさせない（要求文書 9.1、Q6。構築順序10）。
+// 書き込みの検査の hook（PreToolUse・Bash）：ハーネスのファイルと承認の記録を、Bash 経由で書き換えさせない。
 // settings.json の Edit のルールは、Bash の「>」や sed などには効くが、node -e や python3 -c の中の書き込みには効かない（公式ドキュメント）。
 // その穴を、コマンドの文字列から分かる範囲で埋める。すり抜けは残るので、ターンの終わりに protect-check.mjs が変更を見つける。
 // - approvals.yaml を書きうるコマンド → 止める（deny）。承認の記録は hook（approve-hook.mjs）だけが書く

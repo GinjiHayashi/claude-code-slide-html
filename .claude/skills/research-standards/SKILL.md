@@ -5,7 +5,7 @@ description: 調査とファクトチェックで共通の信頼性ルール。r
 
 # 共通の信頼性ルール（research-standards）
 
-`researcher`（調査）と `fact-checker`（ファクトチェック）が守るルール（要求文書 7.4）。調べた結果は `research-template.md` の書式で返す。
+`researcher`（調査）と `fact-checker`（ファクトチェック）が守るルール。調べた結果は `research-template.md` の書式で返す。
 
 ## 出典
 
@@ -51,7 +51,7 @@ description: 調査とファクトチェックで共通の信頼性ルール。r
 
 ## 対象外
 
-- スライドの見た目や文章の良し悪しの評価（要求文書 D6）。
+- スライドの見た目や文章の良し悪しの評価。
 
 ## researcher の呼び出し方とまとめ方（呼び出し元が行う）
 

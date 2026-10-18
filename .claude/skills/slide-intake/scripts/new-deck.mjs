@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// デッキのフォルダと、空の brief.md を作る（要求文書 6.2）。slide-intake の最初に一度だけ実行する。
+// デッキのフォルダと、空の brief.md を作る。slide-intake の最初に一度だけ実行する。
 // 使い方：node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>
 // - deck-id は YYYY-MM-DD-<短い英語名>（小文字・数字・ハイフン）。decks/<deck-id>/ と、その中の inputs/（人間が渡した元の資料）・build/（ビルドが作るもの）を作る
 // - brief.md は deck_id だけを入れ、ほかの項目は空（＝まだ聞いていない）。項目と見出しは check-brief.mjs と同じ

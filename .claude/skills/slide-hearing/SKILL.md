@@ -5,7 +5,7 @@ description: slide-intake で作った brief.md の空の項目、不備や不�
 
 # ヒアリング（slide-hearing）
 
-`decks/<deck-id>/brief.md` の、`slide-intake` で埋まらなかった項目と、埋まっていても不備や不足がある項目を聞く（要求文書 6.3）。質問は `questions.md` に固定してある。
+`decks/<deck-id>/brief.md` の、`slide-intake` で埋まらなかった項目と、埋まっていても不備や不足がある項目を聞く。質問は `questions.md` に固定してある。
 
 ## 手順
 
@@ -30,7 +30,7 @@ description: slide-intake で作った brief.md の空の項目、不備や不�
 
 ## 調査が要るとき
 
-- 論点と、わかっていれば確かめ方の候補を「調査が必要な項目」に書く。調査そのものは構成の検討（`slide-outline`）で `researcher` に頼む（要求文書 7.3）。
+- 論点と、わかっていれば確かめ方の候補を「調査が必要な項目」に書く。調査そのものは構成の検討（`slide-outline`）で `researcher` に頼む。
 - ヒアリングの答えを決めるのに調査が要るとき（例：「業界の平均と比べたい」と言われ、比べられる統計があるかで構成が変わる）は、`researcher` を論点ごとに呼んでよい。結果は brief.md に書かず、人間に見せて答えをもらう。
 - 呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」に従う。
 - 検索語に機密の情報（未公開の社名・数値・案件名）を入れない（CLAUDE.md）。

@@ -64,7 +64,7 @@ reference/
 1. `reference/source.pdf` を新しい資料に置き換える（PDF 以外なら `source.<拡張子>`）。
 2. `README.md`・`slide-style.md`・`palette.md` を、今と同じ見出しで書き直す。値が資料にない項目は「なし」と書き、空欄にしない。利用条件は `license-notice/policy.md` の区分で確かめる。
 3. 人間が内容を確認する。
-4. `html-build` の `theme.css` と `layout-catalog.md` を、新しい値で見直す。差し替えは構築時の作業で、スライド作成中には行わない（作成中に見た目を変えないため。要求文書 D4）。
+4. `html-build` の `theme.css` と `layout-catalog.md` を、新しい値で見直す。差し替えは構築時の作業で、スライド作成中には行わない（作成中に見た目を変えないため）。
 
 - 元資料の図・文章・ロゴ・組織名の表記は、スライドに転載しない。
 - 元資料を加工して作ったファイルには、出典と「加工して作成」の旨を書く。

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// research.md のチェック：書式と、確度と出典の食い違いを出す（要求文書 7.2〜7.4）。内容が正しいかは見ない（ファクトチェックで確かめる）。
+// research.md のチェック：書式と、確度と出典の食い違いを出す。内容が正しいかは見ない（ファクトチェックで確かめる）。
 // 使い方：node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id>/research.md
 // - 書式は research-standards/research-template.md。「## C-001」ごとに「- 項目: 値」の YAML の箇条書き
 // - 「引用しない」「除外」のドメイン（domains.md）の URL を出典にするとエラー

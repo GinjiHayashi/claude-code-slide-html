@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// brief.md のチェック：空の項目（まだ聞いていない）と、書式の誤りを出す。ヒアリングで聞く項目はここから決める（要求文書 6.2・6.3）。
+// brief.md のチェック：空の項目（まだ聞いていない）と、書式の誤りを出す。ヒアリングで聞く項目はここから決める。
 // 使い方：node .claude/skills/slide-hearing/scripts/check-brief.mjs decks/<deck-id>/brief.md
 // - 書式は slide-hearing/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
 // - デッキのフォルダに inputs/ があれば、その中のファイルがすべて「入力の一覧」の表に書かれているかも確かめる（漏れた資料は構成に使われないため）

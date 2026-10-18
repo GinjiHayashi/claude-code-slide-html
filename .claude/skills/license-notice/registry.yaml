@@ -177,7 +177,7 @@
   commercial_use: true
   notice_required: false
   notes:
-    - スクリプトを Node.js に統一する場合（レビュー R13）は差し替えを検討する
+    - スクリプトを Node.js に統一する場合は差し替えを検討する
   verified_by: GinjiHayashi
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）

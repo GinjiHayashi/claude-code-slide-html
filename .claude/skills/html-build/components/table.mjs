@@ -3,7 +3,7 @@ import { esc, need } from "./_util.mjs";
 // table：正確な値を一覧で読ませる。8行×6列まで。
 // data: { columns: [string], rows: [[...]], highlight?: [行の番号（1から）], align?: ["left"|"right"|"center"], style? }
 // highlight は任意（書かなければ強調しない）。
-// style（見た目の種類）：既定は zebra（ユーザーが決定。見出しの青がタイトルの青とそろい、統一感があるため）
+// style（見た目の種類）：既定は zebra（見出しの青がタイトルの青とそろい、統一感があるため）
 //   panel  本文の行は薄いグレーの地＋横線（見本のガイドブックと同じ）
 //   lines  白地＋横線だけ
 //   zebra  白と薄いグレーを1行おきに。線なし

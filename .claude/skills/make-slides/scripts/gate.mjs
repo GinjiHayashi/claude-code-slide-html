@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する（要求文書 4章・11章）。
+// 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する。
 // AI の自己申告では判定しない。
 // 使い方：node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>
 // - outline：brief.md が承認済み。outline-draft.md（人間の構成の草案）があれば、それも承認済み

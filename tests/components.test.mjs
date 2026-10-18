@@ -59,6 +59,8 @@ test("code：色は theme.css のトークンのクラスで出し、使えな�
   const html = code({ lang: "python", code: "def f():\n    return 'a' # c\n" });
   assert.ok(html.includes('<span class="text-code-keyword">def</span>'));
   assert.ok(html.includes("text-code-comment"));
+  assert.ok(html.includes(">Python</span>") && !code({ lang: "text", code: "x" }).includes("rounded-full border"));
+  assert.ok(code({ lang: "python", code: "x", file: "a.py" }).includes("font-bold text-ink\">a.py</span>"));
   assert.ok(!/#[0-9a-f]{6}|style=/i.test(html));
   assert.throws(() => code({ lang: "cobol", code: "x" }), /lang に cobol は使えない/);
 });

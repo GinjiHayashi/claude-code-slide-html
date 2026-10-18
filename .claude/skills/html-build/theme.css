@@ -56,7 +56,7 @@
   --color-error: #ce0000;        /* 悪い例（Don't）、注意 */
 
   /* ---- コード（GitHub Light Default。値は shiki の github-light-default テーマの tokenColors と同じ） ---- */
-  --color-code-bg: #f6f8fa;      /* 文中のコード（`…`）の背景（GitHub のコードの背景）。コードブロックは白の背景に紺の枠 */
+  --color-code-bg: #f6f8fa;      /* 文中のコード（`…`）の背景（GitHub のコードの背景）。コードブロックは白の背景 */
   --color-code-text: #1f2328;    /* 色の付かない字（editor.foreground） */
   --color-code-comment: #6e7781; /* コメント */
   --color-code-keyword: #cf222e; /* キーワード、記憶域（storage） */

@@ -77,7 +77,7 @@ const html = bar(data, { width: 1172, height: 440 });
 
 | 書く場所 | 書き方 | 見た目 |
 |---|---|---|
-| 複数行のコード | `code` の部品（`diagram: {kind: code, lang, code, file?}`）。`code: \|` に続けて字下げして書く | 白の背景に、図と同じ紺の線（2px）の角の丸い（`rounded-panel`、8）枠。ファイル名の帯の下にも同じ線。GitHub Light Default の色、Roboto Mono の `text-code`（14px） |
+| 複数行のコード | `code` の部品（`diagram: {kind: code, lang, code, file?}`）。`code: \|` に続けて字下げして書く | エディタのウィンドウ風。白の背景に `line` の色の 1px の角の丸い（`rounded-panel`、8）枠。上の帯の左に3つの丸、中央にファイル名（`file`。黒の太字）、右端に言語の名前の丸いラベル。GitHub Light Default の色、Roboto Mono の `text-code`（14px） |
 | 文中の短いコード（関数名、コマンド、ファイル名） | 本文・箇条書き・説明文で `` `…` `` で囲む | Roboto Mono。背景は `code-bg`、角は `radius-inline`（4）。字の大きさは周りの文と同じ |
 | 独自の表現（`html:`）の中 | `<code>…</code>` と書くだけ。クラスで色や字を指定しない | 文中のコードと同じ（`base.html` がすべての `<code>` に当てる） |
 

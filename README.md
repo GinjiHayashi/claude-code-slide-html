@@ -4,6 +4,29 @@ Claude Code で、構成の検討から HTML スライド（`deck.html`）の作
 
 > 資料を Web で開いて確かめる調査（researcher・fact-checker）は、通信を許した環境ではまだ試していません。使い始めたら、出典が実際に開かれているかを確かめてください。
 
+## クイックスタート
+
+必要なもの：Node.js 22 以上、Python 3、git、Claude Code。
+
+1. **スライド用の private リポジトリを作る**（初回だけ）：下の「[1. スライド用リポジトリを作る](#1-スライド用リポジトリを作る)」の手順で、このリポジトリを複製します。
+2. **セットアップする**（初回だけ）：作ったリポジトリで実行し、見本のビルドが終了コード 0 で終われば準備完了です（`examples/sample-deck/build/deck.html` をブラウザで開けます）。
+
+   ```sh
+   npm run setup
+   npm run build -- examples/sample-deck
+   ```
+
+3. **スライドを頼む**：Claude Code を起動し、`/make-slides` に続けて依頼を書きます。
+
+   ```text
+   /make-slides 新任職員向けに、行政のデジタル化の歩みを10分で話したい。
+   ```
+
+4. **質問と承認に答える**：AI が足りないことを質問し、3回（前提の `brief.md`、構成とファクトチェック、できあがった `deck.html`）承認を求めます。答えは自由な言葉で構いません。
+5. **受け取る**：`decks/<deck-id>/build/deck.html` ができます。1ファイルで完結しているので、そのまま渡して共有できます。
+
+途中で止まったときや、完成したスライドを直したいときも `/make-slides` で続きを頼めます。流れの全体は `.claude/skills/make-slides/SKILL.md` の「全体の流れ」にあります。
+
 ## このリポジトリの位置づけ
 
 | リポジトリ | 公開範囲 | 置くもの |
@@ -66,26 +89,14 @@ git push -u origin feature/harness-update
 
 ### 3. セットアップ（初回だけ）
 
-必要なもの：Node.js 22 以上、Python 3、git。
-
-```sh
-npm run setup
-```
-
-npm のパッケージ（版は `package-lock.json` で固定）、検査と PDF に使うブラウザ（Chromium）、フォントのサブセット化に使う Python のパッケージをまとめて入れます。
+コマンドは「クイックスタート」の 2 です。`npm run setup` は、npm のパッケージ（版は `package-lock.json` で固定）、検査と PDF に使うブラウザ（Chromium）、フォントのサブセット化に使う Python のパッケージをまとめて入れます。
 
 - 使っているパッケージとその版は、すべて `.claude/skills/license-notice/registry.yaml` に登録しています。版を変えるとビルドの照合で止まります。
-- 確認：見本をビルドして、終了コードが 0 なら準備完了です。
-
-  ```sh
-  npm run build -- examples/sample-deck
-  ```
-
-  `examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
+- 見本のビルドでは、`examples/sample-deck/build/` に `deck.html`（ブラウザで開く）、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` ができます。
 
 ### 4. スライドを作る
 
-スライド用リポジトリで Claude Code を起動し、`/make-slides` に続けて依頼を書きます（例：`/make-slides 新任職員向けに、行政のデジタル化の歩みを10分で話したい。…`）。途中で止まったときや、完成したスライドを直したいときも `/make-slides` で続きを頼めます。
+頼み方は「クイックスタート」の 3〜5 です。ここでは、そのあいだに git で起きることを説明します。
 
 git は次のように進みます（AI が行うのは 1〜3 と、頼まれたときの 4。マージは人間）。
 
@@ -147,6 +158,8 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 | `chore:` | 設定やフォルダ構成などの雑務 |
 
 例：`docs: README に git の運用ルールを追加`
+
+スライド用リポジトリのデッキのコミットは、種類の後ろにデッキの ID を付けます（例：`feat(2026-10-17-data-platform): outline.md と factcheck.md を承認`）。
 
 ### 注意
 

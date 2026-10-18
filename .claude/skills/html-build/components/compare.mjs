@@ -1,4 +1,4 @@
-import { esc, need } from "./_util.mjs";
+import { esc, check, R, O } from "./_util.mjs";
 
 // compare：選択肢を観点ごとに比べる。選択肢は2〜3、観点は6まで。
 // data: {
@@ -23,8 +23,11 @@ const cell = (v) => {
   return `${mark}${note}`;
 };
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { options: [R], criteria: [R], values: [O], recommend: O };
+
 export default function compare(data) {
-  need("compare", data, ["options", "criteria", "values"]);
+  check("compare", data, schema);
   const O = data.options, Cr = data.criteria;
   if (O.length < 2 || O.length > 3) throw new Error("compare: options は2〜3");
   if (Cr.length > 6) throw new Error("compare: criteria は6まで");

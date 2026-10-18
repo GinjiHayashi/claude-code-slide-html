@@ -16,10 +16,10 @@ const html = bar(data, { width: 1172, height: 440 });
 
 | 引数 | 中身 |
 |---|---|
-| `data` | `outline.md` の `diagram:` の中身（`kind:` を除く）。項目は下の 3章 |
+| `data` | `outline.md` の `diagram:` の中身（`kind:` を除く）。書ける項目は下の 3章 |
 | `opt.width`・`opt.height` | 部品を置く枠の大きさ（px）。スライドの型が渡す。既定は `title-diagram` の 1172×440 |
 
-- 必須の項目がない、上限（本数・系列数など）を超えた、名前の食い違い（`highlight` に存在しない名前）があると、部品はエラーで止まる。直すのは `outline.md` の側。
+- 知らない項目や必須の項目がない、上限（本数・系列数など）を超えた、名前の食い違い（`highlight` に存在しない名前）があると、部品はエラーで止まる。直すのは `outline.md` の側。
 - CSS だけの部品（bar・hbar・table など）は `opt` を受け取らず、親の枠いっぱいに広がる。置く場所の大きさは親（スライドの型や組み合わせの枠）が決める。
 
 ## 2. すべての部品に共通すること
@@ -28,7 +28,7 @@ const html = bar(data, { width: 1172, height: 440 });
 |---|---|
 | 強調 | `highlight` に書いたものだけ `primary` の青。ほかは灰色。書かなければ強調しない（全部を同じ色にする部品もある） |
 | 強調表示 | 大きな数字は `callout: { value, label }` に書く。部品は計算しない。どの部品でも任意 |
-| 箱と線の色 | 枠と矢印は `line` で変えられるが、既定の `deepnavy`（Light Blue 1200 #00234B）のまま使う。塗りの箱には必ず枠を付ける |
+| 箱と線の色 | 枠と矢印は `deepnavy`（Light Blue 1200 #00234B）の1色（`components/_util.mjs` の `LINE`）。塗りの箱には必ず枠を付ける |
 | 角 | 箱の角は `rounded-panel`（8）。矢印や線の曲がり角も半径 8。**tree だけは直角** |
 | 文字 | 図の中は 12px 以上。灰色の棒など、白地で 3:1 に届かない面には必ず数値を書く |
 | 区別 | 色だけで区別しない。印の形、線の種類、直接のラベル、記号の形を使う |
@@ -36,46 +36,9 @@ const html = bar(data, { width: 1172, height: 440 });
 
 ## 3. 部品ごとのデータ
 
-「既定」は、何も書かないときの値。
-
-### 3.1 データ
-
-| 部品 | data の項目 | 選べるもの（既定） | 上限 |
-|---|---|---|---|
-| `kpi` | items（label, value, unit?, compare?, trend?, highlight?） | — | 1〜4個 |
-| `bar` | data（label, value, highlight?）, unit | callout | 2〜12本。1本の列は幅 160 まで |
-| `hbar` | data（label, value, highlight?）, unit | sort（true：大きい順）, callout | 2〜10本 |
-| `stacked-bar` | categories, series（name, values）, unit | percent, callout | 系列5・分類8 |
-| `line` | x, series（name, values）, unit | highlight（系列名）, target, zero, callout | 系列4・時点24 |
-| `area` | x, series（name, values）, unit | percent, callout | 系列5・時点24 |
-| `combo` | x, bar（name, values, unit）, line（name, values, unit） | callout | 時点12 |
-| `donut` | items（label, value）, unit | legend（**direct**・compact・table）, total, callout | 5項目 |
-| `scatter` | points（x, y, label?）, x_label, x_unit, y_label, y_unit | highlight, callout | 点50 |
-| `table` | columns, rows | style（**zebra**・panel・lines・light・light-zebra）, highlight（行）, align | 8行×6列 |
-| `heatmap` | rows, columns, values, unit | steps（3〜**5**） | 12行×12列 |
-| `map` | data（pref, value）, unit | style（**shape**・tile）, steps, highlight | 47都道府県 |
-
-### 3.2 構造・時間
-
-| 部品 | data の項目 | 選べるもの（既定） | 上限 |
-|---|---|---|---|
-| `flowchart` | nodes（label, caption?, type?） | direction（**right**・down）, wrap, highlight。枝分かれは nodes に id・col・row、edges（from, to, label?） | 箱12 |
-| `steps` | items（title, text?） | direction（**right**・down）, highlight（段の番号） | 横5段・縦6段 |
-| `timeline` | items（date, label, text?） | highlight（番号） | 3〜6個 |
-| `roadmap` | periods, lanes（name, items: start, end, label, highlight?） | — | 期間8・レーン4 |
-| `sequence` | actors, messages（from, to, label, reply?） | highlight（番号） | 登場5・やりとり10 |
-| `er` | entities（name, fields: name, key?）, relations（from, to, card?, label?） | highlight, col・row | 表6 |
-
-### 3.3 概念
-
-| 部品 | data の項目 | 選べるもの（既定） | 上限 |
-|---|---|---|---|
-| `matrix` | x_axis・y_axis（label, low, high）, cells（4つ: title, text?, items?） | highlight（1〜4） | 箇条書きは各マス3つ |
-| `pyramid` | levels（label, text?）。上から書く | highlight（段の番号） | 3〜5段 |
-| `tree` | root, children（label, children?） | direction（**down**・right）, highlight | 3階層・子5 |
-| `compare` | options, criteria, values（◯・△・×、短い文、{ mark, note }） | recommend | 選択肢2〜3・観点6 |
-| `venn` | sets（label, items?）, overlaps（sets, items） | highlight（true：全部の重なりを塗る） | 集合3 |
-| `math` | tex | size（**large**・body）, caption, output（**html**・mathml） | — |
+- 書ける項目は `node .claude/skills/html-build/scripts/schema.mjs [kind]` で出す。正は各部品の `export const schema`（R：必須、O：任意）で、このファイルには書き写さない。
+- 知らない項目（`highlite` のような書き間違いを含む）、必須の項目がない、形が違う（並びのはずが1つだけなど）と、部品はどこが違うかを示してエラーで止まる。
+- 値の意味・選べるもの・既定は、各部品の冒頭のコメントにある。上限（本数・系列数など）は `slide-outline/diagram-catalog.md` の「制約」。
 
 ## 4. 組み合わせ方
 

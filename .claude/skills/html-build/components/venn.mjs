@@ -1,4 +1,4 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE } from "./_util.mjs";
 
 let seq = 0; // 1つのデッキに venn が複数あっても clipPath の id が重ならないようにする
 
@@ -6,17 +6,20 @@ let seq = 0; // 1つのデッキに venn が複数あっても clipPath の id �
 // data: {
 //   sets: [{ label, items? }]（items はその集合だけに入るもの）,
 //   overlaps?: [{ sets: [集合の番号（0から）], items }]（重なりに入るもの）,
-//   highlight?: true（すべての集合が重なる部分を淡い青で塗る）, line?
+//   highlight?: true（すべての集合が重なる部分を淡い青で塗る）
 // }
 // opt: { width, height }（既定は 1172×440）
 // - 円は白地に枠。重なりは塗らず、highlight のときだけ全部が重なる部分を塗る（色を混ぜない）。
 // - 集合の名前は円の外に、各部分の項目は部分の中に書く。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { sets: [{ label: R, items: O }], overlaps: optional([{ sets: R, items: O }]), highlight: O };
+
 export default function venn(data, opt = {}) {
-  need("venn", data, ["sets"]);
+  check("venn", data, schema);
   const S = data.sets, n = S.length;
   if (n < 2 || n > 3) throw new Error("venn: sets は2〜3");
-  const LN = lineOf(data);
+  const LN = LINE;
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const mid = W / 2;
   let C, r;

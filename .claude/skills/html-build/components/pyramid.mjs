@@ -1,16 +1,19 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // pyramid：土台から上へ積み上がる関係。3〜5段。levels は上（頂点）から順に書く。
-// data: { levels: [{ label, text? }], highlight?: 段の番号（1から。上から数える）, line? }
+// data: { levels: [{ label, text? }], highlight?: 段の番号（1から。上から数える） }
 // opt:  { width, height }
 // - 左にピラミッド（台形を積む）、右に各段の説明を、段と同じ高さで書く。
 // - 段は白地に枠。highlight の段は primary の塗りに白文字。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { levels: [{ label: R, text: O }], highlight: O };
+
 export default function pyramid(data, opt = {}) {
-  need("pyramid", data, ["levels"]);
+  check("pyramid", data, schema);
   const Lv = data.levels;
   if (Lv.length < 3 || Lv.length > 5) throw new Error("pyramid: levels は3〜5");
-  const LN = lineOf(data);
+  const LN = LINE;
   const H = opt.height ?? 440, PW = Math.min(560, (opt.width ?? 1172) * 0.5);
   const gap = 8, lh = (H - gap * (Lv.length - 1)) / Lv.length;
   const shapes = Lv.map((lv, i) => {

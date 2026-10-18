@@ -1,6 +1,6 @@
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { esc, need, num, unitLabel, seqStep } from "./_util.mjs";
+import { esc, check, R, O, optional, num, unitLabel, seqStep } from "./_util.mjs";
 
 // 都道府県の境界（Natural Earth v5.1.2 を scripts/make-japan-map.mjs で加工したもの。registry.yaml の natural-earth）
 const SHAPES = fileURLToPath(new URL("../../license-notice/assets/natural-earth/japan-prefectures.json", import.meta.url));
@@ -27,8 +27,11 @@ const TILE = {
 };
 const short = (p) => (p === "北海道" ? p : p.replace(/[都府県]$/, ""));
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { data: [{ pref: R, value: R }], unit: R, style: O, steps: O, highlight: O, callout: optional({ value: R, label: R }) };
+
 export default function map(data, opt = {}) {
-  need("map", data, ["data", "unit"]);
+  check("map", data, schema);
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const val = new Map(data.data.map((d) => {
     const k = short(d.pref);

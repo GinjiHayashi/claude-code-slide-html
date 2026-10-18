@@ -133,7 +133,7 @@ export async function checkOutline(file) {
       if (!Array.isArray(f.items) || f.items.length !== 4) err(s, "grid-4 の items はちょうど4つ");
       else f.items.forEach((it, n) => {
         if (!it?.heading || !it?.text) return err(s, `items の${n + 1}つ目に heading（小見出し）と text（説明）が要る`);
-        for (const x of Object.keys(it)) if (!["heading", "text", "icon"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
+        for (const x of Object.keys(it)) if (!["heading", "text"].includes(x)) err(s, `items の${n + 1}つ目に知らない項目「${x}」がある`);
         if (width(it.heading) > 15) warn(s, `items の${n + 1}つ目の heading が全角15字を超えている`);
         if (width(plain(it.text)) > 75) warn(s, `items の${n + 1}つ目の text が3行の目安（全角75字）を超えている`);
         bullets.push(it.text);

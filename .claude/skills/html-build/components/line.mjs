@@ -1,6 +1,6 @@
 import { scaleLinear, scalePoint } from "d3-scale";
 import { line as d3line } from "d3-shape";
-import { esc, num, need, callout, unitLabel, SERIES, marker, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, marker, svgSize } from "./_util.mjs";
 import { yGrid, xLabels, spread } from "./_axis.mjs";
 
 // line：時間の変化と傾向を示す折れ線。系列は4まで、時点は24まで。
@@ -11,8 +11,11 @@ import { yGrid, xLabels, spread } from "./_axis.mjs";
 // - データ点には系列ごとに形の違う印を付け、系列名と最後の値を線の右端に直接書く（凡例を離さない。charts.md 3章）。
 // - target は点線で示す。callout は任意。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { x: [R], series: [{ name: R, values: R }], unit: R, highlight: O, target: optional({ value: R, label: O }), zero: O, callout: optional({ value: R, label: R }) };
+
 export default function line(data, opt = {}) {
-  need("line", data, ["x", "series", "unit"]);
+  check("line", data, schema);
   const { x: xs, series } = data;
   if (series.length < 1 || series.length > 4) throw new Error("line: 系列は1〜4");
   if (xs.length < 2 || xs.length > 24) throw new Error("line: 時点は2〜24");

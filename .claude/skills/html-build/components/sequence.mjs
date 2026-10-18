@@ -1,21 +1,24 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // sequence：やりとりの順番（シーケンス図）。登場するものは5まで、やりとりは10まで。
 // data: {
 //   actors: [名前],
 //   messages: [{ from, to, label, reply?: true（応答。点線） }],
-//   highlight?: やりとりの番号（1から）, line?
+//   highlight?: やりとりの番号（1から）
 // }
 // opt: { width, height }（既定は 1172×440）
 // - 上に登場するものの箱、下へ点線の生存線を引き、やりとりは上から順に横向きの矢印で書く。
 // - 応答（reply）は点線の矢印。highlight のやりとりは primary の色と太字。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { actors: [R], messages: [{ from: R, to: R, label: R, reply: O }], highlight: O };
+
 export default function sequence(data, opt = {}) {
-  need("sequence", data, ["actors", "messages"]);
+  check("sequence", data, schema);
   const A = data.actors, M = data.messages;
   if (A.length < 2 || A.length > 5) throw new Error("sequence: actors は2〜5");
   if (M.length < 1 || M.length > 10) throw new Error("sequence: messages は1〜10");
-  const LN = lineOf(data);
+  const LN = LINE;
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const cw = W / A.length, bw = Math.min(200, cw - 32), bh = 48;
   const x = (name) => {

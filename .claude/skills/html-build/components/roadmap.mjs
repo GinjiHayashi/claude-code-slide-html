@@ -1,18 +1,21 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // roadmap：期間のある計画を、横に期間・縦に分野（レーン）を並べた表の上に棒で示す。
-// data: { periods: [string], lanes: [{ name, items: [{ start, end, label, highlight? }] }], line? }
+// data: { periods: [string], lanes: [{ name, items: [{ start, end, label, highlight? }] }] }
 // - start・end は periods の名前で書く（例 "2026年4月"）。end を含む。
 // - 期間は8列まで、レーンは4まで。同じレーンの棒は重ねない（重なるならレーンを分ける）。
 // - 見出し行は table と同じ primary の塗りに白文字。レーンは白と薄いグレーを交互にする（表の既定 zebra と揃える）。
 // - 棒は白地に枠。highlight の棒は primary の塗りに白文字。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { periods: [R], lanes: [{ name: R, items: [{ start: R, end: R, label: R, highlight: O }] }] };
+
 export default function roadmap(data) {
-  need("roadmap", data, ["periods", "lanes"]);
+  check("roadmap", data, schema);
   const P = data.periods, L = data.lanes;
   if (P.length < 2 || P.length > 8) throw new Error("roadmap: periods は2〜8");
   if (L.length < 1 || L.length > 4) throw new Error("roadmap: lanes は1〜4");
-  const LN = lineOf(data);
+  const LN = LINE;
   const idx = (p) => {
     const i = P.indexOf(p);
     if (i < 0) throw new Error(`roadmap: periods に ${p} がない`);

@@ -1,4 +1,4 @@
-import { esc, num, need, callout, unitLabel, SERIES } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES } from "./_util.mjs";
 
 // stacked-bar：量と内訳を同時に見せる積み上げ縦棒。系列は5まで、分類は8まで。
 // data: { categories: [string], series: [{ name, values: [number] }], unit, percent?, callout? }
@@ -6,8 +6,11 @@ import { esc, num, need, callout, unitLabel, SERIES } from "./_util.mjs";
 // 下から series の順に積む。系列名は右側に、棒と同じ上下の順で並べる（凡例をグラフの隣に置く。charts.md 4章）。
 // 面の中には、高さが足りるときだけ数値を書く。棒の上には合計を書く（percent のときは書かない）。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { categories: [R], series: [{ name: R, values: R }], unit: R, percent: O, callout: optional({ value: R, label: R }) };
+
 export default function stackedBar(data) {
-  need("stacked-bar", data, ["categories", "series", "unit"]);
+  check("stacked-bar", data, schema);
   const { categories: cats, series } = data;
   if (series.length < 2 || series.length > 5) throw new Error("stacked-bar: 系列は2〜5");
   if (cats.length < 1 || cats.length > 8) throw new Error("stacked-bar: 分類は1〜8");

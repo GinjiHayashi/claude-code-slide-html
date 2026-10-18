@@ -1,4 +1,4 @@
-import { esc, need, lineOf, rounded } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE, rounded } from "./_util.mjs";
 
 // flowchart：流れ図。一列の流れから、枝分かれ・合流・戻りのある図まで、Mermaid を使わずに描く。
 // （以前の flow を統合した。箱を格子に置き、矢印は縦横の線を角の丸い折れ線でつなぐ）
@@ -12,7 +12,7 @@ import { esc, need, lineOf, rounded } from "./_util.mjs";
 //    data: { nodes: [{ id, label, col, row, caption?, type? }], edges: [{ from, to, label? }] }
 //
 // 共通：type: process（白地。既定）／store（置き場所。淡い青の地）／decision（判断。丸い箱）
-//       highlight?: [id または label]、line?（枠と矢印の色）、radius?（矢印の曲がり角の半径。既定 8）
+//       highlight?: [id または label]、radius?（矢印の曲がり角の半径。既定 8）
 //       caption は箱の下（down のときは右）に書く短い説明（2行まで）。
 // opt:  { width, height }（置く枠の大きさ。既定は 1172×440）
 // 矢印の通り方：
@@ -23,8 +23,11 @@ import { esc, need, lineOf, rounded } from "./_util.mjs";
 //   - 上の行の左の列へ（戻り・ループ）：箱の下から出て、図のいちばん下を通り、相手の箱の下に入る
 // 矢印に書く文字（label）は、最後の線の途中に白い縁取りを付けて書く。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { nodes: [{ label: R, caption: O, type: O, id: O, col: O, row: O }], edges: optional([{ from: R, to: R, label: O }]), direction: O, wrap: O, highlight: O, radius: O };
+
 export default function flowchart(data, opt = {}) {
-  need("flowchart", data, ["nodes"]);
+  check("flowchart", data, schema);
   const auto = data.nodes.every((n) => n.col === undefined && n.row === undefined);
   const down = auto && data.direction === "down";
   const N = data.nodes.map((n, i) => {
@@ -38,7 +41,7 @@ export default function flowchart(data, opt = {}) {
   const E = data.edges ?? (auto ? N.slice(1).map((n, i) => ({ from: N[i].id, to: n.id })) : null);
   if (!E) throw new Error("flowchart: col・row を書いたときは edges も書く");
   if (N.length < 2 || N.length > 12) throw new Error("flowchart: nodes は2〜12");
-  const LN = lineOf(data);
+  const LN = LINE;
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const cols = Math.max(...N.map((n) => n.col)) + 1;
   const rows = Math.max(...N.map((n) => n.row)) + 1;

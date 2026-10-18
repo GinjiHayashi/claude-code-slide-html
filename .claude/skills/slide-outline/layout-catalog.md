@@ -33,7 +33,7 @@
 | `title-diagram` | 図が中心 | title, diagram | breadcrumb, caption, source | 図は高さ 500 まで（画面の約 70%） |
 | `two-column` | 2つを比べる | title, left, right | breadcrumb, source | 左右とも、小見出し1つと箇条書き4項目まで |
 | `do-dont` | 良い例と悪い例 | title, do, dont | breadcrumb | `do` は上端に `success` の帯、`dont` は上端に `error` の帯。緑と赤はこの型だけで使う |
-| `grid-4` | 原則や要点を4つ並べる | title, items（4つ） | breadcrumb | 2×2。各項目は小見出し（全角15字まで）と説明（3行まで）。アイコンは任意 |
+| `grid-4` | 原則や要点を4つ並べる | title, items（4つ） | breadcrumb | 2×2。各項目は小見出し（全角15字まで）と説明（3行まで） |
 | `checklist` | 確認する項目の一覧 | title, items（text, done） | breadcrumb | 2列。済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）。8項目まで |
 | `closing` | 締め | — | contact, email | 表紙と同じく白地＋下端の横の帯（表紙に合わせる）。「ありがとうございました」。問い合わせ先とメールは構成を決めるときに人間に聞く。なければ書かず、お礼だけを縦の中央に置く |
 | `credits` | ライセンス表記 | — | — | license-notice のスクリプトだけが作る。outline.md には書かない |

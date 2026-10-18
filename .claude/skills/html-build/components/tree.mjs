@@ -1,28 +1,31 @@
-import { esc, need, lineOf, rounded } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE, rounded } from "./_util.mjs";
 
 // tree：階層（組織、分類）。3階層まで、1つの親の子は5まで。
 // data: {
 //   root: 名前（文字）または { label },
 //   children: [{ label, children?: [{ label }] }],
-//   direction?: "down" | "right", highlight?: [label], line?
+//   direction?: "down" | "right", highlight?: [label]
 // }
 // opt: { width, height }（既定は 1172×440）
 // - down（既定）：上に root、その下に子を横に並べ、孫は子の下に縦に積む（横幅を使い切らないため）。
 // - right：左に root、右へ子・孫と広げる。孫が多い分類の木に向く。
 // - 線は矢印にせず、縦横の線を直角に折れる線でつなぐ（tree だけの例外。ほかの図は半径 8 で丸める）。箱は白地に枠、highlight の箱は primary の塗りに白文字。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { root: R, children: [{ label: R, children: optional([{ label: R, children: O }]) }], direction: O, highlight: O };
+
 export default function tree(data, opt = {}) {
-  need("tree", data, ["root", "children"]);
-  const LN = lineOf(data);
+  check("tree", data, schema);
+  const LN = LINE;
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const root = { label: typeof data.root === "string" ? data.root : data.root.label, children: data.children };
-  const check = (n, depth) => {
+  const depthCheck = (n, depth) => {
     const c = n.children ?? [];
     if (depth >= 2 && c.length) throw new Error("tree: 3階層まで");
     if (c.length > 5) throw new Error(`tree: ${n.label} の子は5まで`);
-    c.forEach((k) => check(k, depth + 1));
+    c.forEach((k) => depthCheck(k, depth + 1));
   };
-  check(root, 0);
+  depthCheck(root, 0);
   if (!root.children.length) throw new Error("tree: children が空");
   const hi = new Set(data.highlight ?? []);
   const box = (n, x, y, w, h, small) => {

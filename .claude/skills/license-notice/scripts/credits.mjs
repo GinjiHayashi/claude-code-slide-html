@@ -1,7 +1,7 @@
 // 表記の生成：照合に合格した素材について、registry.yaml の値と templates/ の本文から、
 // credits スライドの行と、deck.html に入れるライセンスの全文を作る。
 // 文面は AI が書かない。registry.yaml と templates/ の文字をそのまま使う。
-// - 行：素材ごとに1行。追加のライセンス（additional_licenses）も1行ずつ（例：KaTeX のフォント、Lucide の Feather 由来のアイコン）
+// - 行：素材ごとに1行。追加のライセンス（additional_licenses）も1行ずつ（例：KaTeX のフォント）
 // - 全文：templates/<SPDX ID>.txt の {{copyright}} に registry.yaml の copyright を差し込む。
 //   テンプレートがないライセンスは、表記が必要（notice_required）ならエラー、不要（パブリックドメインなど）なら行だけ載せる
 import fs from "fs";

@@ -74,6 +74,7 @@ export async function build(deckDir) {
       "# assets-manifest.yaml：deck.html を走査スクリプト（license-notice/scripts/scan.mjs）が調べて作った、使った素材の一覧。手で直さない",
       YAML.stringify({
         deck_id: outline.meta.deck_id,
+        outline_sha256: crypto.createHash("sha256").update(fs.readFileSync(outlineFile)).digest("hex"), // どの outline.md から作ったか（status.mjs が古いビルドを見分ける）
         deck_sha256: crypto.createHash("sha256").update(html).digest("hex"),
         distributed: scan.assets.map((a) => ({ id: a.id, version: reg.get(a.id)?.version, license: reg.get(a.id)?.license, found: a.found })),
         build_only: [...reg.values()].filter((e) => e.scope === "build-only").map((e) => ({ id: e.id, version: e.version, license: e.license })),

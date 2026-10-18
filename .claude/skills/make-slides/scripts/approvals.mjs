@@ -2,6 +2,8 @@
 // - 1件の承認＝対象のファイル、その時点の sha256、承認者、承認日時。outline.md はスライドごとの sha256 も残す
 //   （承認後にどのスライドが変わったかを示し、ファクトチェックをそのスライドだけやり直せるようにするため）
 // - 記録は追記だけ。同じ対象の承認が複数あれば、最後のものを使う
+// - factcheck.md の承認には、そのときの outline.md のスライドごとの sha256（outline_slides）も残す
+//   （ファクトチェックのあとに変わったスライドを、ゲートが見つけられるようにするため）
 // - 流れ：AI が request.mjs で承認を依頼する（approval-request.yaml に、その時点の sha256 を残す）→ 人間が自由な言葉で答える
 //   → approve-hook.mjs（人間のプロンプトを受けた hook）が答えを判定し、承認なら approvals.yaml に答えの原文ごと記録する
 // - approvals.yaml を書くのは hook だけ。AI は書かない（.claude/settings.json で禁止）
@@ -48,6 +50,8 @@ export function recordApproval(deckDir, target, info) {
   const buf = fs.readFileSync(path.join(deckDir, target));
   const entry = { target, sha256: sha256(buf), ...info };
   if (target === "outline.md") entry.slides = slideHashes(buf.toString("utf8"));
+  const outline = path.join(deckDir, "outline.md");
+  if (target === "factcheck.md" && fs.existsSync(outline)) entry.outline_slides = slideHashes(fs.readFileSync(outline, "utf8"));
   const prev = latest(readApprovals(deckDir), target);
   let changed = prev ? "前回の承認から変わっている" : "初めての承認";
   if (prev?.sha256 === entry.sha256) changed = "前回の承認から変わっていない";

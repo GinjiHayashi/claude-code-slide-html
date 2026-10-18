@@ -21,8 +21,23 @@ for (const kind of Object.keys(DIAGRAMS)) {
     assert.equal(typeof html, "string");
     assert.ok(html.length > 0);
     assert.throws(() => f({}, { width: 1172, height: 440 }));
+    assert.throws(() => f({ ...DIAGRAMS[kind], highlite: 1 }, { width: 1172, height: 440 }), /知らない項目 highlite/);
   });
 }
+
+test("部品：入れ子の項目の書き間違いも止まる（matrix の軸の name は label の誤り）", async () => {
+  const matrix = (await import(path.join(COMP, "matrix.mjs"))).default;
+  const d = DIAGRAMS.matrix;
+  assert.throws(() => matrix({ ...d, x_axis: { name: "影響", low: "小", high: "大" } }), /知らない項目 x_axis\.name/);
+  const bar = (await import(path.join(COMP, "bar.mjs"))).default;
+  assert.throws(() => bar({ ...DIAGRAMS.bar, data: [{ label: "A", valu: 1 }] }), /data\[1\]\.valu/);
+});
+
+test("schema.mjs：全部の図の型の項目を出せる", async () => {
+  const { schemaOf } = await import(path.join(SKILLS, "html-build/scripts/schema.mjs"));
+  const { describe } = await import(path.join(COMP, "_util.mjs"));
+  for (const k of KINDS) assert.ok(describe(await schemaOf(k)).length > 0, k);
+});
 
 test("見本の outline.md の全スライドを組み立てられる", async () => {
   const o = readOutline(path.join(tempDeck(), "outline.md"));

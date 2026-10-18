@@ -9,12 +9,46 @@ export const esc = (v) =>
 /** 数値を3桁区切りにする。数値でなければそのまま返す */
 export const num = (v) => (typeof v === "number" ? v.toLocaleString("ja-JP") : esc(v));
 
-/** 必須の項目がなければ止める（書式チェックの前の最後の守り） */
-export const need = (kind, data, keys) => {
-  for (const k of keys) {
-    if (data?.[k] === undefined || data?.[k] === null) throw new Error(`${kind}: 必須の項目 ${k} がない`);
-  }
+// ---- data の決まり（各部品の schema）----
+// 項目の名前に、決まりを書く。R：必須、O：任意（中身は部品が確かめる）。
+// [決まり]：並び（各要素をその決まりで確かめる）。{ … }：まとまり。どちらも optional(…) で任意にする。
+// 書式チェックは部品を呼んで確かめるので、ここで知らない項目（書き間違い）もエラーにする。
+export const R = { req: true }, O = { req: false };
+export const optional = (spec) => ({ req: false, spec });
+const norm = (spec) => {
+  if (spec === R || spec === O) return spec;
+  if (spec.spec !== undefined) return { ...norm(spec.spec), req: false };
+  if (Array.isArray(spec)) return { req: true, list: norm(spec[0]) };
+  return { req: true, keys: spec };
 };
+const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+/** data が schema に合うかを確かめ、合わなければ止める（必須の項目がない、知らない項目がある、形が違う） */
+export function check(kind, data, schema, where = "") {
+  if (!isObj(data)) throw new Error(`${kind}: ${where || "data"} は { 項目: 値 } の形にする`);
+  for (const k of Object.keys(data)) if (!(k in schema)) throw new Error(`${kind}: 知らない項目 ${where}${k}（書けるもの：${Object.keys(schema).join("・")}）`);
+  for (const [k, spec] of Object.entries(schema)) {
+    const v = data[k], n = norm(spec), at = `${where}${k}`;
+    if (v === undefined || v === null) {
+      if (n.req) throw new Error(`${kind}: 必須の項目 ${at} がない`);
+      continue;
+    }
+    if (n.keys) {
+      if (!isObj(v)) throw new Error(`${kind}: ${at} は { ${Object.keys(n.keys).join(", ")} } の形にする`);
+      check(kind, v, n.keys, `${at}.`);
+    }
+    if (n.list) {
+      if (!Array.isArray(v)) throw new Error(`${kind}: ${at} は並び（- で始まる行）にする`);
+      if (n.list.keys) v.forEach((x, i) => check(kind, x, n.list.keys, `${at}[${i + 1}].`));
+    }
+  }
+}
+
+/** schema を人が読める1行にする（schema.mjs と書式チェックの説明に使う） */
+export function describe(schema) {
+  const one = (n) => (n.keys ? `{ ${describe(n.keys)} }` : n.list ? `[${one(n.list)}]` : "");
+  return Object.entries(schema).map(([k, spec]) => { const n = norm(spec), d = one(n); return `${k}${n.req ? "" : "?"}${d ? `: ${d}` : ""}`; }).join(", ");
+}
 
 /** 強調表示（outline.md に書いた値をそのまま出す。部品は計算しない） */
 export const callout = (c) =>
@@ -55,16 +89,8 @@ export const svgSize = (data, opt = {}) => {
   return { w, h };
 };
 
-// ---- 箱の枠と矢印の色（flow・steps・flowchart で共通）----
-// 既定は deepnavy（Light Blue 1200 #00234B）。
-export const LINES = {
-  gray: { border: "border-gray-600", stroke: "stroke-gray-600", fill: "fill-gray-600", bg: "bg-gray-600" },
-  navy: { border: "border-blue-1200", stroke: "stroke-blue-1200", fill: "fill-blue-1200", bg: "bg-blue-1200" },
-  deepnavy: { border: "border-lightblue-1200", stroke: "stroke-lightblue-1200", fill: "fill-lightblue-1200", bg: "bg-lightblue-1200" },
-  primary: { border: "border-primary", stroke: "stroke-primary", fill: "fill-primary", bg: "bg-primary" },
-};
-export const DEFAULT_LINE = "deepnavy";
-export const lineOf = (data) => LINES[data.line ?? DEFAULT_LINE];
+// ---- 箱の枠と矢印の色（構造・概念の図で共通）。Light Blue 1200 #00234B ----
+export const LINE = { border: "border-lightblue-1200", stroke: "stroke-lightblue-1200", fill: "fill-lightblue-1200", bg: "bg-lightblue-1200" };
 
 /** 折れ線（点の並び）を SVG の path にする。角は半径 r で丸める（前後の線の半分より大きくはしない）。flowchart・tree で共通 */
 export function rounded(p, r = 8) {

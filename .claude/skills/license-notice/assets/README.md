@@ -4,7 +4,6 @@
 
 | フォルダ | 中身 | いつ追加するか |
 |---|---|---|
-| `lucide/` | 使うアイコンの SVG（`lucide-static@1.59.0` から取り込む） | 構築順序4で部品を作るとき、使うものだけ |
 | `natural-earth/` | 都道府県の境界の SVG の path（Natural Earth v5.1.2 を `html-build/scripts/make-japan-map.mjs` で加工） | map 部品（style: shape）を採用したとき |
 
 - Noto Sans JP は、使う文字だけにサブセット化してビルド時に埋め込むため、ここには置かない（npm の `@fontsource/noto-sans-jp@5.3.1` から取得する）。

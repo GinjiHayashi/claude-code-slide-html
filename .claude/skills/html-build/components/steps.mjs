@@ -1,20 +1,23 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // steps：順番に行う手順。3〜6段。番号を付け、線でつないで順番を示す。
 // data: { items: [{ title, text? }], highlight?: 段の番号（1から。今いる段など）, direction? }
 // - direction: "right"（既定。左から右へ並べる。5段まで）／"down"（上から下へ並べる。6段まで。説明が長いとき向き）
 // - title は全角12字まで、text は横向きで3行、縦向きで1〜2行までを目安にする。
-// - カードは白地に枠（枠の色は _util.mjs の LINES）。highlight の段は淡い青の地に青い枠。
+// - カードは白地に枠（枠の色は _util.mjs の LINE）。highlight の段は淡い青の地に青い枠。
 
 const circle = (i) =>
   `<div class="relative flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-primary text-heading font-bold text-on-primary">${i + 1}</div>`;
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { items: [{ title: R, text: O }], highlight: O, direction: O };
+
 export default function steps(data) {
-  need("steps", data, ["items"]);
+  check("steps", data, schema);
   const I = data.items;
   const down = data.direction === "down";
   if (I.length < 3 || I.length > (down ? 6 : 5)) throw new Error(`steps: items は3〜${down ? 6 : 5}`);
-  const LN = lineOf(data);
+  const LN = LINE;
   const card = (i) => (data.highlight === i + 1 ? "bg-highlight border-primary" : `bg-canvas ${LN.border}`);
 
   if (down) {

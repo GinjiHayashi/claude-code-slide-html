@@ -1,4 +1,4 @@
-import { esc, need } from "./_util.mjs";
+import { esc, check, R, O } from "./_util.mjs";
 
 // kpi：結論の数字を大きく見せる。1〜4個を横に並べる。
 // data: { items: [{ label, value, unit?, compare?, trend?: number[], highlight? }] }
@@ -15,13 +15,15 @@ const spark = (values) => {
 </svg>`;
 };
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { items: [{ label: R, value: R, unit: O, compare: O, trend: O, highlight: O }] };
+
 export default function kpi(data) {
-  need("kpi", data, ["items"]);
+  check("kpi", data, schema);
   const items = data.items;
   if (items.length < 1 || items.length > 4) throw new Error("kpi: items は1〜4個");
   const cards = items
     .map((it) => {
-      need("kpi", it, ["label", "value"]);
       const box = it.highlight ? "bg-highlight border-primary" : "bg-panel border-gray-400"; // 塗りの箱には必ず枠を付ける（地の色だけだと境目がわかりにくい）
       const val = it.highlight ? "text-primary" : "text-ink";
       return `<div class="flex flex-1 flex-col rounded-panel border-2 ${box} p-[24px]">

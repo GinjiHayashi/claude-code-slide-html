@@ -1,10 +1,10 @@
-import { esc, need, lineOf } from "./_util.mjs";
+import { esc, check, R, O, LINE } from "./_util.mjs";
 
 // matrix：2つの軸で4つに分ける（2×2）。
 // data: {
 //   x_axis: { label, low, high }, y_axis: { label, low, high },
 //   cells: [左上, 右上, 左下, 右下]（各 { title, text?, items? }）,
-//   highlight?: 1〜4, line?
+//   highlight?: 1〜4
 // }
 // - 軸：両端に low・high を書き、その間を両矢印でつなぐ。軸の名前は矢印に重ねず、横軸は矢印の下、縦軸は矢印の左の中央に置く。縦軸は上が high、横軸は右が high。
 // - マス：見出しの下の本文（text：普通の文、items：箇条書き3つまで）は、見出しより字下げする。text と items は両方書ける。
@@ -18,10 +18,13 @@ const head = (dir, cls) =>
     down: `<svg data-origin="generated" class="absolute bottom-0 left-1/2 -translate-x-1/2" width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path class="${cls}" d="M7 12L14 0H0Z"/></svg>`,
   })[dir];
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { x_axis: { label: R, low: R, high: R }, y_axis: { label: R, low: R, high: R }, cells: [{ title: R, text: O, items: O }], highlight: O };
+
 export default function matrix(data) {
-  need("matrix", data, ["x_axis", "y_axis", "cells"]);
+  check("matrix", data, schema);
   if (data.cells.length !== 4) throw new Error("matrix: cells は4つ（左上・右上・左下・右下）");
-  const LN = lineOf(data);
+  const LN = LINE;
   const { x_axis: X, y_axis: Y } = data;
   const cells = data.cells.map((c, i) => {
     if ((c.items ?? []).length > 3) throw new Error("matrix: 各マスの項目は3つまで");

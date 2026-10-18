@@ -1,6 +1,6 @@
 import { scaleLinear, scalePoint } from "d3-scale";
 import { area as d3area, stack, stackOffsetExpand } from "d3-shape";
-import { esc, need, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
 import { yGrid, xLabels, spread } from "./_axis.mjs";
 
 // area：量と構成比の時間の変化を示す積み上げ面グラフ。系列は5まで、時点は24まで。
@@ -9,8 +9,11 @@ import { yGrid, xLabels, spread } from "./_axis.mjs";
 // - 下から series の順に積む。percent: true で各時点を 100% にそろえる。
 // - 系列名は、それぞれの面の右端の近くに書く（charts.md 3章）。面の境目には白い線を引いて区別しやすくする。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { x: [R], series: [{ name: R, values: R }], unit: R, percent: O, callout: optional({ value: R, label: R }) };
+
 export default function area(data, opt = {}) {
-  need("area", data, ["x", "series", "unit"]);
+  check("area", data, schema);
   const { x: xs, series } = data;
   if (series.length < 2 || series.length > 5) throw new Error("area: 系列は2〜5");
   if (xs.length < 2 || xs.length > 24) throw new Error("area: 時点は2〜24");

@@ -1,5 +1,5 @@
 import { scaleLinear } from "d3-scale";
-import { esc, need, callout, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, callout, svgSize } from "./_util.mjs";
 import { yGrid } from "./_axis.mjs";
 
 // scatter：2つの量の関係を示す散布図。点は50まで。
@@ -8,8 +8,11 @@ import { yGrid } from "./_axis.mjs";
 // - 名前（label）は、highlight に挙げた点にだけ書く（全部に書くと読めなくなるため）。
 // - highlight の点は primary、ほかは gray-400。highlight がなければ全部 blue-600。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { points: [{ x: R, y: R, label: O }], x_label: O, x_unit: R, y_label: O, y_unit: R, highlight: O, callout: optional({ value: R, label: R }) };
+
 export default function scatter(data, opt = {}) {
-  need("scatter", data, ["points", "x_unit", "y_unit"]);
+  check("scatter", data, schema);
   const P = data.points;
   if (P.length < 3 || P.length > 50) throw new Error("scatter: 点は3〜50");
   const { w, h } = svgSize(data, opt);

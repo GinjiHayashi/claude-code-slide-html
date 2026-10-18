@@ -1,4 +1,4 @@
-import { esc, need } from "./_util.mjs";
+import { esc, check, R, O } from "./_util.mjs";
 
 // table：正確な値を一覧で読ませる。8行×6列まで。
 // data: { columns: [string], rows: [[...]], highlight?: [行の番号（1から）], align?: ["left"|"right"|"center"], style? }
@@ -11,8 +11,11 @@ import { esc, need } from "./_util.mjs";
 //   light-zebra  light の見出し＋白と薄いグレーを1行おきに。線なし
 // 数値の列は既定で右寄せし、列の中で小数の桁数を揃える（3 と 2.6 が並ぶなら 3.0 と書く）。見出し行は primary の塗りに白文字。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { columns: [R], rows: [O], highlight: O, align: O, style: O };
+
 export default function table(data) {
-  need("table", data, ["columns", "rows"]);
+  check("table", data, schema);
   const { columns, rows } = data;
   if (columns.length > 6) throw new Error("table: 列は6まで");
   if (rows.length > 8) throw new Error("table: 行は8まで");

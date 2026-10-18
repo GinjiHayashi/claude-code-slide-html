@@ -66,7 +66,7 @@ pdf: false                              # PDF も書き出すか（brief.md か�
 | `title-diagram` | title ＋ 図 | breadcrumb, caption, source | 図は `diagram`（1つ）か `diagrams`（左右に2つ） |
 | `two-column` | title, left, right | breadcrumb, source | left・right は `{heading: 小見出し, items: [箇条書き 1〜4項目]}` |
 | `do-dont` | title, do, dont | breadcrumb | do・dont は two-column と同じ形 |
-| `grid-4` | title, items | breadcrumb | items はちょうど4つ。各 `{heading: 15字まで, text: 3行まで, icon: 任意}` |
+| `grid-4` | title, items | breadcrumb | items はちょうど4つ。各 `{heading: 15字まで, text: 3行まで}` |
 | `checklist` | title, items | breadcrumb | items は 1〜8項目。各 `{text: 項目, done: true か false}` |
 | `closing` | — | contact, email | 問い合わせ先とメール。brief.md から写し、「なし」なら書かない |
 

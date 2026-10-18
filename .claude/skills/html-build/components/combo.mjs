@@ -1,6 +1,6 @@
 import { scaleLinear, scaleBand } from "d3-scale";
 import { line as d3line } from "d3-shape";
-import { esc, num, need, callout, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, svgSize } from "./_util.mjs";
 import { yGrid, xLabels } from "./_axis.mjs";
 
 // combo：量（棒）と推移（線）を同時に見せる複合グラフ。棒と線を1系列ずつ。時点は12まで。
@@ -10,8 +10,11 @@ import { yGrid, xLabels } from "./_axis.mjs";
 // - 棒は gray-400 で、棒の中に数値を書く。線は primary の太線で、印の上に数値を書く。
 // - 左上と右上に、それぞれの軸が何か（名前と単位）を書く。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { x: [R], bar: { name: R, values: R, unit: R }, line: { name: R, values: R, unit: R }, callout: optional({ value: R, label: R }) };
+
 export default function combo(data, opt = {}) {
-  need("combo", data, ["x", "bar", "line"]);
+  check("combo", data, schema);
   const { x: xs, bar, line: ln } = data;
   if (xs.length < 2 || xs.length > 12) throw new Error("combo: 時点は2〜12");
   const { w, h } = svgSize(data, opt);

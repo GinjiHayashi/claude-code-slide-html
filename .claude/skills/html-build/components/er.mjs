@@ -1,20 +1,23 @@
-import { esc, need, lineOf, rounded } from "./_util.mjs";
+import { esc, check, R, O, LINE, rounded } from "./_util.mjs";
 
 // er：データの項目と関係（ER 図）。表は6まで。
 // data: {
 //   entities: [{ name, fields: [{ name, key?: "PK" | "FK" }], col?, row? }],
 //   relations: [{ from, to, card?: "1:N" など（両端に書く）, label? }],
-//   highlight?: [表の名前], line?
+//   highlight?: [表の名前]
 // }
 // opt: { width, height }（既定は 1172×440）
 // - 表は見出しを塗り、項目を並べる。col・row を書かなければ、左上から3列で並べる。
 // - 関係の線は縦横の角の丸い（半径 8）折れ線。両端に「1」「N」などの多重度を書く。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { entities: [{ name: R, fields: [{ name: R, key: O }], col: O, row: O }], relations: [{ from: R, to: R, card: O, label: O }], highlight: O };
+
 export default function er(data, opt = {}) {
-  need("er", data, ["entities", "relations"]);
+  check("er", data, schema);
   const E = data.entities;
   if (E.length < 2 || E.length > 6) throw new Error("er: entities は2〜6");
-  const LN = lineOf(data);
+  const LN = LINE;
   const W = opt.width ?? 1172, H = opt.height ?? 440;
   const per = Math.min(3, E.length);
   const N = E.map((e, i) => ({ ...e, col: e.col ?? i % per, row: e.row ?? Math.floor(i / per) }));

@@ -1,12 +1,15 @@
-import { esc, need, num, unitLabel, seqStep } from "./_util.mjs";
+import { esc, check, R, O, num, unitLabel, seqStep } from "./_util.mjs";
 
 // heatmap：2つの分類の組み合わせごとの値を、青の濃淡で示す。
 // data: { rows: [行の名前], columns: [列の名前], values: [[行ごとの値]], unit, steps?: 段階の数（3〜5。既定 5） }
 // - 最小から最大までを等しい幅で区切り、濃いほど大きい。色だけに頼らないよう、マスには値も書く。
 // - 下に凡例（各段階の範囲）を書く。12行×12列まで。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { rows: [R], columns: [R], values: [O], unit: R, steps: O };
+
 export default function heatmap(data) {
-  need("heatmap", data, ["rows", "columns", "values", "unit"]);
+  check("heatmap", data, schema);
   const R = data.rows, C = data.columns, V = data.values;
   if (R.length > 12 || C.length > 12) throw new Error("heatmap: 12行×12列まで");
   if (V.length !== R.length || V.some((r) => r.length !== C.length)) throw new Error("heatmap: values は 行の数 × 列の数");

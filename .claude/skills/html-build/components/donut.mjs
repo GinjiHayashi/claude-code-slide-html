@@ -1,5 +1,5 @@
 import { pie, arc } from "d3-shape";
-import { esc, num, need, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
 import { spread } from "./_axis.mjs";
 
 // donut：全体の総量が明らかなときの構成比。5項目まで（超える分は「その他」にまとめて渡す）。
@@ -13,8 +13,11 @@ import { spread } from "./_axis.mjs";
 // - 色は大きい順に青の濃い方から。「その他」は灰色。
 // - どの書き方でも、名前と割合を文字で書く（色だけで読ませない）。多くの場合は hbar の方が正確に伝わる。
 
+// data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
+export const schema = { items: [{ label: R, value: R }], unit: R, total: O, total_label: O, legend: O, callout: optional({ value: R, label: R }) };
+
 export default function donut(data, opt = {}) {
-  need("donut", data, ["items", "unit"]);
+  check("donut", data, schema);
   if (data.items.length < 2 || data.items.length > 5) throw new Error("donut: items は2〜5");
   const others = data.items.filter((d) => d.label === "その他");
   const items = data.items.filter((d) => d.label !== "その他").sort((a, b) => b.value - a.value).concat(others);

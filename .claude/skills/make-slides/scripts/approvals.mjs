@@ -1,4 +1,4 @@
-// 承認の記録（decks/<deck-id>/approvals.yaml）を読む・書く共通の処理（要求文書 4章）。
+// 承認の記録（decks/<deck-id>/approvals.yaml）を読む・書く共通の処理。
 // - 1件の承認＝対象のファイル、その時点の sha256、承認者、承認日時。outline.md はスライドごとの sha256 も残す
 //   （承認後にどのスライドが変わったかを示し、ファクトチェックをそのスライドだけやり直せるようにするため）
 // - 記録は追記だけ。同じ対象の承認が複数あれば、最後のものを使う
@@ -60,7 +60,7 @@ export function recordApproval(deckDir, target, info) {
     changed = `前回の承認から変わったところ：${[...ids].filter((k) => prev.slides[k] !== entry.slides[k]).join("、")}`;
   }
   const f = path.join(deckDir, "approvals.yaml");
-  const head = fs.existsSync(f) ? "" : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない（要求文書 4章）\n";
+  const head = fs.existsSync(f) ? "" : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない\n";
   fs.appendFileSync(f, head + YAML.stringify([entry]));
   return { entry, changed };
 }

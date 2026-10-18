@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 変更の検出の hook（SessionStart・Stop）：会話の中でハーネスのファイル（.claude/、CLAUDE.md）が変わったら、AI に人間へ報告させる（要求文書 9.1、Q6。構築順序10）。
+// 変更の検出の hook（SessionStart・Stop）：会話の中でハーネスのファイル（.claude/、CLAUDE.md）が変わったら、AI に人間へ報告させる。
 // settings.json のルールと protect-bash.mjs をすり抜けた変更（スクリプトの中の書き込み、確認を飛ばすモードなど）も、
 // ファイルの中身を比べるので見つけられる。最後の守り。
 // 使い方（settings.json から呼ぶ）：protect-check.mjs start ／ protect-check.mjs stop

@@ -8,7 +8,7 @@ const SHAPES = fileURLToPath(new URL("../../license-notice/assets/natural-earth/
 // map：都道府県ごとの値を青の濃淡で示す（コロプレス）。
 // data: { data: [{ pref, value }], unit, style?: "shape" | "tile", steps?: 3〜5, highlight?: [pref] }
 // opt:  { width, height, shapes?（境界を差し替えるとき） }
-// - shape（既定）：実際の形で描く。境界は Natural Earth（ユーザーが決定）。沖縄は左上の枠に描く。
+// - shape（既定）：実際の形で描く。境界は Natural Earth。沖縄は左上の枠に描く。
 //   小さい都府県（東京・香川など）は色が読みにくいので、強調や数値は本文や callout で補う。
 // - tile：47都道府県を同じ大きさの正方形で並べる（タイルグリッド地図）。小さい県も読め、マスに名前を書ける。
 // - pref は「東京都」「東京」のどちらでもよい。値のない都道府県は灰色。

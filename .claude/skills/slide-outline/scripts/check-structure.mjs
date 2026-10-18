@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 構成の比べ：人間の構成を写した草案（outline-draft.md）と outline.md を比べ、AI が変えたところと足したところを出す（ユーザーの要望。構築順序 8-2）。
+// 構成の比べ：人間の構成を写した草案（outline-draft.md）と outline.md を比べ、AI が変えたところと足したところを出す。
 // 使い方：node .claude/skills/slide-outline/scripts/check-structure.mjs decks/<deck-id>
 // - 草案は、人間が確認した（approvals.yaml に記録がある）ときのまま変わっていないこと。違えばエラー
 // - スライドはタイトルで対応を取る（並べ替えや番号の振り直しがあっても対応が取れるように）。取れなければ同じ番号どうし（タイトルを変えたとき）

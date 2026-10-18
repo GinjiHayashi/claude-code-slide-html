@@ -7,12 +7,12 @@ import { esc, need, lineOf, rounded } from "./_util.mjs";
 // 1) 一列の流れ（簡単な書き方）：nodes を並べるだけ。col・row と edges を書かなければ、順に自動でつなぐ。
 //    data: { nodes: [{ label, caption?, type? }], direction?: "right" | "down", wrap?: 1行の箱の数 }
 //    - direction: "right"（既定。左から右）／"down"（上から下。caption は箱の右に書く）
-//    - wrap: 1行の箱の数。超えたら、行の右端の箱から矢印を折り曲げて次の行の左端の箱へつなぎ、次の行も左から右へ進む（ユーザーが決定）
+//    - wrap: 1行の箱の数。超えたら、行の右端の箱から矢印を折り曲げて次の行の左端の箱へつなぎ、次の行も左から右へ進む
 // 2) 枝分かれ・合流・戻りのある図：箱に id・col（列）・row（行）を付け、edges でつなぎ方を書く。
 //    data: { nodes: [{ id, label, col, row, caption?, type? }], edges: [{ from, to, label? }] }
 //
 // 共通：type: process（白地。既定）／store（置き場所。淡い青の地）／decision（判断。丸い箱）
-//       highlight?: [id または label]、line?（枠と矢印の色）、radius?（矢印の曲がり角の半径。既定 8。ユーザーが決定）
+//       highlight?: [id または label]、line?（枠と矢印の色）、radius?（矢印の曲がり角の半径。既定 8）
 //       caption は箱の下（down のときは右）に書く短い説明（2行まで）。
 // opt:  { width, height }（置く枠の大きさ。既定は 1172×440）
 // 矢印の通り方：

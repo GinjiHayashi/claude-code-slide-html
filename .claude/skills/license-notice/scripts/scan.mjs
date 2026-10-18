@@ -1,4 +1,4 @@
-// 走査：deck.html から、使っている素材と外部への読み込みを洗い出す（要求文書 12.4 ②）。
+// 走査：deck.html から、使っている素材と外部への読み込みを洗い出す。
 // AI の自己申告ではなく、HTML の中身だけから決める。結果は assets-manifest.yaml の元になる。
 // 見つけるもの
 // - 素材：@font-face のフォント名、data-asset-id="<registry の id>:<名前>" の付いた要素、KaTeX の数式（class="katex"）

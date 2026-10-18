@@ -1,6 +1,6 @@
 # factcheck.md の書式
 
-`decks/<deck-id>/factcheck.md` は、承認済みの `outline.md` をファクトチェックした結果と、それに対する人間の判断をまとめるファイル（要求文書 8章）。`fact-checker` の結果を呼び出し元（`slide-factcheck`）がここにまとめる。
+`decks/<deck-id>/factcheck.md` は、承認済みの `outline.md` をファクトチェックした結果と、それに対する人間の判断をまとめるファイル。`fact-checker` の結果を呼び出し元（`slide-factcheck`）がここにまとめる。
 
 チェック：`node .claude/skills/slide-factcheck/scripts/check-factcheck.mjs decks/<deck-id>/factcheck.md`
 

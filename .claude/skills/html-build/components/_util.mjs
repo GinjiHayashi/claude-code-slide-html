@@ -1,5 +1,5 @@
 // 部品で共通に使う小さな関数。
-// 部品は「データを受け取り HTML の文字列を返す」関数にする（要求文書 11章）。
+// 部品は「データを受け取り HTML の文字列を返す」関数にする。
 // Tailwind はソースの文字列からクラス名を拾うため、クラス名は組み立てずに完全な形で書く。
 
 /** HTML に埋め込む文字を安全にする */
@@ -56,7 +56,7 @@ export const svgSize = (data, opt = {}) => {
 };
 
 // ---- 箱の枠と矢印の色（flow・steps・flowchart で共通）----
-// 既定は deepnavy（Light Blue 1200 #00234B。灰色・紺・青の4案を見比べてユーザーが決定）。ほかは比較のために残している。
+// 既定は deepnavy（Light Blue 1200 #00234B）。
 export const LINES = {
   gray: { border: "border-gray-600", stroke: "stroke-gray-600", fill: "fill-gray-600", bg: "bg-gray-600" },
   navy: { border: "border-blue-1200", stroke: "stroke-blue-1200", fill: "fill-blue-1200", bg: "bg-blue-1200" },

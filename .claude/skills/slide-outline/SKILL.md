@@ -5,7 +5,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 
 # 構成の検討（slide-outline）
 
-`decks/<deck-id>/brief.md` をもとに `decks/<deck-id>/outline.md` を作る（要求文書 7章）。`outline.md` はスライドの元ファイルで、ここに書いた文と数値がそのままスライドに載り、ファクトチェックの対象になる。書き方は `outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md`。
+`decks/<deck-id>/brief.md` をもとに `decks/<deck-id>/outline.md` を作る。`outline.md` はスライドの元ファイルで、ここに書いた文と数値がそのままスライドに載り、ファクトチェックの対象になる。書き方は `outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md`。
 
 ## 手順
 
@@ -49,7 +49,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 
 ### 決まっている
 
-人間の構成を崩さない（ユーザーの要望）。
+人間の構成を崩さない。
 
 - スライドの並び、枚数、タイトル、各スライドの文は、人間が書いたとおりにする。言い換え、まとめ、分割、並べ替え、削除をしない。
 - AI が埋めてよいのは、人間が書いていない項目だけ：型（`layout`）、図の型と、人間が渡したデータの写し、空の必須項目（説明文 `lead` など）、`claims`、`source`、`notes`。足したものは手順 7 の 2 で一覧にして見せる。
@@ -59,7 +59,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 
 ### たたき台がある
 
-人間のたたき台を土台にし、修正案を出す（要求文書 7.1）。
+人間のたたき台を土台にし、修正案を出す。
 
 - まず、草案（`outline-draft.md`）を outline.md に写す。
 - 調査と `design-reference` の基本方針をもとに、修正案を出す。1つの案ごとに、どのスライドを・どう変えるか・なぜか（調査の主張の ID や、基本方針の該当箇所）を書く。

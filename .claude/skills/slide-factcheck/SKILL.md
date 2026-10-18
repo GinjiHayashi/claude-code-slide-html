@@ -5,7 +5,7 @@ description: 承認済みの outline.md を、fact-checker をスライドのま
 
 # ファクトチェック（slide-factcheck）
 
-承認済みの `decks/<deck-id>/outline.md` の記述が事実と一致するかを確かめ、`decks/<deck-id>/factcheck.md` にまとめる（要求文書 8章）。確かめるのは `fact-checker`（`.claude/agents/fact-checker.md`）。書式は `factcheck-template.md`。
+承認済みの `decks/<deck-id>/outline.md` の記述が事実と一致するかを確かめ、`decks/<deck-id>/factcheck.md` にまとめる。確かめるのは `fact-checker`（`.claude/agents/fact-checker.md`）。書式は `factcheck-template.md`。
 
 ## 手順
 
@@ -48,7 +48,7 @@ description: 承認済みの outline.md を、fact-checker をスライドのま
 - 人間の判断を自分で書く、推測で写す。判断の前に `outline.md` を直す。
 - 「修正する」「削除する」の指摘のスライド以外を直す。
 - `factcheck.md` や `outline.md` の承認を自分で判断する。`approvals.yaml` を書く。
-- スライドの見た目や文章の良し悪しを評価する（D6）。
+- スライドの見た目や文章の良し悪しを評価する。
 
 ## ファイル
 

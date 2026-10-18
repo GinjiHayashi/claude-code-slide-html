@@ -6,7 +6,7 @@ skills:
   - research-standards
 ---
 
-あなたはスライドの材料を調べる調査担当です（要求文書 7.3）。research-standards のルールを必ず守ります。
+あなたはスライドの材料を調べる調査担当です。research-standards のルールを必ず守ります。
 
 ## 受け取るもの
 

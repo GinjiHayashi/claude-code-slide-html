@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import { esc } from "./components/_util.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 
-// スライドの型（slide-outline/layout-catalog.md）を HTML にする。運用時は固定（D4）。
+// スライドの型（slide-outline/layout-catalog.md）を HTML にする。運用時は固定。
 // renderDeck(outline) が、outline.md の各スライドを1つの <section class="slide"> にして返す。
 // - 寸法・色・文字の大きさは layout-catalog の値。Tailwind が読み取れるよう、クラス名は省略せずに書く。
 // - 図は components/ の部品に outline のデータと枠の大きさを渡して作る。
@@ -64,7 +64,7 @@ async function visual(f, w, h, comps) {
   else if (f.diagrams) {
     const [a, b] = f.diagrams;
     if (a.kind === "kpi") {
-      // 案B：kpi を左に縦に積み、もう1つを右に置く（components.md 4章）
+      // kpi を左に縦に積み、もう1つを右に置く（components.md 4章）
       const stack = (await Promise.all(a.items.map((it) => diagram({ kind: "kpi", items: [it] }, 360, H, comps)))).join('<div class="h-[16px]"></div>');
       v = `<div class="flex h-full gap-[48px]"><div class="flex w-[360px] shrink-0 flex-col justify-center">${stack}</div><div class="min-w-0 flex-1">${await diagram(b, w - 408, H, comps)}</div></div>`;
     } else {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// factcheck.md のチェック：書式と、区分・根拠・人間の判断の食い違いを出す（要求文書 8章）。
+// factcheck.md のチェック：書式と、区分・根拠・人間の判断の食い違いを出す。
 // 使い方：node .claude/skills/slide-factcheck/scripts/check-factcheck.mjs decks/<deck-id>/factcheck.md
 // - 書式は slide-factcheck/factcheck-template.md。「## FC-101」ごとに「- 項目: 値」の YAML の箇条書き
 // - 根拠の出典は research.md と同じきまり（check-research.mjs の checkSource）

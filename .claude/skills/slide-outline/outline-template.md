@@ -1,6 +1,6 @@
 # outline.md の書き方（outline-template）
 
-`outline.md` は、スライドの元ファイル（ソース）の**ただ1つの**ファイル。`deck.html` はここからビルドで作るので、手で直さない。直すときは、`outline.md` の該当スライドの節だけを読んで書き換える（`deck.html` は読まない。要求文書 11章）。
+`outline.md` は、スライドの元ファイル（ソース）の**ただ1つの**ファイル。`deck.html` はここからビルドで作るので、手で直さない。直すときは、`outline.md` の該当スライドの節だけを読んで書き換える（`deck.html` は読まない）。
 
 ビルドの前に `html-build/scripts/check-outline.mjs` が書式を検査する。エラーがあればビルドを止め、注意は報告して人間の確認で見る。
 
@@ -85,7 +85,7 @@ pdf: false                              # PDF も書き出すか（brief.md か�
       - {name: 今年度, values: [8200, 8600, 9100]}
 ```
 
-- 2つ並べるときは `diagrams:` に2つ書く。kpi を左に縦に積み、棒グラフを右に置く形（案B）は、`diagrams` の1つ目に kpi を書く。
+- 2つ並べるときは `diagrams:` に2つ書く。kpi を左に縦に積み、棒グラフを右に置く形は、`diagrams` の1つ目に kpi を書く。
 - 1枚の図は2つまで。kpi は図として数えない（`components.md` 4章）。
 - 強調する値（`callout`、kpi の値）も outline に書く。部品は計算しない（承認とファクトチェックの対象にするため）。
 

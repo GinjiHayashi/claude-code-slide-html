@@ -1,4 +1,4 @@
-// 照合：走査の結果を registry.yaml と policy.md に照らす（要求文書 12.4 ③）。
+// 照合：走査の結果を registry.yaml と policy.md に照らす。
 // エラー（ビルドを止める）
 // - 外部への読み込み、登録のない素材（フォント・data: の埋め込み・registry にない id）
 // - 未確認の項目（verified_by・verified_at が空）

@@ -1,4 +1,4 @@
-"""Excel（.xlsx）の中身を、Python の標準ライブラリだけで読み出す（要求文書 6.2：スプレッドシートは .xlsx で置く）。
+"""Excel（.xlsx）の中身を、Python の標準ライブラリだけで読み出す。
 
 使い方
   python3 xlsx.py <file.xlsx>                         シートの一覧と、使っている範囲、先頭の5行

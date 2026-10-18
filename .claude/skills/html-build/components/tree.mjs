@@ -9,7 +9,7 @@ import { esc, need, lineOf, rounded } from "./_util.mjs";
 // opt: { width, height }（既定は 1172×440）
 // - down（既定）：上に root、その下に子を横に並べ、孫は子の下に縦に積む（横幅を使い切らないため）。
 // - right：左に root、右へ子・孫と広げる。孫が多い分類の木に向く。
-// - 線は矢印にせず、縦横の線を直角に折れる線でつなぐ（tree だけの例外。ほかの図は半径 8 で丸める。ユーザーが決定）。箱は白地に枠、highlight の箱は primary の塗りに白文字。
+// - 線は矢印にせず、縦横の線を直角に折れる線でつなぐ（tree だけの例外。ほかの図は半径 8 で丸める）。箱は白地に枠、highlight の箱は primary の塗りに白文字。
 
 export default function tree(data, opt = {}) {
   need("tree", data, ["root", "children"]);

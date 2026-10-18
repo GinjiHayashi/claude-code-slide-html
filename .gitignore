@@ -1,6 +1,7 @@
-# 案件ごとの作業フォルダは git 管理外（レビュー R10）
-decks/*
-!decks/.gitkeep
+# 案件ごとの作業フォルダ decks/ は、decks/.gitignore で git 管理外にしている（レビュー R10）。
+# スライド用リポジトリでは decks/.gitignore を消すだけで管理対象になる（このファイルは変えないので、ハーネスの更新と衝突しない）
+# 承認の依頼（一時ファイル。hook が答えを受けて消す）
+decks/*/approval-request.yaml
 
 # ビルドで使う依存パッケージ
 node_modules/
@@ -11,3 +12,9 @@ node_modules/
 # OS が作るファイル
 .DS_Store
 Thumbs.db
+
+# デザインの見本の元資料（公開リポジトリには入れない。取得手順は各見本の README.md）
+.claude/skills/design-reference/reference/source.*
+
+# ビルドで作るファイル（outline.md から作り直せる。フォントを埋め込むので、ライセンス表記の仕組みを通したものだけを配る）
+examples/*/build/

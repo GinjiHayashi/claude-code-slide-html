@@ -1,0 +1,70 @@
+#!/usr/bin/env node
+// 承認ゲート：次の工程に進んでよいかを、approvals.yaml とファイルの sha256 だけで判定する（要求文書 4章・11章）。
+// AI の自己申告では判定しない。
+// 使い方：node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> <outline|factcheck|build>
+// - outline：brief.md が承認済み
+// - factcheck：brief.md と outline.md が承認済み
+// - build：outline.md と factcheck.md が承認済みで、factcheck.md の書式にエラーがなく、P0 にすべて人間の判断（decision）が書かれている。
+//   さらに、factcheck.md を承認したときから outline.md のスライドが変わっていない（変わったスライドはファクトチェックし直す）
+// 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { sha256, slideHashes, readApprovals, latest } from "./approvals.mjs";
+import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
+
+const NEEDS = {
+  outline: ["brief.md"],
+  factcheck: ["brief.md", "outline.md"],
+  build: ["outline.md", "factcheck.md"],
+};
+
+// factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
+export function factcheckedChanges(approval, outlineText) {
+  if (!approval?.outline_slides) return null;
+  const now = slideHashes(outlineText), then = approval.outline_slides;
+  return [...new Set([...Object.keys(then), ...Object.keys(now)])].filter((k) => k !== "meta" && then[k] !== now[k]);
+}
+
+export function checkGate(deckDir, stage) {
+  const errors = [];
+  const approvals = readApprovals(deckDir);
+  for (const target of NEEDS[stage]) {
+    const file = path.join(deckDir, target);
+    if (!fs.existsSync(file)) { errors.push(`${target} がない`); continue; }
+    const a = latest(approvals, target);
+    if (!a) { errors.push(`${target} が承認されていない（request.mjs で承認を依頼し、人間が答える）`); continue; }
+    const text = fs.readFileSync(file);
+    if (a.sha256 === sha256(text)) continue;
+    let where = "";
+    if (a.slides) {
+      const now = slideHashes(text.toString("utf8"));
+      const ids = new Set([...Object.keys(a.slides), ...Object.keys(now)]);
+      where = `。変わったところ：${[...ids].filter((k) => a.slides[k] !== now[k]).join("、")}`;
+    }
+    errors.push(`${target} が承認後に変更されている（承認：${a.approved_by}、${a.approved_at}）${where}`);
+  }
+  if (stage === "build" && fs.existsSync(path.join(deckDir, "factcheck.md"))) {
+    const fc = checkFactcheck(fs.readFileSync(path.join(deckDir, "factcheck.md"), "utf8"));
+    if (fc.errors.length) errors.push(`factcheck.md の書式にエラーが ${fc.errors.length}件ある（check-factcheck.mjs で確かめる）`);
+    if (fc.waiting.length) errors.push(`factcheck.md の P0 に人間の判断（decision）がない：${fc.waiting.join("、")}`);
+    const a = latest(approvals, "factcheck.md");
+    const of = path.join(deckDir, "outline.md");
+    if (a && fs.existsSync(of)) {
+      const changed = factcheckedChanges(a, fs.readFileSync(of, "utf8"));
+      if (changed === null) errors.push("factcheck.md の承認に、そのときの outline.md の記録がない。factcheck.md を承認し直す");
+      else if (changed.length) errors.push(`ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`);
+    }
+  }
+  return { ok: !errors.length, errors };
+}
+
+// コマンドとして呼ばれたとき
+if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+  const [deckDir, stage] = process.argv.slice(2);
+  if (!deckDir || !NEEDS[stage]) { console.error(`使い方：node gate.mjs decks/<deck-id> <${Object.keys(NEEDS).join("|")}>`); process.exit(2); }
+  const r = checkGate(deckDir, stage);
+  for (const e of r.errors) console.log(`止める  ${e}`);
+  console.log(r.ok ? `${stage} に進んでよい` : `${stage} に進めない`);
+  process.exit(r.ok ? 0 : 1);
+}

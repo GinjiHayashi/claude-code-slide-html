@@ -1,0 +1,232 @@
+# 使ってよい素材と道具の一覧（registry.yaml）
+# - 基準は policy.md。項目は AI が書き、人間が承認する（policy.md 4章）。運用時は固定ファイル。
+# - verified_by / verified_at が空の項目は「未確認」。照合スクリプトは未確認の項目を不合格にする。
+# - verification：何をもって確認したか（公式の LICENSE と照合 / AI の転記を承認）。人間の承認があるまで AI は verified_by・verified_at・verification を書かない。
+# - scope: distributed（deck.html に埋め込まれる。クレジットに載せる）| build-only（ビルド時だけ使う。クレジットに載せない）
+# - files: distributed の素材の実体（assets/ からの相対パス）と sha256。外部からは読み込まない。
+
+# ---- 配布物に入る素材 ----
+
+- id: noto-sans-jp
+  name: Noto Sans JP
+  type: font
+  scope: distributed
+  version: "5.3.1"                  # npm パッケージ @fontsource/noto-sans-jp の版（フォント自体は Version 2.004）
+  license: OFL-1.1
+  copyright: "(c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'."
+  source: https://github.com/notofonts/noto-cjk
+  package: "npm:@fontsource/noto-sans-jp@5.3.1"
+  files: []                         # 使う文字だけにサブセット化してビルド時に埋め込むため、実体は npm から取得する
+  commercial_use: true
+  notice_required: true             # OFL 条件2：著作権表示とライセンス全文を配布物に含める
+  conditions:
+    - 著作権表示と OFL-1.1 の全文を deck.html に含める
+    - サブセット化は改変にあたるため、予約フォント名「Source」を含む名前を付けない（「Noto Sans JP」は含まない）
+  notes:
+    - 著作権表示はフォントファイルの name テーブル（ID 0）から取った。Fontsource の LICENSE ファイルの1行目は「Google Inc.」で、フォント本体の表記と食い違う
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した（Noto の著作権者はフォント本体の表記を採用）
+
+- id: lucide
+  name: Lucide
+  type: icon
+  scope: distributed
+  version: "1.59.0"
+  license: ISC
+  copyright: "Copyright (c) 2026 Lucide Icons and Contributors"
+  additional_licenses:
+    - license: MIT
+      copyright: "Copyright (c) 2013-present Cole Bemis"
+      applies_to: Feather 由来のアイコン（lucide-static の LICENSE に一覧がある。例：database、check、arrow-right）
+  source: https://github.com/lucide-icons/lucide
+  package: "npm:lucide-static@1.59.0"
+  files: []                         # 構築順序4で、使うアイコンだけを assets/lucide/ に追加し sha256 を書く
+  commercial_use: true
+  notice_required: true             # ISC・MIT とも、著作権表示と許諾文を含める
+  conditions:
+    - アイコンを1つでも使ったら、ISC と MIT（Feather）の両方の表記を載せる（どのアイコンが Feather 由来かを判定しなくて済むようにする）
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: 公式の LICENSE と照合した
+
+- id: katex
+  name: KaTeX（数式の組版。CSS とフォントを埋め込む）
+  type: library
+  scope: distributed                # 数式のあるデッキだけ、CSS とフォント（woff2）を deck.html に埋め込む
+  version: "0.19.0"
+  license: MIT
+  copyright: "Copyright (c) 2013-2020 Khan Academy and other contributors"
+  additional_licenses:
+    - license: OFL-1.1
+      copyright: "Copyright (c) 2009-2010, Design Science, Inc. (<www.mathjax.org>) Copyright (c) 2014-2018 Khan Academy (<www.khanacademy.org>)"
+      applies_to: KaTeX のフォント（dist/fonts の KaTeX_*。予約フォント名 KaTeX_Main など）
+  source: https://github.com/KaTeX/KaTeX
+  package: "npm:katex@0.19.0"
+  files: []                         # CSS とフォントは npm から取得し、改変せずに埋め込む
+  commercial_use: true
+  notice_required: true             # MIT・OFL とも、著作権表示とライセンス全文を含める
+  conditions:
+    - 数式を1つでも使ったデッキには、MIT（KaTeX）と OFL-1.1（KaTeX のフォント）の両方の表記を載せる
+    - フォントを改変（サブセット化など）するなら、予約フォント名（KaTeX_*）を含む名前を付けない。今は改変せずに埋め込む
+  notes:
+    - MIT の文面は npm の katex@0.19.0 同梱の LICENSE、OFL の著作権表示は dist/fonts/KaTeX_Main-Regular.ttf の name テーブル（ID 0・13）と src/stretchy.ts の注記から取った
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
+- id: natural-earth
+  name: Natural Earth（都道府県の境界）
+  type: map-data
+  scope: distributed                # 加工した境界を SVG の path として deck.html に埋め込む
+  version: "5.1.2"
+  license: LicenseRef-PublicDomain
+  copyright: "Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com."
+  source: https://www.naturalearthdata.com/about/terms-of-use/
+  package: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson"
+  source_sha256: 22d0e3ad85eb3e27f17cabf8ba2d50e554fbc27a87796ff891d958185da62fb5
+  files:
+    - path: natural-earth/japan-prefectures.json   # html-build/scripts/make-japan-map.mjs で加工したもの
+      sha256: 66fa4b3fef2fd89fc83491a436adfc466d67c5f1778aa00a6cc3466bf1318b94
+  commercial_use: true
+  notice_required: false            # 利用条件に「Crediting the authors is unnecessary.」とある
+  conditions:
+    - 表記は不要だが、クレジットに「Made with Natural Earth.」を載せる（利用条件が示す書き方。任意）
+  notes:
+    - 加工：日本の47都道府県だけを取り出して投影し、伊豆諸島・小笠原諸島と鹿児島県の北緯30度より南の島を除き、沖縄県は本島の周りを別の枠に描く
+    - 境界は Natural Earth が描いたもので、国の公式の境界ではない。発表で境界の正確さが問われる場合は、国土数値情報（CC BY 4.0）を検討する
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
+# ---- ビルド時だけ使う道具（クレジットに載せない） ----
+
+- id: tailwindcss
+  name: Tailwind CSS（tailwindcss、@tailwindcss/cli）
+  type: library
+  scope: build-only
+  version: "4.3.3"
+  license: MIT
+  copyright: "Copyright (c) Tailwind Labs, Inc."
+  source: https://github.com/tailwindlabs/tailwindcss
+  package: "npm:tailwindcss@4.3.3, npm:@tailwindcss/cli@4.3.3"
+  commercial_use: true
+  notice_required: false
+  conditions:
+    - 生成した CSS の先頭の「/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */」を消さない
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-scale
+  name: d3-scale
+  type: library
+  scope: build-only
+  version: "4.0.2"
+  license: ISC
+  copyright: "Copyright 2010-2021 Mike Bostock"
+  source: https://github.com/d3/d3-scale
+  package: "npm:d3-scale@4.0.2"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-shape
+  name: d3-shape
+  type: library
+  scope: build-only
+  version: "3.2.0"
+  license: ISC
+  copyright: "Copyright 2010-2022 Mike Bostock"
+  source: https://github.com/d3/d3-shape
+  package: "npm:d3-shape@3.2.0"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: playwright
+  name: Playwright
+  type: library
+  scope: build-only
+  version: "1.64.1"
+  license: Apache-2.0
+  copyright: "Copyright (c) Microsoft Corporation"
+  source: https://github.com/microsoft/playwright
+  package: "npm:playwright@1.64.1"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - 検査と PDF 化だけに使う。ブラウザ本体（Chromium）は配布物に入らない
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: fonttools
+  name: fontTools（フォントのサブセット化）
+  type: library
+  scope: build-only
+  version: "4.67.0"
+  license: MIT
+  copyright: "Copyright (c) 2017 Just van Rossum"
+  source: https://github.com/fonttools/fonttools
+  package: "pypi:fonttools==4.67.0"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - スクリプトを Node.js に統一する場合（レビュー R13）は差し替えを検討する
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: brotli
+  name: Brotli（woff2 の圧縮）
+  type: library
+  scope: build-only
+  version: "1.2.0"
+  license: MIT
+  copyright: "Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors."
+  source: https://github.com/google/brotli
+  package: "pypi:brotli==1.2.0"
+  commercial_use: true
+  notice_required: false
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
+- id: d3-geo
+  name: d3-geo（地図の投影）
+  type: library
+  scope: build-only
+  version: "3.1.1"
+  license: ISC
+  copyright: "Copyright 2010-2024 Mike Bostock"
+  source: https://github.com/d3/d3-geo
+  package: "npm:d3-geo@3.1.1"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - html-build/scripts/make-japan-map.mjs だけで使う。依存の d3-array・internmap も ISC（d3-scale と同じ）
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した
+
+- id: yaml
+  name: yaml（YAML の読み込み）
+  type: library
+  scope: build-only
+  version: "2.9.1"
+  license: ISC
+  copyright: "Copyright Eemeli Aro <eemeli@gmail.com>"
+  source: https://github.com/eemeli/yaml
+  package: "npm:yaml@2.9.1"
+  commercial_use: true
+  notice_required: false
+  notes:
+    - html-build/scripts で outline.md・approvals.yaml・registry.yaml を読む。依存なし
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-17
+  verification: AI が公式の配布物（LICENSE・利用条件）から転記した内容を、チャットで承認した

@@ -49,7 +49,7 @@
 | 場所 | 置くもの | 誰が直すか |
 |---|---|---|
 | `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、メモなど） | 人間が置く。AI は書き換えない |
-| フォルダの直下 | `brief.md`、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml` | 人間と AI（`approvals.yaml` は hook だけ） |
+| フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml` | 人間と AI（`approvals.yaml` は hook だけ） |
 | `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` | ビルドのスクリプトだけ。手で直さない |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。

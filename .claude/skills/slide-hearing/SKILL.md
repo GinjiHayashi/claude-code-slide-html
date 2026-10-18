@@ -23,8 +23,8 @@ description: slide-intake で作った brief.md の空の項目、不備や不�
    - 答えの中に、調べないとわからないこと（他社の事例、統計、制度など）があれば、「調査が必要な項目」に足す（下の「調査が要るとき」）。
 4. **もう一度チェック**して、1 に戻る。終了コード 0 で、見直しでも何も出なければ 5 に進む。空の項目と確認したいことがなくなるか、人間が「これで進めて」と言うまで続ける。
 5. **brief の確認を頼む**：
-   1. brief.md の要点（目的、聞き手、結論、長さ、構成の進め方）と、まだ空の項目・「未定」の項目を人間に見せる。`deck_id` もここで見せる。
-   2. `node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> brief.md` で承認を依頼する。
+   1. brief.md の要点（目的、聞き手、結論、長さ、構成の進め方）と、まだ空の項目・「未定」の項目を人間に見せる。`deck_id` もここで見せる。構成の草案（`outline-draft.md`）があれば、スライドごとの番号とタイトルも見せ、人間の構成のとおりかを確かめてもらう。
+   2. `node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> brief.md` で承認を依頼する。草案があれば一緒に依頼する（`request.mjs decks/<deck-id> brief.md outline-draft.md`）。
    3. 人間の答えは hook が記録する。承認されたかは `node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> outline` で確かめる。
    4. 直してほしいと言われたら、直して 5 をやり直す。
 

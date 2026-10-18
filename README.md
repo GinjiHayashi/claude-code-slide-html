@@ -18,22 +18,28 @@ Claude Code に、構成の検討から HTML スライド（`deck.html`）の作
 | Claude Code | — | スライドを作る AI | `claude --version` |
 | GitHub CLI（推奨） | — | リポジトリと PR の作成 | `gh auth status` |
 
-macOS と Linux（Windows は WSL の Ubuntu）で同じ手順です。[Homebrew](https://brew.sh) は Linux でも使えるので、ツールはまとめて Homebrew で入れます。
+macOS と Linux（Windows は WSL の Ubuntu）で同じ手順です。それぞれの公式のインストーラーを使います。
 
 ```sh
-# 1. Homebrew（入っていなければ）。終わりに表示される「Next steps」のコマンドも実行して、brew を使えるようにする
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Node.js（nvm で入れる。nvm を入れたら、新しいターミナルを開いてから次の行）
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+nvm install 22
 
-# 2. ツール
-brew install node git gh uv
-curl -fsSL https://claude.ai/install.sh | bash   # Claude Code（公式のインストーラー）
+# uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 3. GitHub にログイン（ブラウザが開く）
-gh auth login
+# Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-- Linux では、Homebrew の前に `sudo apt-get install build-essential procps curl file git` が要ります（Homebrew の公式の前提）。
-- Windows では WSL の中で使ってください（Windows のまま動かすことは試していません）。
+OS によって入れ方が違うものは、次のとおりです。
+
+| ツール | macOS | Linux（Ubuntu・WSL） |
+|---|---|---|
+| git | `xcode-select --install`（Apple のコマンドラインツールに入っている） | `sudo apt install git` |
+| GitHub CLI | [公式サイト](https://cli.github.com) のインストーラー（.pkg） | [公式の手順](https://github.com/cli/cli/blob/trunk/docs/install_linux.md)（apt のリポジトリを足す） |
+
+GitHub CLI を入れたら、`gh auth login` で GitHub にログインします（ブラウザが開きます）。Windows では WSL の中で使ってください（Windows のまま動かすことは試していません）。
 
 入れたら、新しいターミナルを開き、表の「確かめ方」のコマンドで版が出ることを確かめます。GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。
 

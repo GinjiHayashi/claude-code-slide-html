@@ -18,9 +18,14 @@ Claude Code に、構成の検討から HTML スライド（`deck.html`）の作
 | Claude Code | — | スライドを作る AI | `claude --version` |
 | GitHub CLI（推奨） | — | リポジトリと PR の作成 | `gh auth status` |
 
-macOS と Linux（Windows は WSL の Ubuntu）で同じ手順です。それぞれの公式のインストーラーを使います。
+Ubuntu（Windows では WSL の Ubuntu）を前提にしています。
+
+**Windows のとき**：PowerShell を管理者として開いて `wsl --install` を実行し、再起動して Ubuntu を開きます。以降のコマンドはすべて Ubuntu の中で打ちます。作業フォルダは Ubuntu 側（`~/` の下）に置きます（`/mnt/c/...` は遅いため）。
 
 ```sh
+# git と curl
+sudo apt update && sudo apt install -y git curl
+
 # Node.js（nvm で入れる。nvm を入れたら、新しいターミナルを開いてから次の行）
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 nvm install 22
@@ -30,16 +35,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Claude Code
 curl -fsSL https://claude.ai/install.sh | bash
+
+# GitHub CLI（公式の apt リポジトリを足して入れる）
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update && sudo apt install -y gh
+gh auth login   # GitHub にログイン（表示に従ってブラウザで認証する）
 ```
-
-OS によって入れ方が違うものは、次のとおりです。
-
-| ツール | macOS | Linux（Ubuntu・WSL） |
-|---|---|---|
-| git | `xcode-select --install`（Apple のコマンドラインツールに入っている） | `sudo apt install git` |
-| GitHub CLI | [公式サイト](https://cli.github.com) のインストーラー（.pkg） | [公式の手順](https://github.com/cli/cli/blob/trunk/docs/install_linux.md)（apt のリポジトリを足す） |
-
-GitHub CLI を入れたら、`gh auth login` で GitHub にログインします（ブラウザが開きます）。Windows では WSL の中で使ってください（Windows のまま動かすことは試していません）。
 
 入れたら、新しいターミナルを開き、表の「確かめ方」のコマンドで版が出ることを確かめます。GitHub CLI がなくても進められますが、リポジトリの作成と設定を手で行うことになります。
 

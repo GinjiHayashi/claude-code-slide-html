@@ -13,7 +13,12 @@ const approve = (dir, target) => recordApproval(dir, target, { approved_by: "tes
 test("judge：はっきりした承認・否定・判断できない答え", () => {
   for (const t of ["承認します", "OK", "問題ないです", "LGTM", "進めてください"]) assert.equal(judge(t), "approve", t);
   for (const t of ["直してください", "ちょっと待って", "保留で", "いいえ", "これで合っていますか？", "OKではないです"]) assert.equal(judge(t), "reject", t);
-  for (const t of ["あとで見ます", "S04 の数字の出どころを教えて"]) assert.equal(judge(t), "unclear", t);
+  for (const t of ["S04 の数字の出どころを教えて", "ありがとう"]) assert.equal(judge(t), "unclear", t);
+});
+
+test("judge：同意の語を含む否定の言い方は承認にしない", () => {
+  for (const t of ["承認しません", "承認できません", "まだ承認しないで", "OK しないでください", "はいはい、あとでね", "後で承認します"]) assert.equal(judge(t), "reject", t);
+  for (const t of ["問題ありません", "問題ないです", "はい、承認します", "大丈夫です。進めてください", "かまいません。OK です"]) assert.equal(judge(t), "approve", t);
 });
 
 test("slideHashes：1枚だけ変えると、その番号だけ変わる", () => {

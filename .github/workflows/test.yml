@@ -18,9 +18,9 @@ jobs:
       # Python とそのパッケージは uv が入れる（.python-version・uv.lock）
       - uses: astral-sh/setup-uv@v6
 
-      # README「2. セットアップ」と同じ手順（CI では OS のライブラリも入れる）
+      # README「2. セットアップ」と同じ手順（Linux では OS のライブラリも入れる）
       - name: セットアップ
-        run: npm run setup -- --with-deps
+        run: npm run setup
 
       - name: テスト
         run: npm test

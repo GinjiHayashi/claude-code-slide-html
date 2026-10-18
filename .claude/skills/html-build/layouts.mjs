@@ -24,7 +24,7 @@ const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip 
 const bullets = (items, size = "text-heading") =>
   `<ul class="m-0 flex list-none flex-col gap-[16px] p-0 ${size} text-ink">${items.map((t) => `<li class="flex gap-[12px]"><span class="mt-[0.7em] h-[6px] w-[6px] shrink-0 rounded-full bg-primary"></span><span>${strong(t)}</span></li>`).join("")}</ul>`;
 
-// 説明文の行数（幅を広げたあと）。ビルド後の検査（5-4）で実際の行数を測る
+// 説明文の行数（幅を広げたあと）。ビルド後の検査（inspect.mjs）で実際の行数を測る
 const leadLines = (t) => Math.ceil(width(plain(t)) / (leadWidth(t) / LEAD.px - 2));
 
 // ---- 本文のある型の枠：パンくず・タイトル・説明文・本文・出典 ----

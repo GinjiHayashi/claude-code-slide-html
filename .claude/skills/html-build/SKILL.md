@@ -10,8 +10,10 @@ description: 承認済みの outline.md から、1ファイルで完結する de
 ## ビルドする
 
 ```
-CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/scripts/build.mjs decks/<deck-id>
+npm run build -- decks/<deck-id>
 ```
+
+Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入れる（なければ Playwright が入れたものを使う）。
 
 - 終了コードが 0 なら合格。1 なら不合格で、理由は `decks/<deck-id>/build/build-log.md` に書かれている。
 - 書き出すもの（すべて `decks/<deck-id>/build/` の中）：`deck.html`、`assets-manifest.yaml`、`build-log.md`。`outline.md` が `pdf: true` で合格したときは `deck.pdf` も。
@@ -29,6 +31,8 @@ CHROMIUM_PATH=<Chromium のパス（任意）> node .claude/skills/html-build/sc
 ## 守ること
 
 - **ソースは `outline.md` だけ。** `deck.html` は直さない。直すときは `outline.md` の該当スライドの節（`## S05` から次の見出しまで）だけを読んで書き換え、ビルドし直す。`deck.html` は読まない（大きく、読む量が無駄になる）。結果は `build-log.md` で見る。
+- **部品にはデータだけを渡す。** 棒の長さや座標などの寸法は部品とビルドが計算し、AI は書かない。強調する数値（「約1/7」など）も `outline.md` に書き、承認とファクトチェックの対象にする。部品に計算で増やさせない。
+- 出典はスライドごとに `source:`（スライドの下部に出る）、発表者ノートは `notes:` に書く。
 - 書き方は `slide-outline/outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md` と `components.md`。
 - 目的に合う部品があれば必ず使う。部品で表しにくいときだけ `html:` に独自の表現を書く（`components.md` 4.1：トークンだけ、枠に収める、画像やスクリプトを入れない）。
 - 承認済みかどうかは自分で判断しない。`make-slides/scripts/gate.mjs` で確かめる。

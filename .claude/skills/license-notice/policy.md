@@ -59,7 +59,7 @@ deny:
 
 1. AI が調べる：ライセンス、著作権者、バージョン、出典の URL、商用利用の可否。公式の配布物（パッケージ同梱の LICENSE、公式サイトの利用条件）で確かめる。
 2. AI が `registry.yaml` に項目を書く。このとき `verified_by`・`verified_at` は空にする（照合スクリプトは未確認として不合格にする）。
-3. `distributed` の素材は、AI が実体を `assets/` に置き（または取得元のパッケージを書き）、sha256 を `registry.yaml` に書く。
+3. `distributed` の素材は、AI が実体を `assets/` に置き（または取得元のパッケージを書き）、sha256 を `registry.yaml` に書く。部品から埋め込むときは `data-asset-id="<id>:<名前>"` を付ける。
 4. AI が人間に、追加した項目と調べた根拠（出典の URL、LICENSE の該当箇所）を示して承認を求める。
 5. 人間が承認したら、AI が `verified_by`（承認した人）・`verified_at`（承認した日）・`verification`（何を承認したか）を書く。**人間の承認の言葉がない限り、AI はこの3つを書かない。**
 6. 条件付き（`conditional`）のライセンスは、人間が使うかどうかを個別に判断する。AI は判断の材料（守る条件）を `conditions` に書いて示す。

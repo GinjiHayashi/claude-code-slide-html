@@ -59,8 +59,7 @@ git push -u origin feature/harness-update
 # develop への PR を作り、マージコミットで取り込む（squash にしない）
 ```
 
-- この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します（試して確かめました）。
-
+- この PR だけは **squash ではなくマージコミット** でマージします。squash にすると、ハーネスの履歴とのつながりが切れ、次の取り込みで、前回取り込んだ行がまた変わっているところが衝突します。
 - `decks/` の中身はハーネスにないので、衝突しません。
 - 衝突するのは、ハーネスと同じファイル（`CLAUDE.md` や `.claude/` の中）を、スライド用リポジトリで直していたときだけです。ハーネスのファイルは直さず、直したいときはハーネスの側を直してから取り込みます。
 - 取り込んだら、見本のビルド（下の「3. セットアップ」の確認）が通るかを見ます。`package-lock.json` が変わっていたら、`npm run setup` をやり直します。
@@ -152,6 +151,12 @@ git は次のように進みます（AI が行うのは 1〜3 と、頼まれた
 ### 注意
 
 - このリポジトリは public です。トークン、パスワード、案件の情報をコミットしないでください。
+
+## ハーネスを直すとき
+
+- `develop` から `feature/<短い英語>` を切って直し、`develop` への PR を作ります（上の「git の運用ルール」）。
+- テストは `npm test`、見本のビルドは `npm run build -- examples/sample-deck` です。PR では CI（GitHub Actions）が同じものを実行します。
+- スライドの型や図の部品の決まりは、コード（`.claude/skills/html-build/scripts/spec.mjs` と各部品の `schema`）が正です。文書には書き写さず、`node .claude/skills/html-build/scripts/schema.mjs` を参照します。
 
 ## ライセンス
 

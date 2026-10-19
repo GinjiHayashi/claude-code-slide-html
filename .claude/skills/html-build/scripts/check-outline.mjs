@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -95,9 +95,9 @@ export async function checkOutline(file) {
     for (const [k, max] of Object.entries(L.text ?? {})) {
       if (f[k] == null) continue;
       const lines = String(f[k]).replace(/\n+$/, "").split("\n"); // 「|」で書くと最後に改行が付くので外す
-      if (k === "title" && f.layout === "title") {
-        if (lines.length > 2) err(s, "表紙の title は2行まで");
-        lines.forEach((l, n) => width(plain(l)) > 22 && warn(s, `表紙の title の${n + 1}行目が全角22字の目安を超えている（${width(plain(l))}字）`));
+      if (L.lines?.[k]) {
+        if (lines.length > L.lines[k]) err(s, `${k} は${L.lines[k]}行まで`);
+        lines.forEach((l, n) => width(plain(l)) > max && warn(s, `${k} の${n + 1}行目が全角${max}字の目安を超えている（${width(plain(l))}字）`));
       } else if (lines.length > 1 && k === "title") err(s, "title は1行にする");
       else if (width(plain(f[k])) > max) warn(s, `${k} が全角${max}字の目安を超えている（${width(plain(f[k]))}字）`);
     }
@@ -193,11 +193,11 @@ export async function checkOutline(file) {
         });
     }
 
-    // 太字（components.md 4.2）：1項目に1か所、1枚に3か所まで
+    // 太字（components.md 4.2、数は spec.mjs の BOLD）
     const bolds = (t) => (String(t).match(/\*\*(.+?)\*\*/g) ?? []).length;
-    bullets.forEach((t) => bolds(t) > 1 && warn(s, `太字が1項目に${bolds(t)}か所ある（目安は1か所）：${plain(t).slice(0, 20)}…`));
+    bullets.forEach((t) => bolds(t) > BOLD.perItem && warn(s, `太字が1項目に${bolds(t)}か所ある（目安は${BOLD.perItem}か所）：${plain(t).slice(0, 20)}…`));
     const total = bullets.reduce((a, t) => a + bolds(t), 0);
-    if (total > 3) warn(s, `太字が1枚に${total}か所ある（目安は3か所まで）`);
+    if (total > BOLD.perSlide) warn(s, `太字が1枚に${total}か所ある（目安は${BOLD.perSlide}か所まで）`);
 
     // 図：名前が一覧にあるか、データが部品の決まりに合うか（部品を実際に呼んで確かめる）
     const ds = f.diagrams ?? (f.diagram ? [f.diagram] : []);

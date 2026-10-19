@@ -59,17 +59,27 @@ export const KINDS = [
 
 // ---- スライドの型 ----
 // required・optional：書ける項目。visual：図（diagram・diagrams・html のどれか1つ）が必須。lead：説明文が必須（要らないなら lead: false）
-// text：1行の文字数の目安（全角）。list：箇条書きの [最少, 最多, 1項目の文字数の目安, 下の階層を書けるか]。数は1つ目の階層で数え、項目のすぐあとの並びは下の階層（SUB_ITEMS まで）
+// text：1行の文字数の目安（全角）。lines：改行して何行まで書けるか（書いていない項目は1行。text はその1行の目安）。list：箇条書きの [最少, 最多, 1項目の文字数の目安, 下の階層を書けるか]。数は1つ目の階層で数え、項目のすぐあとの並びは下の階層（SUB_ITEMS まで）
 // numbered：true で1つ目の階層を数字の箇条書きにする（body のある型）
 // columns：{ heading, items } の枠（項目の名前、箇条書きの数、1項目と小見出しの文字数）
 // grid：{ heading, text, icon? } をちょうど count 個（icon は phosphor:<名前> か先頭の assets の SVG。番号の丸の代わりに出す）。checks：{ text, done } を min〜max 個
 // author：{ org, name } の文字数の目安。chapters：目次に載せられる章の数
 // 文字数は目安で、超えると注意。最後はビルド後の検査で、実際の行数をブラウザで測る
 const BODY = ["breadcrumb", "source"];
+// 説明文（lead）：幅 base を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
+export const LEAD = { base: 640, max: 1172, lines: 3, px: 16 };
+// 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
+export const BOLD = { perItem: 1, perSlide: 3 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
 const COLUMN = { items: [1, 4], heading: 20 };
 export const LAYOUTS = {
-  title: { required: ["title", "date"], optional: ["subtitle", "author"], text: { title: 44, subtitle: 50, date: 20 }, author: { org: 40, name: 20 } },
+  title: {
+    required: ["title", "date"],
+    optional: ["subtitle", "author"],
+    text: { title: 22, subtitle: 50, date: 20 },
+    lines: { title: 2 },
+    author: { org: 40, name: 20 },
+  },
   toc: { required: [], optional: ["title"], text: { title: 30 }, chapters: 12 },
   section: { required: ["title"], optional: ["description", "topics"], text: { title: 16, description: 120 }, list: { topics: [3, 6, 20] } },
   "title-body": { required: ["title", "body"], optional: [...BODY, "numbered"], lead: true, text: { title: 30 }, list: { body: [1, 5, 110, true] } },
@@ -108,7 +118,7 @@ export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.opti
 export function describeLayout(name) {
   const L = LAYOUTS[name];
   const limit = (k) => {
-    if (L.text?.[k]) return `${k}（${L.text[k]}字）`;
+    if (L.text?.[k]) return L.lines?.[k] ? `${k}（${L.lines[k]}行まで、1行${L.text[k]}字）` : `${k}（${L.text[k]}字）`;
     if (L.list?.[k]) {
       const [a, b, c, nest] = L.list[k];
       return `${k}（箇条書き ${a}〜${b}項目、各${c}字${nest ? `、下の階層は1項目に${SUB_ITEMS}つまで` : ""}）`;

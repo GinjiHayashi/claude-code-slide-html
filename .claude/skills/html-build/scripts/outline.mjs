@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import YAML from "yaml";
 import { frontMatter } from "../../../lib/common.mjs";
+import { LEAD } from "./spec.mjs";
 
 // outline.md を読む。書き方は slide-outline/outline-template.md。
 // - 先頭の --- で囲んだ部分はデッキ全体の設定（YAML）。
@@ -44,16 +45,16 @@ export function parseOutline(text, file = "outline.md") {
   return { meta, slides };
 }
 
-// 全角を1、半角を0.5として数える（layout-catalog の「文字数の数え方」）
+// 文字数：全角を1、半角を0.5として数える（字数の目安と検査は、すべてこの数え方）
 export const width = (s) => [...String(s)].reduce((a, c) => a + (c.charCodeAt(0) < 0x80 || (c >= "\uff61" && c <= "\uff9f") ? 0.5 : 1), 0);
 export const plain = (s) =>
   String(s)
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/`([^`]+)`/g, "$1"); // 太字とコードの印を除いた文字
 
-// 説明文（lead）の幅：640 を基本に、3行を超える長さなら3行に収まるまで広げる（最大 1172）。
-// 16px の文字を全角1字＝16px とみなし、禁則や句読点のずれの分として1行に2字の余裕をみる。
-export const LEAD = { base: 640, max: 1172, lines: 3, px: 16 };
+// 説明文（lead）の幅：LEAD.base を基本に、LEAD.lines 行を超える長さなら収まるまで広げる（最大 LEAD.max）。
+// 文字を全角1字＝LEAD.px とみなし、禁則や句読点のずれの分として1行に2字の余裕をみる。
+export { LEAD };
 export const leadWidth = (text) => {
   const need = Math.ceil(width(plain(text)) / LEAD.lines + 2) * LEAD.px;
   return Math.min(LEAD.max, Math.max(LEAD.base, need));

@@ -83,7 +83,7 @@ export const schema = {
   ],
 };
 
-const FIELDS = {
+export const FIELDS = {
   area: { req: ["at", "size"], opt: ["text", "icon", "tone", "id"] },
   frame: { req: ["at", "size"], opt: ["shape", "text", "id"] },
   box: { req: ["at", "text"], opt: ["size", "caption", "icon", "tone", "shape", "align", "id"] },

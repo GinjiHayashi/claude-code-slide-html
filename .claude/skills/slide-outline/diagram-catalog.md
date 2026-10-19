@@ -100,7 +100,7 @@ d3・KaTeX は、license-notice の許可済み一覧に載っているものだ
 
 ## 6. 自由図（canvas）
 
-一覧の型で `idea` の絵が描けないとき（`match` が「意味が欠ける」「描けない」）に使う。座標は px ではなく格子のマス目（既定 12列×6行）で、色は役割（`tone`）で書く。部品が `theme.css` のトークンに直し、線の端・矢印の向き・文字の位置・目盛りなどの計算は部品が行う。形の一覧と項目は `html-build/components/canvas.mjs` の冒頭のコメント。
+一覧の型で `idea` の絵が描けないとき（`match` が「意味が欠ける」「描けない」）に使う。座標は px ではなく格子のマス目（既定 12列×6行）で、色は役割（`tone`）で書く。部品が `theme.css` のトークンに直し、線の端・矢印の向き・文字の位置・目盛りなどの計算は部品が行う。形の一覧と値の意味は `html-build/components/canvas.mjs` の冒頭のコメント、形ごとに書ける項目は `node .claude/skills/html-build/scripts/schema.mjs canvas`。
 
 | 形のなかま | 形（type） |
 |---|---|

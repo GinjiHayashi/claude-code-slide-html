@@ -248,7 +248,7 @@ export async function checkOutline(file) {
     if (f.html)
       warn(
         s,
-        `独自の表現（html:）を使っている${matchKind && matchKind !== MATCHES[0] ? `（match：${matchKind}）` : ""}。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る`,
+        `独自の表現（html:）を使っている${matchKind && matchKind !== MATCHES[0] ? `（match：${matchKind}）` : ""}。トークンだけを使い、枠に収める。人間の確認で見る`,
       );
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");

@@ -1,7 +1,11 @@
 ---
 name: fact-checker
-description: outline.md の記述が事実と一致するかを、スライドのまとまりごとに確かめるファクトチェック用サブエージェント。slide-factcheck が、まとまりごとに並列で呼ぶ。指摘は P0・P1・要確認に分け、根拠を付けて返し、呼び出し元が factcheck.md にまとめる。
+description: outline.md の記述が事実と一致するかを、スライドのまとまりごとに確かめるファクトチェック用サブエージェント。slide-factcheck が、brief.md の max_subagents 以下のまとまりに分けて並列で呼ぶ。指摘は P0・P1・要確認に分け、根拠を付けて返し、呼び出し元が factcheck.md にまとめる。
 tools: Read, WebSearch, WebFetch
+# トークンを抑えるため：メインより安いモデルで動かす。検索が止まらなくなるのを防ぐ。CLAUDE.md は読まない（要る決まりは research-standards にある）
+model: sonnet
+maxTurns: 80
+omitClaudeMd: true
 skills:
   - research-standards
 ---
@@ -12,7 +16,7 @@ skills:
 
 呼び出し元は次を渡します。足りなければ、調べずに「足りないもの」を返します。
 
-- 確かめるスライドの番号（例：`S04〜S07`）
+- 確かめるスライドの番号（範囲か一覧。例：`S04〜S07`、`S04〜S06・S09`）
 - `decks/<deck-id>/` のパス（`outline.md`、`brief.md`、`research.md` を読むため）
 - 指摘の ID を付け始める番号（例：`FC-101`）。この番号から順に付ける
 - 今日の日付（取得日に書く）

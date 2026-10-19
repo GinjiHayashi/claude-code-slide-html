@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { KINDS, LAYOUTS, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -13,7 +13,8 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない。
+// match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
 // 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
@@ -123,13 +124,25 @@ export async function checkOutline(file) {
     const list = (k, [min, max, each], arr = f[k]) => {
       if (arr == null) return;
       if (!Array.isArray(arr)) return err(s, `${k} は箇条書き（- で始まる行の並び）にする`);
-      if (arr.length < min || arr.length > max) err(s, `${k} は${min}〜${max}項目（今は${arr.length}項目）`);
+      const top = arr.filter((t) => !Array.isArray(t));
+      if (top.length < min || top.length > max) err(s, `${k} は${min}〜${max}項目（今は${top.length}項目）`);
       arr.forEach((t, n) => {
+        if (Array.isArray(t)) {
+          // 下の階層：すぐ前が文字の項目で、中身は文字だけ
+          if (n === 0 || Array.isArray(arr[n - 1])) return err(s, `${k} の${n + 1}つ目の並び（下の階層）は、文字の項目のすぐあとに書く`);
+          if (!t.length || t.length > SUB_ITEMS) err(s, `${k} の下の階層は1〜${SUB_ITEMS}項目`);
+          return t.forEach((c) => {
+            if (typeof c !== "string") return err(s, `${k} の下の階層は文字だけ（3つ目の階層は書けない）`);
+            bullets.push(c);
+            if (width(plain(c)) > each) warn(s, `${k} の下の階層の「${c.slice(0, 10)}…」が全角${each}字の目安を超えている`);
+          });
+        }
         if (typeof t !== "string") return err(s, `${k} の${n + 1}項目目が文字ではない`);
         bullets.push(t);
         if (width(plain(t)) > each) warn(s, `${k} の${n + 1}項目目が全角${each}字の目安を超えている（${width(plain(t))}字）`);
       });
     };
+    if (f.numbered != null && typeof f.numbered !== "boolean") err(s, "numbered は true か false にする");
     for (const [k, rule] of Object.entries(L.list ?? {})) list(k, rule);
     for (const k of L.columns?.keys ?? []) {
       const c = f[k],
@@ -200,16 +213,42 @@ export async function checkOutline(file) {
         }
         const { kind, ...data } = d;
         try {
-          comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
+          const load = async (k) => {
+            if (!KINDS.includes(k)) throw new Error(`図の型「${k}」は一覧にない`);
+            return (comps[k] ??= (await import(path.join(COMP, `${k}.mjs`))).default);
+          };
+          await load(kind);
+          if (kind === "canvas") for (const k of (await import(path.join(COMP, "canvas.mjs"))).chartKinds(data)) await load(k);
           if (kind === "image") usedAssets.add(data.src);
-          comps[kind](data, { deck });
+          comps[kind](data, { deck, comps });
         } catch (e) {
           err(s, `図 ${kind} のデータが決まりに合わない：${e.message}`);
         }
       }
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
-    if (f.html) warn(s, "独自の表現（html:）を使っている。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る");
+    // 図のイメージ（slide-outline の手順 5）：先に idea で絵を書き、match で部品で描けるかを決める
+    const hasFigure = !!(f.diagram || f.diagrams || f.html);
+    const match = f.match == null ? null : String(f.match).trim();
+    const matchKind = match && MATCHES.find((x) => match.startsWith(x));
+    if (hasFigure && !f.idea) warn(s, "図のイメージ（idea）がない。部品を選ぶ前に、見せたい絵を1〜3行で書く");
+    if (hasFigure && match == null) warn(s, `match がない（${MATCHES.join("・")}）`);
+    if (!hasFigure && (f.idea || match != null)) warn(s, "idea・match があるのに図がない");
+    if (match != null && !matchKind) err(s, `match は ${MATCHES.join("・")} のどれかで始める`);
+    else if (matchKind && matchKind !== MATCHES[0] && !/^[^：:]+[：:]\s*\S/.test(match))
+      err(s, `match が「${matchKind}」のときは「：」のあとに、何が欠けるか・なぜ描けないかを書く`);
+    // 自由図（canvas）は、一覧の型で描けないときの描き方（「そのまま」以外）。一覧の型と同じ扱いにしない
+    const kinds = (Array.isArray(ds) ? ds : []).map((d) => d?.kind).filter((k) => k && k !== "kpi");
+    const listed = kinds.filter((k) => k !== "canvas");
+    if (matchKind === MATCHES[0] && f.html && !f.diagram && !f.diagrams) warn(s, "match が「そのまま」なのに独自の表現（html:）で描いている。部品を使う");
+    if (matchKind === MATCHES[0] && kinds.includes("canvas")) warn(s, "match が「そのまま」なのに自由図（canvas）で描いている。一覧の型を使う");
+    if (matchKind && matchKind !== MATCHES[0] && !f.html && !kinds.includes("canvas"))
+      warn(s, `match が「${matchKind}」なのに一覧の型（${listed.join("・")}）で描いている。自由図（canvas）か独自の表現で描く`);
+    if (f.html)
+      warn(
+        s,
+        `独自の表現（html:）を使っている${matchKind && matchKind !== MATCHES[0] ? `（match：${matchKind}）` : ""}。トークンだけを使い、枠に収め、build-log.md に記録して人間の確認で見る`,
+      );
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");

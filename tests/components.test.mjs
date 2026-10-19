@@ -121,3 +121,25 @@ test("ライセンスの照合：assets にないデッキの素材はエラー�
     { id: "deck", name: "画像：a.png", license: "自組織の素材", copyright: "自組織" },
   ]);
 });
+
+test("dirtree：ファイルの下に行を書く・1行目の字下げはエラー", async () => {
+  const { default: dirtree } = await import(path.join(COMP, "dirtree.mjs"));
+  assert.throws(() => dirtree({ tree: "a/\n  b.txt\n    c.txt" }, { deck }), /ファイルなので/);
+  assert.throws(() => dirtree({ tree: "  a/\n    b.txt" }, { deck }), /1行目は字下げしない/);
+});
+
+test("canvas：格子からはみ出す形と、ない id への線はエラー", async () => {
+  const { default: canvas } = await import(path.join(COMP, "canvas.mjs"));
+  assert.throws(() => canvas({ shapes: [{ type: "box", at: [11, 5], size: [2, 1], text: "a" }] }, { deck }));
+  assert.throws(() =>
+    canvas(
+      {
+        shapes: [
+          { type: "box", id: "a", at: [0, 0], text: "a" },
+          { type: "line", from: "a", to: "zz" },
+        ],
+      },
+      { deck },
+    ),
+  );
+});

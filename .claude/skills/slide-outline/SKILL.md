@@ -17,13 +17,14 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - `research.md` があれば。
    - `design-reference` の基本方針（`principles.md`、`layout.md`、`charts.md`）。
 3. **構成を作る**：「構成の進め方」の1行目で分ける（下の「モードごとの動き方」）。草案があるときは、`outline-draft.md` を `outline.md` に写してから始める（`cp`）。
-4. **調べる**：「調査が必要な項目」と「構成で検討すること」のうち調べればわかるものを論点にし、`researcher` を論点ごとに並列で呼ぶ。呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」。構成を考える途中で新しい論点が出たときも同じ。
+4. **調べる**：「調査が必要な項目」と「構成で検討すること」のうち調べればわかるものを論点にし、`researcher` を並列で呼ぶ（数は `brief.md` の `max_subagents` まで）。呼び方とまとめ方は `research-standards` の「researcher の呼び出し方とまとめ方」。構成を考える途中で新しい論点が出たときも同じ。
    - 調べた主張をスライドに使うときは、そのスライドの `claims` に主張の ID を書く。確度が「未確認」「矛盾あり」の主張を使うときは、人間に伝える。
    - research.md の主張を使わなくなったら、消さずに `dropped` を足し、そのスライドの `claims` からも外す（`research-template.md`）。
    - 検索語に機密の情報を入れない（CLAUDE.md）。
 5. **outline.md を書く**：
    - 先頭の設定と表紙（S01）・締めは、`brief.md` の先頭の設定から写す（`brief-template.md` の対応表）。
-   - 型は `layout-catalog.md` から、図は `diagram-catalog.md` から選ぶ。書ける項目は `node .claude/skills/html-build/scripts/schema.mjs <型の名前>` で確かめる。目的に合う部品があれば必ず使い、似たものを独自に作らない。表しにくいものだけ独自の表現（`html-build/components.md` 4.1）。
+   - 型は `layout-catalog.md` から選ぶ。書ける項目は `node .claude/skills/html-build/scripts/schema.mjs <型の名前>` で確かめる。
+   - 図は、部品を選ぶ前に `idea` に見せたい絵を1〜3行で書く（部品の名前は書かない）。そのあと `diagram-catalog.md` の部品に当てはめ、`match` に「そのまま」「意味が欠ける：<何が欠けるか>」「描けない：<なぜか>」のどれかを書く。「そのまま」なら部品を使い、ほかは自由図 `canvas`（`diagram-catalog.md` 6章）で、いくつかの部分に分けて形を選び、組み合わせて描く。`canvas` でも描けないときだけ独自の表現（`html-build/components.md` 4.1）で描く（`outline-template.md` 4章）。
    - 目次（`toc`）と章の扉（`section`）を入れるか、どこに入れるかは、枚数ではなく内容で決める。
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。
    - 出典は、そのスライドの `source` に書く。
@@ -35,7 +36,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 注意（文字数の目安、図の数、太字の数、独自の表現）は、人間に見せるときに伝える。
    - 草案があるときは `node .claude/skills/slide-outline/scripts/check-structure.mjs decks/<deck-id>` で草案と比べる。エラー（草案が確認されていない、確認のあとに変わった、「決まっている」なのに草案がない）は先に解決する。
 7. **見せて、直す**：次の順で伝える。
-   1. スライドの一覧（番号、型、タイトル）と、発表時間・枚数の目安との比べ（枚数を数えて並べるだけ。1枚あたりの時間などは計算しない）。
+   1. スライドの一覧（番号、型、タイトル。図のあるスライドは、図の型か「独自」と `match`）と、発表時間・枚数の目安との比べ（枚数を数えて並べるだけ。1枚あたりの時間などは計算しない）。
    2. `check-structure.mjs` の出力（「変えた」と「AI が埋めた」）をそのまま見せる。草案がないときは、AI が決めたもの（章立て、型、図の選び方など）を書く。
    3. 「構成で検討すること」それぞれの扱い（どのスライドで扱ったか、扱えなかったか）。
    4. 調査の要点と、確度が「未確認」「矛盾あり」の主張、調べきれなかったこと。

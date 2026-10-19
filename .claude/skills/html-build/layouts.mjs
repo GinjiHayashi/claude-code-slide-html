@@ -27,8 +27,21 @@ const strong = (s) =>
 const TITLE = `m-0 flex items-center gap-[24px] text-title font-bold text-primary before:block before:h-[1.25em] before:w-[8px] before:shrink-0 before:translate-y-[0.06em] before:bg-primary before:content-['']`;
 const STRIP_LEFT = `<div data-deco class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
 const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;
-const bullets = (items, size = "text-heading") =>
-  `<ul class="m-0 flex list-none flex-col gap-[16px] p-0 ${size} text-ink">${items.map((t) => `<li class="flex gap-[12px]"><span class="mt-[0.7em] h-[6px] w-[6px] shrink-0 rounded-full bg-primary"></span><span>${strong(t)}</span></li>`).join("")}</ul>`;
+// 箇条書き。項目のすぐあとの並び（[…]）は、その項目の下の階層（白丸）。numbered なら1つ目の階層を数字にする
+// 文字の大きさ：title-body は 1段目 18px・2段目 16px、text-diagram は 1段目 16px・2段目 14px（size・sub）
+const bullets = (items, size = "text-heading", numbered = false, sub = "text-body") => {
+  const groups = [];
+  for (const t of items) Array.isArray(t) ? groups.at(-1)?.kids.push(...t) : groups.push({ t, kids: [] });
+  const kids = (k) =>
+    k.length
+      ? `<ul class="m-0 mt-[12px] flex list-none flex-col gap-[8px] p-0 ${sub}">${k.map((t) => `<li class="flex gap-[12px]"><span class="flex h-[1.7em] shrink-0 items-center"><span class="h-[10px] w-[10px] rounded-full border-2 border-primary"></span></span><span>${strong(t)}</span></li>`).join("")}</ul>`
+      : "";
+  const mark = (i) =>
+    numbered
+      ? `<span class="w-[1.4em] shrink-0 text-right font-bold text-primary">${i + 1}.</span>`
+      : '<span class="flex h-[1.7em] shrink-0 items-center"><span class="h-[10px] w-[10px] rounded-full bg-primary"></span></span>';
+  return `<${numbered ? "ol" : "ul"} class="m-0 flex list-none flex-col gap-[16px] p-0 ${size} text-ink">${groups.map((g, i) => `<li class="flex gap-[12px]">${mark(i)}<div><span>${strong(g.t)}</span>${kids(g.kids)}</div></li>`).join("")}</${numbered ? "ol" : "ul"}>`;
+};
 
 // 説明文の行数（幅を広げたあと）。ビルド後の検査（inspect.mjs）で実際の行数を測る
 const leadLines = (t) => Math.ceil(width(plain(t)) / (leadWidth(t) / LEAD.px - 2));
@@ -64,8 +77,11 @@ ${inner}${s.fields.notes ? `\n<aside class="notes">${esc(s.fields.notes)}</aside
 // env：{ comps（読み込んだ部品）, deck（デッキのフォルダと素材の一覧。画像の部品が使う） }
 async function diagram(d, w, h, env) {
   const { kind, ...data } = d;
-  env.comps[kind] ??= (await import(path.join(COMP, `${kind}.mjs`))).default;
-  return env.comps[kind](data, { width: Math.floor(w), height: Math.floor(h), deck: env.deck });
+  const load = async (k) => (env.comps[k] ??= (await import(path.join(COMP, `${k}.mjs`))).default);
+  await load(kind);
+  // canvas の中に置く図（chart）の部品も読み込んでおく
+  if (kind === "canvas") for (const k of (await import(path.join(COMP, "canvas.mjs"))).chartKinds(data)) await load(k);
+  return env.comps[kind](data, { width: Math.floor(w), height: Math.floor(h), deck: env.deck, comps: env.comps });
 }
 // 図の枠：diagram（1つ）・diagrams（左右に2つ）・html（独自の表現）。caption は図の下に書く
 async function visual(f, w, h, env) {
@@ -140,7 +156,8 @@ ${topics}</div>`,
     page(
       s,
       ctx,
-      () => `<div class="max-w-[960px]">${bullets(s.fields.body)}</div>${s.fields.html ? `<div class="mt-[24px]" data-custom>${s.fields.html}</div>` : ""}`,
+      () =>
+        `<div class="max-w-[960px]">${bullets(s.fields.body, "text-lead", s.fields.numbered, "text-body")}</div>${s.fields.html ? `<div class="mt-[24px]" data-custom>${s.fields.html}</div>` : ""}`,
     ),
   "text-diagram": async (s, ctx) => {
     let out;
@@ -148,7 +165,7 @@ ${topics}</div>`,
     const v = await visual(s.fields, out.w - SPACE.column - 40, out.h, ctx.env);
     return html.replace(
       "@@VISUAL@@",
-      `<div class="flex h-full gap-[40px]"><div class="w-column shrink-0">${bullets(s.fields.body, "text-body")}</div><div class="min-w-0 flex-1">${v}</div></div>`,
+      `<div class="flex h-full gap-[40px]"><div class="w-column shrink-0">${bullets(s.fields.body, "text-body", s.fields.numbered, "text-sub")}</div><div class="min-w-0 flex-1">${v}</div></div>`,
     );
   },
   "title-diagram": async (s, ctx) => {

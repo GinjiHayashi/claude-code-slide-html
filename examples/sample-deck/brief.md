@@ -12,6 +12,7 @@ contact:
   text: 問い合わせ先：データ活用推進本部　データ管理部
   email: data@example.jp
 pdf: true
+max_subagents: 3
 ---
 
 ## 目的・この資料で決めたいこと

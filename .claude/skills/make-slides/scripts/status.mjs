@@ -43,7 +43,8 @@ export function deckStatus(deckDir) {
   const b = checkBrief(read(briefFile));
   b.errors.push(...checkInputs(b.sections, deckDir));
   if (b.errors.length) return at("1a 事前情報の取り込み", "brief.md に書式の誤り", "slide-intake（直して check-brief.mjs を0件にする）", b.errors);
-  if (b.missing.length || b.questions.length)
+  // 承認済みで変わっていない brief.md は、あとから増えた項目（max_subagents など）が空でもヒアリングに戻さない（空の項目は既定の値で進む）
+  if ((b.missing.length && approved(deckDir, approvals, "brief.md") !== "承認済み") || b.questions.length)
     return at("1b ヒアリング", "聞くことが残っている", "slide-hearing", [...b.missing.map((m) => `空：${m}`), ...b.questions.map((q) => `確認：${q}`)]);
   const fixed = (b.sections["構成の進め方"] ?? "").replace(/^[-*]\s*/, "").startsWith("決まっている");
   const draft = fs.existsSync(path.join(deckDir, "outline-draft.md"));
@@ -98,7 +99,10 @@ export function deckStatus(deckDir) {
   if (manifest.deck_sha256 !== sha256(fs.readFileSync(deckFile)))
     return at("4 HTML 作成", "deck.html がビルドのあとに変わった（手で直さない）", "html-build（ビルドし直す）");
   const logMeta = frontMatter(log);
-  if ((logMeta ? YAMLlib.parse(logMeta[1]) : {})?.ok !== true)
+  const meta = logMeta ? YAMLlib.parse(logMeta[1]) : {};
+  // 承認の前の試しのビルド（slide-outline の手順 6）は、承認のあとにビルドし直す
+  if (meta?.gate === false) return at("4 HTML 作成", "承認の前の試しのビルドのまま", "html-build（ビルドし直す）");
+  if (meta?.ok !== true)
     return at("4 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
 
   // 6 最終確認

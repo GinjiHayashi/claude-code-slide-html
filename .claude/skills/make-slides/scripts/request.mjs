@@ -3,7 +3,7 @@
 // 使い方：node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <outline.md など…>
 // - 対象のファイルの今の sha256 を approval-request.yaml に書く。人間の次の答えを hook（approve-hook.mjs）が判定し、
 //   承認なら、この sha256 のまま変わっていないファイルだけを approvals.yaml に記録する
-// - 依頼を出したら、AI は「outline.md を承認しますか？」と聞く。人間は「OK」「問題ないです」など自由な言葉で答えてよい
+// - 依頼を出したら、AI は「outline.md を承認しますか？」と聞く。承認になるのは「OK」「承認します」など短い同意の語だけの答え（approvals.mjs の judge()）
 // - 依頼は同時に1つのデッキだけ。ほかのデッキに残っている依頼は消す（人間の答えがどのデッキへのものか、取り違えないように）
 import fs from "fs";
 import path from "path";

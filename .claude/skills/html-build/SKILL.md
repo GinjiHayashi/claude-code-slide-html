@@ -9,7 +9,7 @@ description: 承認済みの outline.md から、1ファイルで完結する de
 
 ## ビルドする
 
-1. 承認を確かめる：`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> build`。止められたら、ビルドせずに理由を人間に伝え、`make-slides` に戻る（ビルドのスクリプトはゲートで止まらず、注意として記録するだけなので、ここで確かめる）。
+1. 承認を確かめる：`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> build`。止められたら、ビルドせずに理由を人間に伝え、`make-slides` に戻る（ビルドのスクリプトはゲートで止まらず、注意として記録するだけなので、ここで確かめる。直前に `status.mjs` が「4 HTML 作成」と出していれば、省いてよい）。
 2. ビルドする：
 
 ```
@@ -37,7 +37,7 @@ Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入
 - **部品にはデータだけを渡す。** 棒の長さや座標などの寸法は部品とビルドが計算し、AI は書かない。強調する数値（「約1/7」など）も `outline.md` に書き、承認とファクトチェックの対象にする。部品に計算で増やさせない。
 - 出典はスライドごとに `source:`（スライドの下部に出る）、発表者ノートは `notes:` に書く。
 - 書き方は `slide-outline/outline-template.md`、型は `layout-catalog.md`、図は `diagram-catalog.md` と `components.md`。
-- 目的に合う部品があれば必ず使う。部品で表しにくいときだけ `html:` に独自の表現を書く（`components.md` 4.1：トークンだけ、枠に収める、画像やスクリプトを入れない）。
+- 図は `idea`・`match` に従う（決まりは `diagram-catalog.md` の冒頭）。
 - 承認済みかどうかは自分で判断しない。`make-slides/scripts/gate.mjs` で確かめる。
 
 ## 不合格のとき
@@ -48,6 +48,7 @@ Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入
 | はみ出し・余白不足・文字の重なり | 文字数を減らす、改行の位置を変える、図のデータの数を減らす。内容を変える直しは人間に報告して判断を仰ぐ |
 | 文字が小さすぎる・トークン外の色 | 多くは `html:` の独自の表現が原因。トークンのクラスに直す |
 | 説明文が3行を超えた | 説明文（lead）を短くする |
+| ブラウザが起動しない（`Host system is missing dependencies`、`libnss3.so` がないなど） | 環境の不足。個々のライブラリを `apt install` で頼まず、人間に `npx playwright install-deps chromium` の実行を頼む（sudo のパスワードが要る。`sudo npx` は nvm だと動かないので付けない）。済んだらビルドし直す |
 | 外部への通信・スクリプトのエラー | `html:` から外部の読み込みやスクリプトを外す |
 | ライセンスの照合のエラー | 素材を外す。使う必要があるなら、license-notice の手順で人間に登録の承認を求める。`registry.yaml` を自分で承認済みにしない |
 | 注意（人が確認する） | 直さなくてよい。人間に一覧を伝える（図が3つ以上、`html:` を使った、識別子のない SVG など） |

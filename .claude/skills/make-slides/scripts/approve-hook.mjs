@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 承認の hook（UserPromptSubmit）：承認の依頼（approval-request.yaml）が出ているときに、人間の答えを判定して記録する。
-// - 答えは自由な言葉でよい（「OK」「問題ないです」「承認します」など）。判定は approvals.mjs の judge()（決まった語で判定。AI は使わない）
+// - 判定は approvals.mjs の judge()（決まった語で判定。AI は使わない）。承認になるのは「OK」「承認します」など短い同意の語だけの答え
 //   - 承認：依頼のときから変わっていない対象を approvals.yaml に、答えの原文ごと記録する。依頼は消す
 //   - 承認ではない（直す・待つ・疑問など）：記録せず、依頼を消す
 //   - 判断できない：記録せず、依頼を残す（AI がもう一度聞く）
@@ -46,7 +46,7 @@ for (const dir of pending) {
   const id = path.basename(dir);
   const req = readRequest(dir);
   if (verdict === "unclear") {
-    lines.push(`decks/${id}：答えが承認かどうか判断できないので記録しなかった。依頼は残した。もう一度、承認するかを聞く`);
+    lines.push(`decks/${id}：答えが承認かどうか判断できないので記録しなかった。依頼は残した。もう一度聞く。承認なら「承認」とだけ答えてもらうよう添える`);
     continue;
   }
   fs.rmSync(path.join(dir, REQUEST));

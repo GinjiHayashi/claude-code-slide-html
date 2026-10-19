@@ -10,7 +10,9 @@ import path from "path";
 import YAML from "yaml";
 import { DECK_ID, empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
-export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf"];
+export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf", "max_subagents"];
+// 調査とファクトチェックで1回に呼ぶサブエージェントの数の上限（research-standards・slide-factcheck が使う）
+export const MAX_SUBAGENTS = { min: 1, max: 10, default: 3 };
 // 並びは questions.md の表の順・brief-template.md の見出しの順
 export const SECTIONS = [
   "目的・この資料で決めたいこと",
@@ -57,6 +59,9 @@ export function checkBrief(text) {
   }
   for (const k of META) if (empty(meta[k])) missingMeta.push(k);
   if (!empty(meta.pdf) && typeof meta.pdf !== "boolean") errors.push("pdf は true か false");
+  const n = meta.max_subagents;
+  if (!empty(n) && !(Number.isInteger(n) && n >= MAX_SUBAGENTS.min && n <= MAX_SUBAGENTS.max))
+    errors.push(`max_subagents は ${MAX_SUBAGENTS.min}〜${MAX_SUBAGENTS.max} の整数（既定は ${MAX_SUBAGENTS.default}）`);
 
   // 本文：見出しごとの文章。（ ）だけの説明書きは空とみなす
   const body = m ? text.slice(m[0].length) : text;

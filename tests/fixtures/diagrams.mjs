@@ -104,4 +104,12 @@ export const DIAGRAMS = {
   math: { tex: "E = mc^2" },
   code: { lang: "python", code: "print(1)\n" },
   image: { src: "inputs/screen-entry.png", alt: "画面" },
+  canvas: {
+    shapes: [
+      { type: "box", id: "a", at: [1, 2], text: "入力" },
+      { type: "box", id: "b", at: [8, 2], text: "出力" },
+      { type: "line", from: "a", to: "b" },
+    ],
+  },
+  dirtree: { tree: "project/\n  src/\n    * main.py  # 入口\n  README.md\n" },
 };

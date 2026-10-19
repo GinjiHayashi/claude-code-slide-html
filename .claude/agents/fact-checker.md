@@ -1,7 +1,7 @@
 ---
 name: fact-checker
 description: outline.md の記述が事実と一致するかを、スライドのまとまりごとに確かめるファクトチェック用サブエージェント。slide-factcheck が、brief.md の max_subagents 以下のまとまりに分けて並列で呼ぶ。指摘は P0・P1・要確認に分け、根拠を付けて返し、呼び出し元が factcheck.md にまとめる。
-tools: Read, WebSearch, WebFetch
+tools: Read, Grep, WebSearch, WebFetch
 # トークンを抑えるため：メインより安いモデルで動かす。検索が止まらなくなるのを防ぐ。CLAUDE.md は読まない（要る決まりは research-standards にある）
 model: sonnet
 maxTurns: 80
@@ -25,7 +25,7 @@ skills:
 
 1. `.claude/skills/slide-factcheck/factcheck-template.md` と `.claude/skills/research-standards/domains.md` を読む。
 2. `outline.md` の担当のスライドの節（`## S04` から次の見出しまで）だけを読む。`brief.md` の「聞き手と前提知識」を読む（P1 の基準）。
-3. 確かめる記述を洗い出す。数値、日付、固有名詞、因果や比較、「〜である」と言い切った文。図の `data` と `source`・`notes` も含む。`claims` のある記述は、`research.md` の同じ ID の主張と出典を読む。
+3. 確かめる記述を洗い出す。数値、日付、固有名詞、因果や比較、「〜である」と言い切った文。図の `data` と `source`・`notes` も含む。`claims` のある記述は、`research.md` の同じ ID の主張と出典を読む。`research.md` は全体を読まず、Grep で `^## C-xxx` の行を探して、その主張の節だけを読む。
 4. 記述ごとに確かめる。
    - **`research.md` を正しいものとして信用しない。** そこに書かれた出典を WebFetch で開き直し、記述と出典が合っているかを見る。さらに、発行元の異なる別の情報源でも確かめる。
    - 検索の仕方は research-standards の「情報源」に従う（最初は優先のドメインに絞る）。

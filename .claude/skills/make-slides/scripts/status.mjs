@@ -99,7 +99,10 @@ export function deckStatus(deckDir) {
   if (manifest.deck_sha256 !== sha256(fs.readFileSync(deckFile)))
     return at("4 HTML 作成", "deck.html がビルドのあとに変わった（手で直さない）", "html-build（ビルドし直す）");
   const logMeta = frontMatter(log);
-  if ((logMeta ? YAMLlib.parse(logMeta[1]) : {})?.ok !== true)
+  const meta = logMeta ? YAMLlib.parse(logMeta[1]) : {};
+  // 承認の前の試しのビルド（slide-outline の手順 6）は、承認のあとにビルドし直す
+  if (meta?.gate === false) return at("4 HTML 作成", "承認の前の試しのビルドのまま", "html-build（ビルドし直す）");
+  if (meta?.ok !== true)
     return at("4 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
 
   // 6 最終確認

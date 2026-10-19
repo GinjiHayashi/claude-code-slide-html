@@ -38,8 +38,10 @@ const OUTPUTS = ["deck.html", "deck.pdf", "assets-manifest.yaml"];
 export async function build(deckDir) {
   const outlineFile = path.join(deckDir, "outline.md");
   const chk = await checkOutline(outlineFile);
-  // 承認ゲート：単独で呼んだときは止めずに注意として記録する
-  chk.warnings.unshift(...checkGate(deckDir, "build").errors.map((e) => `承認ゲート：${e}`));
+  // 承認ゲート：単独で呼んだときは止めずに注意として記録する（承認前の試しのビルド。build-log.md の gate: false で区別する）
+  const gate = checkGate(deckDir, "build");
+  chk.gate = gate.ok;
+  chk.warnings.unshift(...gate.errors.map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
   const outDir = path.join(deckDir, "build");
@@ -185,6 +187,7 @@ function buildLog(outline, r) {
     // 先頭の設定は status.mjs が読む（下の文は人が読むためのもの。文面を変えても判定は変わらない）
     "---",
     `ok: ${!!r.ok}`,
+    `gate: ${!!r.check.gate}`,
     "---",
     "",
     `# ビルドの記録：${outline.meta.deck_id}`,

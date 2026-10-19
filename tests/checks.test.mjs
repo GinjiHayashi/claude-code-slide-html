@@ -158,8 +158,14 @@ test("outline.md：表紙の title は spec の行数まで（3行はエラー�
   const cover = (id, title) => [`## ${id}`, "- layout: title", `- title: "${title}"`, "- date: 2026年10月24日"];
   fs.writeFileSync(path.join(dir, "outline.md"), outline(cover("S01", "a\\nb\\nc"), cover("S02", "あ".repeat(23))));
   const r = await checkOutline(path.join(dir, "outline.md"));
-  assert.ok(r.errors.some((e) => e.startsWith("S01") && e.includes("2行まで")), r.errors.join("\n"));
-  assert.ok(r.warnings.some((e) => e.startsWith("S02") && e.includes("22字")), r.warnings.join("\n"));
+  assert.ok(
+    r.errors.some((e) => e.startsWith("S01") && e.includes("2行まで")),
+    r.errors.join("\n"),
+  );
+  assert.ok(
+    r.warnings.some((e) => e.startsWith("S02") && e.includes("22字")),
+    r.warnings.join("\n"),
+  );
 });
 
 test("outline.md：html: のスクリプトはエラー", async () => {

@@ -22,7 +22,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 直すとき：中身・見た目 → 2 に戻る（変えたスライドだけ 3 をやり直し、承認2から）。前提 → 1b に戻る（下の「直すとき」）
 ```
 
-- **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が自由な言葉で答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
+- **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
 - **誰が何をするか**：AI は資料を読み、質問し、`brief.md`・`outline.md`・`research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする。
 - **AI がしないこと**：承認の記録、`deck.html` を読む・直す、見た目や文章の良し悪しの判定、ハーネス（`.claude/`・`CLAUDE.md`）の変更。
 
@@ -59,7 +59,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 ## 承認の頼み方
 
 1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`）。依頼は `approval-request.yaml` に書かれる。
-2. そのあとで「outline.md と factcheck.md を承認しますか？」のように聞く。人間は自由な言葉で答えてよい。
+2. そのあとで「outline.md と factcheck.md を承認しますか？承認なら「承認」とだけ答えてください」のように聞く。承認になるのは、短い同意の語（「承認」「OK」「はい」など）だけの答え。ほかの言葉が混じると hook は判断できないとして記録しないので、もう一度聞く。
 3. 答えは hook が判定して記録し、結果を伝えてくる。AI は記録しない。承認した人として、git の `user.name` が記録される（空なら記録されない）。人間が自分の名前を設定した環境で使う。
 4. 承認されたかは自分で判断せず、`status.mjs` か `gate.mjs decks/<deck-id> <outline|factcheck|build>` で確かめる。
 

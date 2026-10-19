@@ -131,6 +131,16 @@ test("dirtree：ファイルの下に行を書く・1行目の字下げはエラ
 test("canvas：格子からはみ出す形と、ない id への線はエラー", async () => {
   const { default: canvas } = await import(path.join(COMP, "canvas.mjs"));
   assert.throws(() => canvas({ shapes: [{ type: "box", at: [11, 5], size: [2, 1], text: "a" }] }, { deck }));
+  // 線の先・曲がる点・括弧・吹き出しの先も格子の中。size は正の数。cubes の filled は並び
+  for (const s of [
+    { type: "line", from: [0, 0], to: [30, 2] },
+    { type: "line", from: [0, 0], to: [2, 2], via: [[-1, 1]] },
+    { type: "brace", from: [20, 0], to: [20, 2] },
+    { type: "note", at: [0, 0], text: "a", to: [0, 99] },
+    { type: "box", at: [1, 1], size: [-2, 1], text: "a" },
+    { type: "cubes", at: [0, 0], size: [4, 2], count: [3, 1], filled: 2 },
+  ])
+    assert.throws(() => canvas({ shapes: [s] }, { deck }), /格子|正の数|並び/, JSON.stringify(s));
   assert.throws(() =>
     canvas(
       {

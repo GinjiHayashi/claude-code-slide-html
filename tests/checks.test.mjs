@@ -140,11 +140,13 @@ test("outline.md：箇条書きの下の階層と numbered", async () => {
       slide("S02", "[[a1], a]"),
       slide("S03", "[a, [a1, [a11]]]"),
       slide("S04", "[a, b]", ["- numbered: はい"]),
+      ["## S05", "- layout: section", "- title: t", "- topics: [a, [a1], b, c]"],
+      ["## S06", "- layout: two-column", "- title: t", "- lead: false", "- left: { items: [a, [a1]] }", "- right: { items: [b] }"],
     ),
   );
   const r = await checkOutline(path.join(dir, "outline.md"));
   assert.ok(!r.errors.some((e) => e.startsWith("S01")), r.errors.join("\n"));
-  for (const id of ["S02", "S03", "S04"])
+  for (const id of ["S02", "S03", "S04", "S05", "S06"])
     assert.ok(
       r.errors.some((e) => e.startsWith(id)),
       `${id}\n${r.errors.join("\n")}`,

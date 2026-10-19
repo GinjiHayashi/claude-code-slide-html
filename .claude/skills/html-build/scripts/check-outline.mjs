@@ -121,14 +121,15 @@ export async function checkOutline(file) {
         if (width(plain(f.lead)) > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${width(plain(f.lead))}字。${LEAD_LIMIT}字まで）`);
       }
     }
-    const list = (k, [min, max, each], arr = f[k]) => {
+    const list = (k, [min, max, each, nest = false], arr = f[k]) => {
       if (arr == null) return;
       if (!Array.isArray(arr)) return err(s, `${k} は箇条書き（- で始まる行の並び）にする`);
       const top = arr.filter((t) => !Array.isArray(t));
       if (top.length < min || top.length > max) err(s, `${k} は${min}〜${max}項目（今は${top.length}項目）`);
       arr.forEach((t, n) => {
         if (Array.isArray(t)) {
-          // 下の階層：すぐ前が文字の項目で、中身は文字だけ
+          // 下の階層：書ける欄だけ（spec の list の4つ目）。すぐ前が文字の項目で、中身は文字だけ
+          if (!nest) return err(s, `${k} には下の階層を書けない（書けるのは title-body・text-diagram の body だけ）`);
           if (n === 0 || Array.isArray(arr[n - 1])) return err(s, `${k} の${n + 1}つ目の並び（下の階層）は、文字の項目のすぐあとに書く`);
           if (!t.length || t.length > SUB_ITEMS) err(s, `${k} の下の階層は1〜${SUB_ITEMS}項目`);
           return t.forEach((c) => {
@@ -242,7 +243,7 @@ export async function checkOutline(file) {
     const listed = kinds.filter((k) => k !== "canvas");
     if (matchKind === MATCHES[0] && f.html && !f.diagram && !f.diagrams) warn(s, "match が「そのまま」なのに独自の表現（html:）で描いている。部品を使う");
     if (matchKind === MATCHES[0] && kinds.includes("canvas")) warn(s, "match が「そのまま」なのに自由図（canvas）で描いている。一覧の型を使う");
-    if (matchKind && matchKind !== MATCHES[0] && !f.html && !kinds.includes("canvas"))
+    if (matchKind && matchKind !== MATCHES[0] && !f.html && !kinds.includes("canvas") && listed.length)
       warn(s, `match が「${matchKind}」なのに一覧の型（${listed.join("・")}）で描いている。自由図（canvas）か独自の表現で描く`);
     if (f.html)
       warn(

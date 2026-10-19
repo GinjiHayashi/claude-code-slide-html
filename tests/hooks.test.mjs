@@ -21,6 +21,11 @@ const RECORD = ["decks/a", "approvals.yaml"].join("/"); // この行が書き込
 test("protect-bash：承認の記録を書くコマンドは deny", () => {
   assert.equal(bash(`echo x >> ${RECORD}`), "deny");
   assert.equal(bash(`node -e "require('fs').writeFileSync('${RECORD}','')"`), "deny");
+  // 前に付くもの（git -C、sudo、変数の代入）と find の -delete で、すり抜けない
+  assert.equal(bash(`git -C /x checkout -- ${RECORD}`), "deny");
+  assert.equal(bash(`sudo cp x ${RECORD}`), "deny");
+  assert.equal(bash(`LANG=C mv x ${RECORD}`), "deny");
+  assert.equal(bash("find decks -name approvals.yaml -delete"), "deny");
 });
 
 test("protect-bash：ハーネスのファイルを書くコマンドは ask", () => {
@@ -32,6 +37,7 @@ test("protect-bash：普段のコマンドは通す", () => {
   assert.equal(bash("node .claude/skills/html-build/scripts/build.mjs decks/a"), "allow");
   assert.equal(bash("cat .claude/skills/html-build/theme.css 2>/dev/null"), "allow");
   assert.equal(bash("git add decks/a && git commit -m 'feat: outline.md を承認'"), "allow");
+  assert.equal(bash("git -C ../x status && find decks -name approvals.yaml"), "allow");
 });
 
 test("protect-bash：パスが文として出てくるだけのヒアドキュメントや読むだけのスクリプトは通す", () => {

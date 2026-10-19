@@ -42,4 +42,4 @@ export function python() {
 export const DECK_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/;
 
 // 先頭の --- で囲んだ設定。戻り値は match の結果（[0] が --- を含む全体、[1] が中の YAML）。なければ null
-export const frontMatter = (text) => text.match(/^---\n([\s\S]*?)\n---\n/);
+export const frontMatter = (text) => text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);

@@ -31,7 +31,7 @@ import { loadAsset, inlineSvg } from "./_asset.mjs";
 //              at（中心）・direction?（right／left／up／down。既定 right）・tone?（ink／primary／muted。既定 ink）
 //   chart   … ほかの図の部品（bar・line・donut など）を、格子の範囲に入れる。at・size・chart（{ kind, …その部品のデータ }）
 //              ほかの形と組み合わせて1つの図にするときに使う（canvas の中に canvas は入れない）
-//   cubes   … 立方体の並び（リスト・行列）。at・size・count（[列, 行]。1行ならリスト）・filled?（色を付ける立方体：数なら
+//   cubes   … 立方体の並び（リスト・行列）。at・size・count（[列, 行]。1行ならリスト）・filled?（色を付ける立方体の並び：数なら
 //              その列ぜんぶ、[列, 行] ならその1つ。どちらも 1 から数える）・text?（正面の文字の並び。左上から順に）
 //              labels?（番号などの文字の並び。行が2つ以上なら各行の左、1行なら各列の下）
 //              tone?（primary／navy。既定 primary）・dash?（true で点線の空の立方体。ないことを表す）
@@ -225,7 +225,10 @@ export default function canvas(data, opt = {}) {
     if (TONES[s.type]) oneOf(s, "tone", TONES[s.type], i);
     if (SHAPES[s.type]) oneOf(s, "shape", SHAPES[s.type], i);
     if (s.at) pair(s.at, "at", i);
-    if (s.size) pair(s.size, "size", i);
+    if (s.size && pair(s.size, "size", i).some((n) => n <= 0)) throw new Error(`canvas: shapes[${i + 1}] の size は正の数にする`);
+    // 線・括弧・吹き出しの先の [x, y]（id で指すものは除く）も格子の中に置く
+    for (const k of ["from", "to"]) if (["line", "brace", "note"].includes(s.type) && Array.isArray(s[k])) inside(pair(s[k], k, i), [0, 0], i);
+    if (s.type === "line") for (const p of s.via ?? []) inside(pair(p, "via の点", i), [0, 0], i);
     if (!["dot", "icon", "badge", "line", "brace", "ring", "arrow"].includes(s.type))
       inside(s.at, s.size ?? (["text", "note"].includes(s.type) ? [3, 1] : [2, 1]), i);
     if (["dot", "icon"].includes(s.type) || (s.type === "badge" && s.at)) inside(s.at, [0, 0], i);
@@ -249,6 +252,8 @@ export default function canvas(data, opt = {}) {
     if (s.type === "cubes") {
       pair(s.count, "count", i);
       s.count.forEach((n) => int(n, 1, 24, "count の列・行", i));
+      if (s.filled !== undefined && !Array.isArray(s.filled))
+        throw new Error(`canvas: shapes[${i + 1}] の cubes の filled は並びで書く（列なら [2]、1つなら [[2, 1]]）`);
       for (const f of s.filled ?? [])
         if (typeof f === "number") int(f, 1, s.count[0], "filled の列", i);
         else pair(f, "filled の [列, 行]", i), int(f[0], 1, s.count[0], "filled の列", i), int(f[1], 1, s.count[1], "filled の行", i);

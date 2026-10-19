@@ -30,12 +30,18 @@ for (const m of cmd.matchAll(/(?:^|[^0-9&<])\d?>>?\s*([^\s;|&<>]+)/g)) {
 // ファイルを変えるコマンド
 for (const seg of cmd.split(/&&|\|\||[;|\n]/)) {
   const words = seg.trim().split(/\s+/);
+  // 前に付く sudo・env・変数の代入（X=1）は飛ばして、実際のコマンドを見る
+  while (words.length > 1 && (["sudo", "env", "command", "exec", "nohup"].includes(words[0]) || /^\w+=/.test(words[0]))) words.shift();
   const name = (words[0] ?? "").split("/").pop();
+  // git のサブコマンド：前に付く -C <パス>・-c <設定>・--git-dir=… などは飛ばす
+  let sub = 1;
+  while (name === "git" && /^-/.test(words[sub] ?? "")) sub += ["-C", "-c", "--git-dir", "--work-tree", "--namespace"].includes(words[sub]) ? 2 : 1;
   const writes =
     ["cp", "mv", "rm", "ln", "tee", "touch", "truncate", "install", "chmod", "rsync", "dd"].includes(name) ||
     (name === "sed" && words.some((w) => /^-[a-zA-Z]*i/.test(w))) ||
     (name === "perl" && words.some((w) => /^-[a-zA-Z]*i/.test(w))) ||
-    (name === "git" && ["checkout", "restore", "reset", "rm", "mv", "apply", "stash"].includes(words[1]));
+    (name === "find" && words.some((w) => ["-delete", "-exec", "-execdir", "-ok", "-fprint"].includes(w))) ||
+    (name === "git" && ["checkout", "restore", "reset", "rm", "mv", "apply", "stash"].includes(words[sub]));
   if (!writes) continue;
   for (const w of words.slice(1)) {
     const k = kind(` ${w}`);

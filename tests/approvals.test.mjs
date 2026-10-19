@@ -17,6 +17,19 @@ test("judge：はっきりした承認・否定・判断できない答え", () 
   for (const t of ["S04 の数字の出どころを教えて", "ありがとう"]) assert.equal(judge(t), "unclear", t);
 });
 
+test("judge：同意の語のほかに言葉が混じれば、承認にしない（聞き直す）", () => {
+  for (const t of [
+    "これはいけません",
+    "問題ないですか",
+    "承認していいのかな",
+    "はい、でも図は差し替えたい",
+    "承認前に確認させて",
+    "問題ないです\n\nところで README も直して",
+  ])
+    assert.notEqual(judge(t), "approve", t);
+  for (const t of ["はい", "OK！", "承認です。", "了解しました、進めてください", "ＯＫ"]) assert.equal(judge(t), "approve", t);
+});
+
 test("judge：同意の語を含む否定の言い方は承認にしない", () => {
   for (const t of ["承認しません", "承認できません", "まだ承認しないで", "OK しないでください", "はいはい、あとでね", "後で承認します"])
     assert.equal(judge(t), "reject", t);
@@ -88,6 +101,15 @@ test("現在地：承認の進み具合で工程が進み、依頼中は答え�
   assert.equal(deckStatus(dir).stage, "4 HTML 作成");
   fs.writeFileSync(path.join(dir, "approval-request.yaml"), "requested_at: x\ntargets:\n  - {target: brief.md, sha256: x}\n");
   assert.equal(deckStatus(dir).stage, "承認の確認");
+});
+
+test("現在地：承認済みの brief.md は、あとから増えた項目が空でもヒアリングに戻さない", () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "brief.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(/^max_subagents:.*\n/m, ""));
+  assert.equal(deckStatus(dir).stage, "1b ヒアリング");
+  approve(dir, "brief.md");
+  assert.equal(deckStatus(dir).stage, "2 構成");
 });
 
 test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）で見る", () => {

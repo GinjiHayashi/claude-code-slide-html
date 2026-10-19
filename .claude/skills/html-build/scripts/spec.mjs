@@ -59,7 +59,7 @@ export const KINDS = [
 
 // ---- スライドの型 ----
 // required・optional：書ける項目。visual：図（diagram・diagrams・html のどれか1つ）が必須。lead：説明文が必須（要らないなら lead: false）
-// text：1行の文字数の目安（全角）。list：箇条書きの [最少, 最多, 1項目の文字数の目安]。数は1つ目の階層で数え、項目のすぐあとの並びは下の階層（SUB_ITEMS まで）
+// text：1行の文字数の目安（全角）。list：箇条書きの [最少, 最多, 1項目の文字数の目安, 下の階層を書けるか]。数は1つ目の階層で数え、項目のすぐあとの並びは下の階層（SUB_ITEMS まで）
 // numbered：true で1つ目の階層を数字の箇条書きにする（body のある型）
 // columns：{ heading, items } の枠（項目の名前、箇条書きの数、1項目と小見出しの文字数）
 // grid：{ heading, text, icon? } をちょうど count 個（icon は phosphor:<名前> か先頭の assets の SVG。番号の丸の代わりに出す）。checks：{ text, done } を min〜max 個
@@ -72,14 +72,14 @@ export const LAYOUTS = {
   title: { required: ["title", "date"], optional: ["subtitle", "author"], text: { title: 44, subtitle: 50, date: 20 }, author: { org: 40, name: 20 } },
   toc: { required: [], optional: ["title"], text: { title: 30 }, chapters: 12 },
   section: { required: ["title"], optional: ["description", "topics"], text: { title: 16, description: 120 }, list: { topics: [3, 6, 20] } },
-  "title-body": { required: ["title", "body"], optional: [...BODY, "numbered"], lead: true, text: { title: 30 }, list: { body: [1, 5, 110] } },
+  "title-body": { required: ["title", "body"], optional: [...BODY, "numbered"], lead: true, text: { title: 30 }, list: { body: [1, 5, 110, true] } },
   "text-diagram": {
     required: ["title", "body"],
     visual: true,
     optional: [...BODY, "caption", "numbered"],
     lead: true,
     text: { title: 30 },
-    list: { body: [1, 4, 68] },
+    list: { body: [1, 4, 68, true] },
   },
   "title-diagram": { required: ["title"], visual: true, optional: [...BODY, "caption"], lead: true, text: { title: 30 } },
   "two-column": {
@@ -110,8 +110,8 @@ export function describeLayout(name) {
   const limit = (k) => {
     if (L.text?.[k]) return `${k}（${L.text[k]}字）`;
     if (L.list?.[k]) {
-      const [a, b, c] = L.list[k];
-      return `${k}（箇条書き ${a}〜${b}項目、各${c}字）`;
+      const [a, b, c, nest] = L.list[k];
+      return `${k}（箇条書き ${a}〜${b}項目、各${c}字${nest ? `、下の階層は1項目に${SUB_ITEMS}つまで` : ""}）`;
     }
     if (L.columns?.keys.includes(k))
       return `${k}（{ heading?: ${L.columns.heading}字, items: 箇条書き ${L.columns.items[0]}〜${L.columns.items[1]}項目、各${L.columns.each}字 }）`;

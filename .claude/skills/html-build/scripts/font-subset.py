@@ -23,8 +23,8 @@ def used(part):
 
 
 chars = used(doc) | set(range(0x20, 0x7f))  # ASCII は常に入れる（ページ番号など、表示時に足される文字のため）
-# <code> の中と、font-mono のクラスの要素（dirtree の名前など）の文字
-mono = re.findall(r'<code\b.*?</code>', doc, flags=re.S) + re.findall(r'<span\b[^>]*\bfont-mono\b[^>]*>.*?</span>', doc, flags=re.S)
+# <code> の中と、font-mono のクラスの要素（dirtree の名前、canvas の cubes の番号など。タグは問わない）のすぐ中の文字
+mono = re.findall(r'<code\b.*?</code>', doc, flags=re.S) + re.findall(r'<\w+\b[^>]*\bfont-mono\b[^>]*>([^<]*)', doc)
 code = used(' '.join(mono))
 # (フォント名, @fontsource のフォルダ, 太さ, 対象の文字)
 ascii = set(range(0x20, 0x7f))  # コードの空白（字下げ）も Roboto Mono の幅にするため、コードがあれば ASCII も入れる

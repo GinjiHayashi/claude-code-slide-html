@@ -9,7 +9,7 @@ description: slide-outline が書いた outline.md を、fact-checker をスラ�
 
 ## 手順
 
-1. **進んでよいか確かめる**：`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> factcheck`。止められたら先に進まず、理由を人間に伝える。
+1. **進んでよいか確かめる**：`node .claude/skills/make-slides/scripts/gate.mjs decks/<deck-id> factcheck`。止められたら先に進まず、理由を人間に伝える（`slide-outline` から続けて来たときは、省いてよい）。
 2. **まとまりに分ける**：`outline.md` のスライドのうち、確かめる記述（数値、日付、固有名詞、因果や比較、言い切った文）があるものを、`brief.md` の `max_subagents`（空なら 3）以下のまとまりに、枚数が同じくらいになるよう分ける。
    - 確かめる記述のないスライド（`toc`、ビルドが足す credits、見出しだけの `section` など）は対象にしない。`title`・`section`・`closing` も、言い切った文や数値があれば対象にする。
    - 対象が少ないときは、まとまりを減らしてよい（目安：1つのまとまりに3枚以上）。

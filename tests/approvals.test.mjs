@@ -129,4 +129,7 @@ test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）�
   assert.equal(deckStatus(dir).stage, "4 HTML 作成");
   log(true);
   assert.equal(deckStatus(dir).stage, "6 最終確認");
+  // 承認の前の試しのビルド（gate: false）のままなら、ビルドし直す
+  fs.writeFileSync(path.join(out, "build-log.md"), "---\nok: true\ngate: false\n---\n");
+  assert.equal(deckStatus(dir).state, "承認の前の試しのビルドのまま");
 });

@@ -78,8 +78,12 @@
   --text-breadcrumb--line-height: 1.4;
   --text-heading: 20px;          /* 小見出し */
   --text-heading--line-height: 1.5;
+  --text-lead: 18px;             /* 文字だけのスライドの箇条書きの1段目 */
+  --text-lead--line-height: 1.6;
   --text-body: 16px;             /* 本文 */
   --text-body--line-height: 1.7;
+  --text-sub: 14px;              /* 図と並べる箇条書きの2段目 */
+  --text-sub--line-height: 1.7;
   --text-kpi: 40px;              /* 指標（大きな数字） */
   --text-kpi--line-height: 1.2;
   --text-caption: 12px;          /* 図表の目盛り、注記、出典 */

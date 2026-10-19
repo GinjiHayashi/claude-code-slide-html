@@ -75,7 +75,20 @@ test("outline.md：図のイメージ（idea・match）。match の書き方の�
   );
   r = await run("- match: そのまま\n- lead: 月次レポートは", "- match: 意味が欠ける：貼り合わせの手間が伝わらない\n- lead: 月次レポートは");
   assert.deepEqual(r.errors, []);
-  assert.ok(r.warnings.some((w) => w.startsWith("S06") && w.includes("部品で描いている")));
+  assert.ok(r.warnings.some((w) => w.startsWith("S06") && w.includes("一覧の型（flowchart）で描いている")));
+  // 「意味が欠ける」を自由図（canvas）で描くのは食い違いではない。「そのまま」を canvas で描くのは注意
+  const canvas = "- diagram:\n    kind: canvas\n    shapes:\n      - {type: box, at: [1, 1], text: a}\n";
+  const s06 = (m) => src.replace(/(## S06\n[\s\S]*?)- match: そのまま\n([\s\S]*?)- diagram:\n(?:    .*\n|      .*\n)+/, `$1- match: ${m}\n$2${canvas}`);
+  fs.writeFileSync(f, s06("意味が欠ける：貼り合わせの手間が伝わらない"));
+  r = await checkOutline(f);
+  assert.deepEqual(r.errors, []);
+  assert.ok(!r.warnings.some((w) => w.startsWith("S06") && w.includes("描いている")), r.warnings.join("\n"));
+  fs.writeFileSync(f, s06("そのまま"));
+  r = await checkOutline(f);
+  assert.ok(
+    r.warnings.some((w) => w.startsWith("S06") && w.includes("自由図（canvas）で描いている")),
+    r.warnings.join("\n"),
+  );
   r = await run(/- idea: 部門の表が[^\n]*\n- match: そのまま\n/, "");
   assert.ok(r.warnings.some((w) => w.startsWith("S06") && w.includes("idea")));
 });
@@ -115,6 +128,27 @@ test("outline.md：どの本文の型にも source を書ける。表紙の date
   assert.ok(!r.errors.some((e) => e.includes("source")), r.errors.join("\n"));
   assert.ok(r.errors.some((e) => e.startsWith("S04") && e.includes("note")));
   assert.equal(r.errors.filter((e) => /^S0[23]/.test(e)).length, 0, r.errors.join("\n"));
+});
+
+test("outline.md：箇条書きの下の階層と numbered", async () => {
+  const dir = tempDeck();
+  const slide = (id, body, more = []) => [`## ${id}`, "- layout: title-body", "- title: t", "- lead: false", `- body: ${body}`, ...more];
+  fs.writeFileSync(
+    path.join(dir, "outline.md"),
+    outline(
+      slide("S01", "[a, [a1, a2], b]", ["- numbered: true"]),
+      slide("S02", "[[a1], a]"),
+      slide("S03", "[a, [a1, [a11]]]"),
+      slide("S04", "[a, b]", ["- numbered: はい"]),
+    ),
+  );
+  const r = await checkOutline(path.join(dir, "outline.md"));
+  assert.ok(!r.errors.some((e) => e.startsWith("S01")), r.errors.join("\n"));
+  for (const id of ["S02", "S03", "S04"])
+    assert.ok(
+      r.errors.some((e) => e.startsWith(id)),
+      `${id}\n${r.errors.join("\n")}`,
+    );
 });
 
 test("outline.md：html: のスクリプトはエラー", async () => {

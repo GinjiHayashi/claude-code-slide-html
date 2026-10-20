@@ -13,7 +13,7 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた。
 // match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
@@ -260,6 +260,9 @@ export async function checkOutline(file) {
     if (matchKind === MATCHES[0] && kinds.includes("canvas")) warn(s, "match が「そのまま」なのに自由図（canvas）で描いている。一覧の型を使う");
     if (matchKind && matchKind !== MATCHES[0] && !f.html && !kinds.includes("canvas") && listed.length)
       warn(s, `match が「${matchKind}」なのに一覧の型（${listed.join("・")}）で描いている。自由図（canvas）か独自の表現で描く`);
+    // steps は順序があるときだけ（diagram-catalog.md 4章）。idea に「順序なし」と書いたのに steps で描いたら注意
+    if (/順序(が|は)?(なし|ない|無)/.test(String(f.idea ?? "")) && kinds.includes("steps"))
+      warn(s, "idea に順序がないと書いたのに steps で描いている。同じ重さの項目を並べるだけなら cards にする（diagram-catalog.md 4章）");
     if (f.html)
       warn(
         s,

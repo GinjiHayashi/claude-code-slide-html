@@ -16,8 +16,8 @@ const GAP_H = 56, // 上の箱どうしのあいだ（矢印の長さ）
   GAP_V = 40; // 段と段のあいだ（上向きの矢印の長さ）
 
 // 矢印（線と先の三角）。right：右向き、up：上向き
-const right = `<svg class="block" width="${GAP_H}" height="16" viewBox="0 0 ${GAP_H} 16" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M4,8H${GAP_H - 16}"/><polygon class="${LINE.fill}" points="${GAP_H - 4},8 ${GAP_H - 17},1 ${GAP_H - 17},15"/></svg>`;
-const up = `<svg class="block" width="16" height="${GAP_V}" viewBox="0 0 16 ${GAP_V}" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M8,${GAP_V - 4}V16"/><polygon class="${LINE.fill}" points="8,4 1,17 15,17"/></svg>`;
+const right = `<svg data-origin="generated" class="block" width="${GAP_H}" height="16" viewBox="0 0 ${GAP_H} 16" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M4,8H${GAP_H - 16}"/><polygon class="${LINE.fill}" points="${GAP_H - 4},8 ${GAP_H - 17},1 ${GAP_H - 17},15"/></svg>`;
+const up = `<svg data-origin="generated" class="block" width="16" height="${GAP_V}" viewBox="0 0 16 ${GAP_V}" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M8,${GAP_V - 4}V16"/><polygon class="${LINE.fill}" points="8,4 1,17 15,17"/></svg>`;
 
 export default function flowNotes(data, opt = {}) {
   check("flow-notes", data, schema);

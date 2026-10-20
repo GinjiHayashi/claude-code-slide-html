@@ -35,7 +35,7 @@ export default function layers(data, opt = {}) {
   ).join("\n");
   // 左の列：上端のラベル、上下両向きの矢印（残りの高さいっぱい）、下端のラベル
   const head = (up) =>
-    `<svg class="shrink-0" width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><polygon class="${LINE.fill}" points="${up ? "8,0 0,12 16,12" : "0,0 16,0 8,12"}"/></svg>`;
+    `<svg data-origin="generated" class="shrink-0" width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><polygon class="${LINE.fill}" points="${up ? "8,0 0,12 16,12" : "0,0 16,0 8,12"}"/></svg>`;
   const arrow = side
     ? `<div class="flex shrink-0 flex-col items-end gap-[8px]" style="width:${LABEL_W}px">
   <div class="text-right text-body font-bold text-ink">${esc(data.top ?? "")}</div>

@@ -23,6 +23,8 @@ for (const kind of Object.keys(DIAGRAMS)) {
     const html = f(DIAGRAMS[kind], { width: 1172, height: 440, deck });
     assert.equal(typeof html, "string");
     assert.ok(html.length > 0);
+    // 部品が作る SVG には、ライセンスの照合で素材と見分けるための印（data-origin・data-asset-id）を付ける
+    assert.doesNotMatch(html, /<svg(?![^>]*data-(origin|asset-id))/);
     assert.throws(() => f({}, { width: 1172, height: 440, deck }));
     assert.throws(() => f({ ...DIAGRAMS[kind], highlite: 1 }, { width: 1172, height: 440, deck }), /知らない項目 highlite/);
   });

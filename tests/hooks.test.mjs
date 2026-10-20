@@ -5,7 +5,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { execFileSync } from "child_process";
-import { ROOT, SKILLS, tempDeck, rootOf } from "./helpers.mjs";
+import { ROOT, SKILLS, tempDeck, rootOf, fakeGh } from "./helpers.mjs";
 
 const SCRIPTS = path.join(SKILLS, "make-slides/scripts");
 const run = (script, input, env = {}) => {
@@ -128,4 +128,30 @@ test("approve-hook：「<」で始まるプロンプト（Claude Code が自分�
   const { dir, root } = requested();
   assert.equal(run("approve-hook.mjs", { prompt: "<task-notification>OK</task-notification>" }, { CLAUDE_PROJECT_DIR: root }), null);
   assert.equal(fs.existsSync(path.join(dir, "approval-request.yaml")), true);
+});
+
+test("approve-hook：「承認だけ」でない答えには、決まった聞き直しの文を伝える", () => {
+  const { root } = requested();
+  const r = run("approve-hook.mjs", { prompt: "html と pdf は問題ない" }, { CLAUDE_PROJECT_DIR: root });
+  assert.ok(
+    r.hookSpecificOutput.additionalContext.includes("ほかの言葉が混じっていたので、承認として記録されませんでした。承認なら『承認』だけを送ってください"),
+  );
+});
+
+test("request --merge と approve-hook：PR の番号・マージ先・head のコミットを記録し、失敗しているチェックを依頼に出す", () => {
+  const { dir, root } = requested();
+  const g = fakeGh({ statusCheckRollup: [{ name: "test", status: "COMPLETED", conclusion: "FAILURE" }] });
+  const out = execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), dir, "--merge", "7"], { encoding: "utf8", env: { ...process.env, ...g.env } });
+  assert.match(out, /CI が失敗しているチェック：test/);
+  assert.match(out, /承認なら『承認』だけを送ってください/);
+  const r = run("approve-hook.mjs", { prompt: "承認" }, { CLAUDE_PROJECT_DIR: root });
+  assert.match(r.hookSpecificOutput.additionalContext, /PR #7 の develop へのマージの承認を記録した/);
+  const rec = fs.readFileSync(path.join(dir, "approvals.yaml"), "utf8");
+  assert.match(rec, /target: merge/);
+  assert.match(rec, new RegExp(`head_sha: ${"a".repeat(40)}`));
+  // main・develop 以外へのマージは頼めない
+  const h = fakeGh({ baseRefName: "release" });
+  assert.throws(() =>
+    execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), dir, "--merge", "7"], { stdio: "pipe", env: { ...process.env, ...h.env } }),
+  );
 });

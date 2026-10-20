@@ -15,7 +15,8 @@
     "deny": [
       "Edit(approvals.yaml)",
       "Edit(/.claude/settings.json)",
-      "Bash(node *approve-hook.mjs*)"
+      "Bash(node *approve-hook.mjs*)",
+      "Bash(gh pr merge*)"
     ],
     "ask": [
       "Bash(git push --force*)",

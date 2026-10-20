@@ -114,7 +114,12 @@ export default function cycle(data, opt = {}) {
     const compact = data.frame && n <= 4 && !data.exit;
     // 上下は、段どうしの箱のあいだが GAP_V を超えないところまで広げ、枠の上下の中央に置く
     const ys = unit.map((u) => u[1]).sort((a, b) => a - b);
-    const dMin = Math.min(...ys.slice(1).map((y, k) => y - ys[k]).filter((d) => d > 1e-6)); // 段と段の間（いちばん狭いところ）
+    const dMin = Math.min(
+      ...ys
+        .slice(1)
+        .map((y, k) => y - ys[k])
+        .filter((d) => d > 1e-6),
+    ); // 段と段の間（いちばん狭いところ）
     const ringH = Math.min(H - top, bh + ((bh + GAP_V) * (y1 - y0)) / dMin);
     const oy = top + (H - top - ringH) / 2;
     // 同じ高さに並ぶ箱どうしが重ならないよう、箱の幅を狭める（5・6つの輪の上下の段など）

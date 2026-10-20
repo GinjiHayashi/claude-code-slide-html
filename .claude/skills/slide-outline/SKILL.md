@@ -27,6 +27,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - 型は `layout-catalog.md` から選ぶ。書ける項目は `node .claude/skills/html-build/scripts/schema.mjs <型の名前>` で確かめる。
    - 図は、部品を選ぶ前に `idea` に見せたい絵を1〜3行で書く（部品の名前は書かない）。そのあと `diagram-catalog.md` の部品に当てはめ、`match` に「そのまま」「意味が欠ける：<何が欠けるか>」「描けない：<なぜか>」のどれかを書く。「そのまま」なら部品を使い、ほかは自由図 `canvas`（`diagram-catalog.md` 6章）で、いくつかの部分に分けて形を選び、組み合わせて描く。`canvas` でも描けないときだけ独自の表現（`html-build/components.md` 4.1）で描く（`outline-template.md` 4章）。
    - 1枚の基本形は「タイトル＋lead＋図」。箇条書きは図で表せないときだけ使う（`design-reference/principles.md` 5章）。
+   - 言葉と図は聞き手に合わせる（`design-reference/principles.md` 6章）。初学者がいるときは、初めて出る専門用語をその場で説明する。資料の比喩は正確な言葉に直す。図が表す関係を `idea` に書き、囲みの見出しで示す。実装や製品の紹介は、現物（リポジトリのファイル、公式ドキュメント）を読んで、手順を食い違わせない。
    - 説明文（`lead`）は、タイトルを補い、図の読み方とそのスライドで言いたいことを2〜3文で書く。字数の目安は `schema.mjs` の「共通」。書き方は `outline-template.md` 5章。
    - 目次（`toc`）と章の扉（`section`）を入れるか、どこに入れるかは、枚数ではなく内容で決める。
    - 数値は入力（Excel は `slide-intake/scripts/xlsx.py … --yaml` の出力）から写し、写したもとのファイル名とシート・セル範囲を、そのスライドの `notes` に書く。計算しない。合計や比率が入力にないときは、自分で出さずに人間に聞く。強調する値（`callout`、kpi の値）も outline.md に書く。

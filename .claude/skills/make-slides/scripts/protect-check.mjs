@@ -6,6 +6,10 @@
 // - start：会話の始めに、ハーネスのファイルの sha256 を一時フォルダに控える
 // - stop：ターンの終わりに今の sha256 と比べ、変わったファイルがあれば、止めて（decision: block）理由を AI に返す。
 //   同じ中身の変更は一度だけ伝える（ハーネスを直す作業で、毎ターン止めないように）
+// - 人間が許可した変更は伝えない：前のターンの終わりから、会話の記録（transcript_path）に、そのファイルへの Edit・Write・NotebookEdit が
+//   成功したと残っていれば、許可された変更として覚え（told）、伝えない（protect-edit.mjs の確認に人間が答えた変更）。
+//   同じターンに、同じファイルを Bash でも書いた場合は見分けられない。確認を飛ばすモード（permission_mode が bypassPermissions）では、
+//   人間が答えていないので、許可された変更として扱わない
 // - node_modules、settings.local.json、worktrees（作業用の複製）、デザインの見本の元資料（git 管理外）は比べない
 // - ハーネスの開発中（common.mjs の harnessDev）は、.claude/settings.json だけを伝える（ほかのファイルは直すのが仕事なので伝えない）
 import fs from "fs";
@@ -45,8 +49,31 @@ const save = (s) => {
   fs.writeFileSync(stateFile, JSON.stringify(s));
 };
 
+// 会話の記録の offset バイト目から後で、成功した Edit・Write・NotebookEdit が書いたファイル（root からの相対パス）
+function toolEdits(transcript, offset = 0) {
+  if (!transcript || !fs.existsSync(transcript)) return { files: new Set(), size: offset };
+  const buf = fs.readFileSync(transcript);
+  const uses = new Map();
+  const files = new Set();
+  for (const line of buf.subarray(Math.min(offset, buf.length)).toString("utf8").split("\n")) {
+    let e;
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const content = Array.isArray(e?.message?.content) ? e.message.content : [];
+    for (const c of content) {
+      if (c.type === "tool_use" && ["Edit", "Write", "NotebookEdit"].includes(c.name)) uses.set(c.id, c.input?.file_path ?? c.input?.notebook_path);
+      if (c.type === "tool_result" && uses.has(c.tool_use_id) && !c.is_error)
+        files.add(path.relative(root, path.resolve(root, String(uses.get(c.tool_use_id)))));
+    }
+  }
+  return { files, size: buf.length };
+}
+
 if (mode === "start" || !fs.existsSync(stateFile)) {
-  save({ base: snapshot(), told: {} });
+  save({ base: snapshot(), told: {}, offset: toolEdits(input.transcript_path).size });
   process.exit(0);
 }
 if (mode !== "stop" || input.stop_hook_active) process.exit(0);
@@ -54,14 +81,18 @@ if (mode !== "stop" || input.stop_hook_active) process.exit(0);
 const state = JSON.parse(fs.readFileSync(stateFile, "utf8"));
 const now = snapshot();
 const dev = harnessDev(root);
+const edits = toolEdits(input.transcript_path, state.offset ?? 0);
+if (input.permission_mode === "bypassPermissions") edits.files.clear();
+state.offset = edits.size;
 const changed = [...new Set([...Object.keys(state.base), ...Object.keys(now)])]
   .filter((f) => !dev || f === path.join(".claude", "settings.json"))
   .filter((f) => state.base[f] !== now[f] && state.told[f] !== (now[f] ?? "deleted"))
   .sort();
-if (!changed.length) process.exit(0);
 for (const f of changed) state.told[f] = now[f] ?? "deleted";
 save(state);
-const list = changed.map((f) => `${f}（${!state.base[f] ? "増えた" : !now[f] ? "消えた" : "変わった"}）`).join("、");
+const unasked = changed.filter((f) => !edits.files.has(f)); // 許可された Edit などでない変更だけを伝える
+if (!unasked.length) process.exit(0);
+const list = unasked.map((f) => `${f}（${!state.base[f] ? "増えた" : !now[f] ? "消えた" : "変わった"}）`).join("、");
 console.log(
   JSON.stringify({
     decision: "block",

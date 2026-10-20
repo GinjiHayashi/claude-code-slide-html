@@ -105,6 +105,20 @@ test("outline.md：一覧にない型・必須の項目の抜け・知らない�
   assert.ok(r.errors.some((e) => e.startsWith("S03") && e.includes("typo")));
 });
 
+test("outline.md：スライドの id は英小文字・数字・ハイフンで、重複はエラー", async () => {
+  const dir = tempDeck();
+  const toc = (id) => ["- layout: toc", `- id: ${id}`];
+  fs.writeFileSync(
+    path.join(dir, "outline.md"),
+    outline(["## S01", ...toc("intro")], ["## S02", ...toc("intro")], ["## S03", ...toc("TDD_Intro")], ["## S04", ...toc("ok-2")]),
+  );
+  const r = await checkOutline(path.join(dir, "outline.md"));
+  const ids = r.errors.filter((e) => e.includes("id"));
+  assert.ok(ids.some((e) => e.startsWith("S02") && e.includes("重複")));
+  assert.ok(ids.some((e) => e.startsWith("S03") && e.includes("英小文字")));
+  assert.ok(!ids.some((e) => e.startsWith("S01") || e.startsWith("S04")));
+});
+
 test("outline.md：どの本文の型にも source を書ける。表紙の date は必須。checklist の知らない項目はエラー", async () => {
   const dir = tempDeck();
   fs.writeFileSync(

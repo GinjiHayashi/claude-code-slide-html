@@ -6,7 +6,9 @@ import path from "path";
 import crypto from "crypto";
 import { SKILLS, tempDeck } from "./helpers.mjs";
 
-const { judge, recordApproval, slideHashes, readApprovals } = await import(path.join(SKILLS, "make-slides/scripts/approvals.mjs"));
+const { judge, recordApproval, slideHashes, slideDigests, slideChanges, readApprovals, YAML } = await import(
+  path.join(SKILLS, "make-slides/scripts/approvals.mjs")
+);
 const { checkGate } = await import(path.join(SKILLS, "make-slides/scripts/gate.mjs"));
 const { deckStatus } = await import(path.join(SKILLS, "make-slides/scripts/status.mjs"));
 const approve = (dir, target) => recordApproval(dir, target, { approved_by: "test", approved_at: "2026-10-18T00:00:00Z", answer: "OK" });
@@ -83,6 +85,98 @@ test("ゲート（build）：factcheck.md の承認のあとに変わったス�
   fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("## S02\n", "## S02\n- notes: 変更\n"));
   approve(dir, "outline.md");
   assert.ok(checkGate(dir, "build").errors.some((e) => e.includes("S02")));
+});
+
+// 文と見た目を分けた比べ方（4.11）に使う、小さな outline.md
+const S = {
+  title: ["- layout: title", "- title: 月次レポートの自動化"],
+  lead: ["- layout: title-diagram", "- title: 作成時間の内訳", "- lead: 窓口サービスが最も長く、全体の3割を占めています。"],
+  box: [
+    "- layout: title-diagram",
+    "- title: 新しい手順",
+    "- diagram:",
+    "    kind: canvas",
+    "    shapes:",
+    "      - { type: box, at: [0, 0], size: [2, 1], text: 入力 }",
+    "      - { type: box, at: [3, 0], size: [2, 1], text: 集計, tone: primary }",
+  ],
+  extra: ["- layout: title-body", "- title: 足したスライド", "- body:", "    - 新しい説明"],
+};
+const mk = (...slides) =>
+  ["---", "deck_id: 2026-10-17-report-automation", "---", ""].concat(slides.flatMap((b, i) => [`## S${String(i + 1).padStart(2, "0")}`, ...b, ""])).join("\n");
+const changes = (a, b) => slideChanges(slideDigests(a), slideDigests(b));
+
+test("slideDigests：箱の大きさ・色だけの変更は見た目、lead の1文字の変更は文", () => {
+  const a = mk(S.title, S.lead, S.box);
+  const look = a.replace("size: [2, 1], text: 集計, tone: primary", "size: [3, 2], text: 集計, tone: soft");
+  assert.deepEqual(changes(a, look), { text: [], look: ["S03"], removed: [] });
+  assert.deepEqual(changes(a, a.replace("3割", "4割")).text, ["S02"]);
+});
+
+test("slideDigests：改行の位置や太字だけの直しは、文の変更にしない（T8）", () => {
+  const a = mk(S.title, S.lead);
+  const b = a.replace("- lead: 窓口サービスが最も長く、", "- lead: |\n    **窓口サービス**が最も長く、\n    ");
+  assert.notEqual(slideHashes(a).S02, slideHashes(b).S02);
+  assert.deepEqual(changes(a, b).text, []);
+});
+
+test("slideChanges：途中に1枚足しても、後ろのスライドは変わった扱いにしない", () => {
+  const a = mk(S.title, S.lead, S.box);
+  const b = mk(S.title, S.extra, S.lead, S.box);
+  assert.deepEqual(changes(a, b), { text: ["S02"], look: [], removed: [] });
+  // 消したスライドは、ファクトチェックのやり直しにならない
+  assert.deepEqual(changes(b, a), { text: [], look: [], removed: ["S02"] });
+});
+
+test("slideChanges：id があれば、番号が変わっても同じスライドとして文を比べる", () => {
+  const withId = (b, id) => [b[0], `- id: ${id}`, ...b.slice(1)];
+  const a = mk(S.title, withId(S.lead, "time-breakdown"));
+  const b = mk(S.title, S.extra, withId(S.lead, "time-breakdown"));
+  assert.deepEqual(changes(a, b).text, ["S02"]);
+  assert.deepEqual(changes(a, b.replace("3割", "4割")).text, ["S02", "S03"]);
+});
+
+test("ゲート（build）：見た目だけの変更は承認のやり直しだけ、文の変更はファクトチェックのやり直しを求める", () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box));
+  fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
+  for (const t of ["brief.md", "outline.md", "factcheck.md"]) approve(dir, t);
+  assert.deepEqual(checkGate(dir, "build").errors, []);
+  // 箱の大きさだけ：outline.md の承認のやり直しを求め、ファクトチェックのやり直しは求めない
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box).replace("size: [2, 1], text: 入力", "size: [3, 1], text: 入力"));
+  const r = checkGate(dir, "build").errors;
+  assert.equal(r.length, 1);
+  assert.match(r[0], /outline\.md が承認後に変更されている.*見た目だけ：S03/);
+  assert.match(deckStatus(dir).next, /ファクトチェックはし直さない/);
+  approve(dir, "outline.md");
+  assert.deepEqual(checkGate(dir, "build").errors, []);
+  // 途中に1枚足す：足したスライドだけ
+  fs.writeFileSync(f, mk(S.title, S.extra, S.lead, S.box).replace("size: [2, 1], text: 入力", "size: [3, 1], text: 入力"));
+  approve(dir, "outline.md");
+  assert.deepEqual(checkGate(dir, "build").errors, [
+    "ファクトチェックのあとに outline.md のスライドの文が変わった：S02（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）",
+  ]);
+  // lead の1文字
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("3割", "4割"));
+  approve(dir, "outline.md");
+  assert.ok(checkGate(dir, "build").errors.some((e) => e.includes("文が変わった：S02、S03")));
+  assert.match(deckStatus(dir).next, /文が変わったスライドだけ/);
+});
+
+test("ゲート（build）：古い形式の承認の記録（outline_text がない）も読み、見出しごとに比べる", () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box));
+  fs.writeFileSync(path.join(dir, "factcheck.md"), "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n");
+  approve(dir, "outline.md");
+  approve(dir, "factcheck.md");
+  const af = path.join(dir, "approvals.yaml");
+  const old = YAML.parse(fs.readFileSync(af, "utf8")).map(({ slide_text, outline_text, ...a }) => a);
+  fs.writeFileSync(af, YAML.stringify(old));
+  assert.deepEqual(checkGate(dir, "build").errors, []);
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box).replace("size: [2, 1], text: 入力", "size: [3, 1], text: 入力"));
+  assert.ok(checkGate(dir, "build").errors.some((e) => e.includes("変わったところ：S03")));
 });
 
 test("現在地：承認の進み具合で工程が進み、依頼中は答え待ちになる", () => {

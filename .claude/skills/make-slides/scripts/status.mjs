@@ -79,10 +79,14 @@ export function deckStatus(deckDir) {
       const st = checkStructure(deckDir);
       reasons.push(...st.errors, ...st.changed.map((c) => `草案から変えた：${c}`));
     }
+    // 文が変わったスライドがなければ（見た目だけの変更なら）、ファクトチェックはし直さず、承認だけを頼み直す
+    const lookOnly = g.errors.every((e) => e.startsWith("outline.md が承認後に変更されている"));
     return at(
       "3 ファクトチェック",
       "構成とファクトチェックの承認待ち",
-      "slide-factcheck（直したスライドだけ手順 2〜5 でファクトチェックし直し、手順 9 で outline.md と factcheck.md を一緒に承認してもらう）",
+      lookOnly
+        ? "slide-factcheck（文が変わったスライドはないので、ファクトチェックはし直さない。手順 9 で outline.md と factcheck.md を一緒に承認してもらう）"
+        : "slide-factcheck（文が変わったスライドだけ手順 2〜5 でファクトチェックし直し、手順 9 で outline.md と factcheck.md を一緒に承認してもらう）",
       reasons,
     );
   }

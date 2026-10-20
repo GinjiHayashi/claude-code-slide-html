@@ -4,6 +4,10 @@
 // - 記録は追記だけ。同じ対象の承認が複数あれば、最後のものを使う
 // - factcheck.md の承認には、そのときの outline.md のスライドごとの sha256（outline_slides）も残す
 //   （ファクトチェックのあとに変わったスライドを、ゲートが見つけられるようにするため）
+// - スライドごとの「文」と「全体」の sha256（slideDigests。outline.md の承認は slide_text、factcheck.md の承認は outline_text）も残す。
+//   文が変わったスライドだけファクトチェックをやり直し、見た目だけの変更は承認のやり直しだけにするため（文と見た目の分け方は spec.mjs の LOOK）。
+//   スライドは見出しの番号ではなく、id（- id: tdd-intro）か文の sha256 で対応づける（途中に1枚足しても、後ろのスライドを変わった扱いにしない）
+// - 古い記録（slide_text・outline_text がないもの）は、これまでどおり見出しごとの sha256 で比べる
 // - 流れ：AI が request.mjs で承認を依頼する（approval-request.yaml に、その時点の sha256 を残す）→ 人間が答える
 //   → approve-hook.mjs（人間のプロンプトを受けた hook）が答えを判定し、承認なら approvals.yaml に答えの原文ごと記録する
 // - approvals.yaml を書くのは hook だけ。AI は書かない（.claude/settings.json で禁止）
@@ -11,6 +15,8 @@ import fs from "fs";
 import path from "path";
 import YAML from "yaml";
 import { frontMatter, sha256 } from "../../../lib/common.mjs";
+import { parseOutline, plain } from "../../html-build/scripts/outline.mjs";
+import { LOOK } from "../../html-build/scripts/spec.mjs";
 
 export { YAML };
 
@@ -32,6 +38,71 @@ export function slideHashes(text) {
   return out;
 }
 
+// outline.md のスライドごとに { slide（見出し）, id?, text（文の sha256）, all（見出しを除いた全体の sha256） } を返す。
+// 読めない outline.md なら null（古い比べ方に戻す）
+const LOOK_KEYS = new Set(LOOK);
+const words = (v, key, out) => {
+  if (v == null || typeof v === "boolean" || LOOK_KEYS.has(key)) return out;
+  if (Array.isArray(v)) v.forEach((x) => words(x, key, out));
+  else if (typeof v === "object") for (const [k, x] of Object.entries(v)) words(x, k, out);
+  else {
+    const t = plain(v).replace(/\s+/g, ""); // 太字とコードの印、空白と改行は比べない
+    if (t) out.push(`${key}=${t}`);
+  }
+  return out;
+};
+export function slideDigests(text) {
+  let o;
+  try {
+    o = parseOutline(text);
+  } catch {
+    return null;
+  }
+  return o.slides.map((s) => ({
+    slide: s.id,
+    ...(typeof s.fields.id === "string" ? { id: s.fields.id } : {}),
+    text: sha256(JSON.stringify(Object.entries(s.fields).flatMap(([k, v]) => words(v, k, [])))),
+    all: sha256(JSON.stringify(s.fields)),
+  }));
+}
+
+// 前の記録（then）と今（now）のスライドを対応づけて、変わったものを返す。
+// 対応づけ：id が同じもの → 文の sha256 が同じもの（同じ見出し、同じ全体のものを先に）。どれとも対応しないスライドは「文が変わった」
+// 戻り値：{ text：文が変わった（ファクトチェックをやり直す）, look：見た目だけ変わった, removed：消えた }（どれも見出しの並び）
+export function slideChanges(then, now) {
+  const used = new Set(),
+    text = new Set(),
+    look = new Set();
+  const pair = (c, p) => {
+    used.add(p);
+    if (p.text !== c.text) text.add(c);
+    else if (p.all !== c.all) look.add(c);
+  };
+  const rest = [];
+  for (const c of now) {
+    const p = c.id && then.find((t) => !used.has(t) && t.id === c.id);
+    if (p) pair(c, p);
+    else rest.push(c);
+  }
+  for (const c of rest) {
+    const free = then.filter((t) => !used.has(t) && t.text === c.text);
+    const p = free.find((t) => t.slide === c.slide) ?? free.find((t) => t.all === c.all) ?? free[0];
+    if (p) pair(c, p);
+    else text.add(c);
+  }
+  const ids = (set) => now.filter((c) => set.has(c)).map((c) => c.slide);
+  return { text: ids(text), look: ids(look), removed: then.filter((t) => !used.has(t)).map((t) => t.slide) };
+}
+
+// 変わったところを1行で書く（outline.md の承認と、ゲートの知らせに使う）
+export function describeChanges(c) {
+  const parts = [];
+  if (c.text.length) parts.push(`文：${c.text.join("、")}`);
+  if (c.look.length) parts.push(`見た目だけ：${c.look.join("、")}`);
+  if (c.removed.length) parts.push(`消した：${c.removed.join("、")}`);
+  return parts.join("／") || "スライドの中身は変わっていない（先頭の設定か、書き方だけ）";
+}
+
 export function readApprovals(deckDir) {
   const f = path.join(deckDir, "approvals.yaml");
   if (!fs.existsSync(f)) return [];
@@ -47,12 +118,22 @@ export function latest(approvals, target) {
 export function recordApproval(deckDir, target, info) {
   const buf = fs.readFileSync(path.join(deckDir, target));
   const entry = { target, sha256: sha256(buf), ...info };
-  if (target === "outline.md") entry.slides = slideHashes(buf.toString("utf8"));
+  if (target === "outline.md") {
+    entry.slides = slideHashes(buf.toString("utf8"));
+    const d = slideDigests(buf.toString("utf8"));
+    if (d) entry.slide_text = d;
+  }
   const outline = path.join(deckDir, "outline.md");
-  if (target === "factcheck.md" && fs.existsSync(outline)) entry.outline_slides = slideHashes(fs.readFileSync(outline, "utf8"));
+  if (target === "factcheck.md" && fs.existsSync(outline)) {
+    const text = fs.readFileSync(outline, "utf8");
+    entry.outline_slides = slideHashes(text);
+    const d = slideDigests(text);
+    if (d) entry.outline_text = d;
+  }
   const prev = latest(readApprovals(deckDir), target);
   let changed = prev ? "前回の承認から変わっている" : "初めての承認";
   if (prev?.sha256 === entry.sha256) changed = "前回の承認から変わっていない";
+  else if (prev?.slide_text && entry.slide_text) changed = `前回の承認から変わったところ：${describeChanges(slideChanges(prev.slide_text, entry.slide_text))}`;
   else if (prev?.slides && entry.slides) {
     const ids = new Set([...Object.keys(prev.slides), ...Object.keys(entry.slides)]);
     changed = `前回の承認から変わったところ：${[...ids].filter((k) => prev.slides[k] !== entry.slides[k]).join("、")}`;

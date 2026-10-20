@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -62,7 +62,8 @@ export async function checkOutline(file) {
   if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc"))
     errors.push(`章が${nch}ある。目次（toc）に載せられるのは${LAYOUTS.toc.chapters}章まで`);
 
-  const seen = new Set();
+  const seen = new Set(),
+    names = new Set();
   const comps = {};
   for (const [i, s] of o.slides.entries()) {
     const f = s.fields;
@@ -71,6 +72,11 @@ export async function checkOutline(file) {
     seen.add(s.id);
     if (s.id !== `S${String(i + 1).padStart(2, "0")}`) warn(s, `${i + 1}枚目だが番号が ${s.id}（番号は並び順と合わせると直しやすい）`);
     for (const k of s.dup) err(s, `項目「${k}」が2回書かれている`);
+    if (f.id !== undefined) {
+      if (typeof f.id !== "string" || !SLIDE_ID.test(f.id)) err(s, "id は英小文字・数字とハイフンで書く（例：tdd-intro）");
+      else if (names.has(f.id)) err(s, `id「${f.id}」がほかのスライドと重複している`);
+      names.add(f.id);
+    }
     const L = LAYOUTS[f.layout];
     if (!f.layout) {
       err(s, "layout がない");

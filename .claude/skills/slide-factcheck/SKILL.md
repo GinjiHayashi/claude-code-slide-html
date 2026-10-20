@@ -41,7 +41,13 @@ description: slide-outline が書いた outline.md を、fact-checker をスラ�
    2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。「outline.md と factcheck.md を承認しますか？」）。
    3. HTML 作成に進めるかは `gate.mjs decks/<deck-id> build` で確かめる。
 
-承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったスライドの番号を出す。そのスライドについて 2 からやり直す。
+承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったところを「文」と「見た目だけ」に分けて出す。
+
+- **文が変わったスライド**（title・lead・本文・図の中の字・データの数値・notes・source・claims など）は、ゲートが「ファクトチェックのあとに outline.md のスライドの文が変わった」と番号を出す。そのスライドについて 2 からやり直す。
+- **見た目だけ変わったスライド**（型、図の型、置き方、大きさ、色の役割、形、アイコン、強調、番号の付け方など）は、ファクトチェックをやり直さない。手順 9 の承認だけを頼み直す。
+- 改行の位置や太字・文中のコードの印だけの直しは、文の変更にしない。スライドを消しただけのときも、やり直さない。
+- 文と見た目の分け方は `html-build/scripts/spec.mjs` の `LOOK`。迷う項目は文に入れてある。
+- スライドは見出しの番号ではなく、`id`（`outline-template.md` 2章）か文で対応づける。途中に1枚足しても、後ろのスライドは「変わった」にならない。
 
 ## しないこと
 

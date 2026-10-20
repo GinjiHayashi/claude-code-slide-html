@@ -65,4 +65,4 @@
 
 ## git
 
-簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides` の「git」。
+簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間が GitHub で行うか、チャットの承認のあとに `make-slides/scripts/merge.mjs` だけが行う）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides` の「git」。

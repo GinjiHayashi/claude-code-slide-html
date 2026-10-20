@@ -52,7 +52,7 @@ description: slide-outline が書いた outline.md を、fact-checker をスラ�
    - 「出典を足す」は、人間から出典が届いたら `research-standards` の書式で `research.md` に足し、そのスライドを 2〜5 でやり直す。
 9. **構成とファクトチェックをまとめて承認してもらう**（どの回も同じ）：
    1. 写した判断と、`outline.md` を直したところ（スライドの番号と、直す前と後）を人間に見せる。草案があれば `check-structure.mjs` の「変えた」も見せる（`slide-outline` の手順 7 のあとに変わったところがわかるように）。
-   2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。「outline.md と factcheck.md を承認しますか？」）。
+   2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。聞く文は「承認の頼み方」の決まった文）。
    3. 次の工程は `status.mjs` で確かめる（構成のあとの回なら 3 HTML 作成、最後の回なら 5 最終確認）。
 
 承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったところを「文」と「見た目だけ」に分けて出す。

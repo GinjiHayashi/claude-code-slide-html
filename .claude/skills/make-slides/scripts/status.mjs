@@ -9,7 +9,7 @@
 // - 承認の依頼が出ていれば、何より先に「人間の答え待ち」を返す
 import fs from "fs";
 import path from "path";
-import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest } from "./approvals.mjs";
+import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest, targetName } from "./approvals.mjs";
 import { checkGate, factcheckedChanges, timing, round } from "./gate.mjs";
 import { checkBrief, checkInputs } from "../../slide-hearing/scripts/check-brief.mjs";
 import { checkStructure } from "../../slide-outline/scripts/check-structure.mjs";
@@ -44,7 +44,7 @@ export function deckStatus(deckDir) {
   const req = readRequest(deckDir);
   if (req)
     return at("承認の確認", "人間の答え待ち", "人間に承認するかを聞く（答えは hook が記録する）", [
-      `依頼中：${req.targets.map((t) => t.target).join("、")}（${req.requested_at}）`,
+      `依頼中：${req.targets.map(targetName).join("、")}（${req.requested_at}）`,
     ]);
 
   // 1 事前情報とヒアリング

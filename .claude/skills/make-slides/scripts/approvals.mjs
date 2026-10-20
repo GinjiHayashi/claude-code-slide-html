@@ -146,6 +146,21 @@ export function recordApproval(deckDir, target, info) {
   return { entry, changed };
 }
 
+// PR のマージの承認（target: merge）。ファイルではなく、PR の番号・マージ先・承認した時点の head のコミットを記録する。
+// マージは merge.mjs だけが行い、この記録と今の PR を突き合わせる（記録のあとに push されていたら止める）
+export function recordMerge(deckDir, t, info) {
+  const entry = { target: "merge", pr: t.pr, base: t.base, head_sha: t.head_sha, ...(t.failing?.length ? { failing: t.failing } : {}), ...info };
+  const f = path.join(deckDir, "approvals.yaml");
+  const head = fs.existsSync(f)
+    ? ""
+    : "# approvals.yaml：承認の記録。承認の依頼に人間が答えると、hook（approve-hook.mjs）が答えの原文ごと追記する。手で書き換えない\n";
+  fs.appendFileSync(f, head + YAML.stringify([entry]));
+  return entry;
+}
+export const latestMerge = (approvals, pr) => [...approvals].reverse().find((a) => a.target === "merge" && Number(a.pr) === Number(pr)) ?? null;
+// 依頼の対象の書き方（ファイルか、PR のマージか）
+export const targetName = (t) => (t.target === "merge" ? `PR #${t.pr} の ${t.base} へのマージ` : t.target);
+
 // 承認の依頼（AI が書く。承認そのものではない）
 export const REQUEST = "approval-request.yaml";
 export function readRequest(deckDir) {

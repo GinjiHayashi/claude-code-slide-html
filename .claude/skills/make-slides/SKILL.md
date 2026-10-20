@@ -31,7 +31,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 ```
 
 - **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
-- **誰が何をするか**：AI は資料を読み、質問し、`brief.md`・`outline.md`・`research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする。
+- **誰が何をするか**：AI は資料を読み、質問し、`brief.md`・`outline.md`・`research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする（チャットの承認で、AI に `merge.mjs` でマージさせることもできる）。
 - **AI がしないこと**：承認の記録、`deck.html` を読む・直す、見た目や文章の良し悪しの判定、ハーネス（`.claude/`・`CLAUDE.md`）の変更。
 
 ## 手順
@@ -70,7 +70,12 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 ## 承認の頼み方
 
 1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`）。依頼は `approval-request.yaml` に書かれる。
-2. そのあとで「outline.md と factcheck.md を承認しますか？承認なら「承認」とだけ答えてください」のように聞く。承認になるのは、短い同意の語（「承認」「OK」「はい」など）だけの答え。ほかの言葉が混じると hook は判断できないとして記録しないので、もう一度聞く。
+2. そのあとで、次の決まった文で聞く（`request.mjs` が対象を入れた文を出す）。言い回しを変えない。
+   > 〈対象〉を承認しますか？承認なら『承認』だけを送ってください。直したいところがあれば、その内容を書いてください。
+   - 承認になるのは、短い同意の語（「承認」「OK」「はい」など）だけの答え。ほかの言葉が混じると hook は判断できないとして記録しない。
+   - 記録されなかったときは、次の決まった文で聞き直す：
+     > ほかの言葉が混じっていたので、承認として記録されませんでした。承認なら『承認』だけを送ってください。
+   - 「承認もします。ついでに S03 も直して」のように、承認とほかの依頼が一緒に来たら、依頼を先に片付ける。直したらファイルが変わるので、そのあとで承認をあらためて頼む（`request.mjs` からやり直す）。依頼がなければ、上の決まった文で聞き直すだけにする。
 3. 答えは hook が判定して記録し、結果を伝えてくる。AI は記録しない。承認した人として、git の `user.name` が記録される（空なら記録されない）。人間が自分の名前を設定した環境で使う。
 4. 承認されたかは自分で判断せず、`status.mjs` か `gate.mjs decks/<deck-id> <outline|factcheck|build|final>` で確かめる。
 
@@ -111,10 +116,14 @@ description: スライド作成の全体の入口。新しいデッキを始め�
    - 種類の後ろの `(<deck-id>)` は、どのデッキのコミットかを示すため（README「コミットメッセージ」）。
    - 今いるブランチが `feature/<deck-id>`（か `-fix`）であることを、コミットの前に確かめる。違えば止めて人間に伝える。
    - `approval-request.yaml` は `.gitignore` で管理外。
-3. **PR**：「完成」になったら、`git push -u origin <ブランチ>` のあと、develop への PR を作る（`gh pr create --base develop`）。PR の本文には、デッキの題名、枚数、ファクトチェックの要確認の数、ビルドの注意を書く。マージは人間が行う（squash マージ）。AI はマージしない。
-4. **発表した版（main とタグ）**：人間に頼まれたときだけ行う。
-   - develop から main への PR を作る（`gh pr create --base main --head develop`）。マージは人間が行う（マージコミット）。
-   - マージされたら、main の最新のコミットにタグを付けて push する：`git tag <deck-id>`（直したあと2回目の発表なら `<deck-id>-2`）→ `git push origin <タグ>`。
+3. **PR**：「完成」になったら、`git push -u origin <ブランチ>` のあと、develop への PR を作る（`gh pr create --base develop`）。PR の本文には、デッキの題名、枚数、ファクトチェックの要確認の数、ビルドの注意を書く。
+4. **マージ**：人間が GitHub でマージするか、チャットの承認でマージする。AI は `gh pr merge` を直接使わない（`.claude/settings.json` で止める）。
+   - チャットで頼まれたら、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> --merge <PR の番号>` で依頼を出し、出力の決まった文で聞く。CI が失敗しているチェックが出たら、その名前も伝えて、それでもよいかを聞く。
+   - 承認されたら `node .claude/skills/make-slides/scripts/merge.mjs decks/<deck-id> <PR の番号>` でマージする。承認の記録がない、承認のあとに PR へ push された、マージ先が develop・main 以外なら、スクリプトが止める。止まったら理由を伝え、必要なら承認を頼み直す。
+   - マージの方式はスクリプトが決める：develop へは squash、main へはマージコミット（ハーネスの更新の取り込み `feature/harness-update` は develop へもマージコミット）。
+5. **発表した版（main とタグ）**：人間に頼まれたときだけ行う。
+   - develop から main への PR を作る（`gh pr create --base main --head develop`）。マージは 4 と同じ（人間が GitHub でマージするか、チャットの承認で `merge.mjs`）。
+   - `merge.mjs` でマージしたら、スクリプトが main の最新のコミットにタグを付けて push する（`<deck-id>`、すでにあれば `<deck-id>-2`、`-3`…）。人間が GitHub でマージしたときは、`git tag <deck-id>`（2回目からは `<deck-id>-2`）→ `git push origin <タグ>` を行う。
 
 ## しないこと
 
@@ -122,7 +131,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 - 人間の答えを待たずに、承認が要る工程を越える。
 - `deck.html` を読む、手で直す。
 - 固定ファイル（CLAUDE.md）を変える。
-- PR をマージする。develop・main に直接コミットする。ハーネスのリポジトリ（`decks/` が管理外）でデッキをコミットする。
+- 承認の記録なしに PR をマージする（`gh pr merge` を直接使う）。develop・main に直接コミットする。ハーネスのリポジトリ（`decks/` が管理外）でデッキをコミットする。
 
 ## ファイル
 
@@ -133,7 +142,9 @@ AI が実行するスクリプト：
 | `scripts/status.mjs` | デッキの現在地（工程・状態・次に使うスキル・理由）を、ファイルと承認の記録とゲートから判定する |
 | `scripts/gate.mjs` | 工程に進めるか（outline・factcheck・build・final）を承認の記録で判定する。final は最終確認の前 |
 | `scripts/branch.mjs` | スライド用リポジトリで、デッキの作業をどのブランチで行うか（新規・続き・直し）を決める |
-| `scripts/request.mjs` | 承認の依頼を出す（approval-request.yaml を書く） |
+| `scripts/request.mjs` | 承認の依頼を出す（approval-request.yaml を書く）。`--merge <PR の番号>` で PR のマージの承認を頼む |
+| `scripts/merge.mjs` | 承認された PR だけをマージし、main のあとはタグを付けて push する |
+| `scripts/github.mjs` | PR を gh で読む・マージする共通の処理（ほかのスクリプトが使う） |
 | `scripts/approvals.mjs` | 承認の記録の読み書き（ほかのスクリプトが使う） |
 
 hook（`.claude/settings.json` から呼ばれる。AI は実行しない）：

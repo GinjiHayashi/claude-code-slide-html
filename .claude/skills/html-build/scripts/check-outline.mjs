@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -145,6 +145,11 @@ export async function checkOutline(file) {
         if (typeof t !== "string") return err(s, `${k} の${n + 1}項目目が文字ではない`);
         bullets.push(t);
         if (width(plain(t)) > each) warn(s, `${k} の${n + 1}項目目が全角${each}字の目安を超えている（${width(plain(t))}字）`);
+        else if (BULLETS.layouts.includes(f.layout) && width(plain(t)) < BULLETS.minItem)
+          warn(
+            s,
+            `${k} の${n + 1}項目目が短すぎる（全角${width(plain(t))}字）。1項目で意味が通る長さにする（目安は全角${BULLETS.goodItem}字以上。principles.md 5章）`,
+          );
       });
     };
     if (f.numbered != null && typeof f.numbered !== "boolean") err(s, "numbered は true か false にする");
@@ -282,7 +287,18 @@ export async function checkOutline(file) {
     }
   }
   for (const a of deck.assets) if (a?.src && !usedAssets.has(a.src)) warnings.push(`assets の ${a.src} はどのスライドでも使っていない`);
+  warnings.push(...layoutBalance(o.slides));
   return { errors, warnings, slides: o.slides.length };
+}
+
+// 型の偏り（principles.md 5章）：箇条書きの型が、本文のあるスライドの BULLETS.ratio を超えたら注意を返す
+export function layoutBalance(slides) {
+  const body = slides.filter((s) => LAYOUTS[s.fields.layout]?.lead);
+  const list = body.filter((s) => BULLETS.layouts.includes(s.fields.layout));
+  if (!body.length || list.length / body.length <= BULLETS.ratio) return [];
+  return [
+    `箇条書きの型（${BULLETS.layouts.join("・")}）が、本文のあるスライド${body.length}枚のうち${list.length}枚（${Math.round((100 * list.length) / body.length)}%）。${Math.round(BULLETS.ratio * 100)}%以下を目安に、図で表せるものは図にする（principles.md 5章）`,
+  ];
 }
 
 // コマンドとして呼ばれたとき

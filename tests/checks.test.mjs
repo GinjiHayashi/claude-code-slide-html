@@ -264,3 +264,24 @@ test("brief のチェック：空の項目を questions.md の表の順に出す
     .map((r) => r.split("|")[2].trim());
   assert.deepEqual(checkBrief(text).missing, rows);
 });
+
+test("outline.md：lead は目安より短いと注意（lead_short に理由を書けば出ない）、3行を超えるとエラー。目安の長さは決まった幅で3行に収まる", async () => {
+  const { leadWidth, LEAD } = await import(path.join(SKILLS, "html-build/scripts/outline.mjs"));
+  const zen = (n) => "あ".repeat(n - 1) + "。";
+  const slide = (lead, more = []) => ["## S01", "- layout: title-body", "- title: t", `- lead: ${lead}`, "- body: [a]", ...more];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(s));
+    return checkOutline(path.join(dir, "outline.md"));
+  };
+  const short = (r) => r.warnings.some((w) => w.includes("lead が短い"));
+  assert.equal(short(await check(...slide(zen(70)))), true);
+  assert.equal(short(await check(...slide(zen(70), ["- lead_short: 表が大きいため"]))), false);
+  assert.equal(short(await check(...slide(zen(145)))), false);
+  assert.ok((await check(...slide(zen(145), ["- lead_short: 表が大きいため"]))).warnings.some((w) => w.includes("lead_short は要らない")));
+  assert.ok((await check(...slide(zen(230)))).errors.some((e) => e.includes("3行に収まらない")));
+  // 目安の上限（160字）までは決まった幅のまま。超えたときだけ広がる
+  assert.equal(leadWidth(zen(150)), LEAD.base);
+  assert.equal(leadWidth(zen(LEAD.target[1])), LEAD.base);
+  assert.ok(leadWidth(zen(190)) > LEAD.base);
+});

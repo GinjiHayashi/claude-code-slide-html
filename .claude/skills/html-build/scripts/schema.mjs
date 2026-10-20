@@ -27,7 +27,7 @@ if (isMain(import.meta.url)) {
   if (!name) {
     console.log("# どの型にも共通");
     console.log(
-      `字数：全角を1、半角を0.5と数える｜lead：${LEAD.lines}行まで（全角${LEAD_LIMIT}字を超えるとエラー）｜太字：1項目に${BOLD.perItem}か所、1枚に${BOLD.perSlide}か所まで｜下の階層：1項目に${SUB_ITEMS}つまで`,
+      `字数：全角を1、半角を0.5と数える｜lead：全角${LEAD.target[0]}〜${LEAD.target[1]}字が目安で、${LEAD.short}字未満は注意（表や大きな図で短くするなら lead_short: <理由>）。${LEAD.lines}行まで（全角${LEAD_LIMIT}字を超えるとエラー）｜太字：1項目に${BOLD.perItem}か所、1枚に${BOLD.perSlide}か所まで｜下の階層：1項目に${SUB_ITEMS}つまで`,
     );
     console.log("");
     console.log("# スライドの型（layout）");

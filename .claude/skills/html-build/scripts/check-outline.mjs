@@ -2,7 +2,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
+import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
 import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, allowedFields } from "./spec.mjs";
@@ -118,7 +118,11 @@ export async function checkOutline(file) {
       else if (typeof f.lead === "string") {
         bullets.push(f.lead);
         if (f.lead.trim().includes("\n")) err(s, "lead は改行せずに1つの文章で書く（行の折り返しはビルドが決める）");
-        if (width(plain(f.lead)) > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${width(plain(f.lead))}字。${LEAD_LIMIT}字まで）`);
+        const n = width(plain(f.lead));
+        if (n > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${n}字。${LEAD_LIMIT}字まで）`);
+        else if (n < LEAD.short && !f.lead_short)
+          warn(s, `lead が短い（全角${n}字。目安は${LEAD.target[0]}〜${LEAD.target[1]}字）。表や大きな図のために短くするなら lead_short: <理由> と書く`);
+        else if (n >= LEAD.short && f.lead_short) warn(s, "lead が短くないので lead_short は要らない");
       }
     }
     const list = (k, [min, max, each, nest = false], arr = f[k]) => {

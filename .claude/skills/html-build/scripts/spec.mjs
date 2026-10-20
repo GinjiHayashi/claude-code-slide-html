@@ -66,8 +66,10 @@ export const KINDS = [
 // author：{ org, name } の文字数の目安。chapters：目次に載せられる章の数
 // 文字数は目安で、超えると注意。最後はビルド後の検査で、実際の行数をブラウザで測る
 const BODY = ["breadcrumb", "source"];
-// 説明文（lead）：幅 base を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
-export const LEAD = { base: 640, max: 1172, lines: 3, px: 16 };
+// 説明文（lead）：字数の目安は target（全角）。short 未満は注意（lead_short に理由を書けば出さない）。
+// 幅は base（target の上限が lines 行に収まる幅。1行に2字の余裕）を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
+export const LEAD = { target: [140, 160], short: 100, max: 1172, lines: 3, px: 16 };
+LEAD.base = (Math.ceil(LEAD.target[1] / LEAD.lines) + 2) * LEAD.px; // 896
 // 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
 export const BOLD = { perItem: 1, perSlide: 3 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
@@ -112,7 +114,7 @@ export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
 export const VISUAL = ["diagram", "diagrams"];
 
 // 型に書ける項目のすべて
-export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(L.lead ? ["lead"] : [])]);
+export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(L.lead ? ["lead", "lead_short"] : [])]);
 
 // 型の決まりを1行で書く（schema.mjs が表示に使う）
 export function describeLayout(name) {
@@ -131,7 +133,11 @@ export function describeLayout(name) {
     if (k === "author") return `author（{ org?: ${L.author.org}字, name?: ${L.author.name}字 }）`;
     return k;
   };
-  const req = [...L.required.map(limit), ...(L.visual ? ["diagram・diagrams・html のどれか"] : []), ...(L.lead ? ["lead（要らないなら false）"] : [])];
+  const req = [
+    ...L.required.map(limit),
+    ...(L.visual ? ["diagram・diagrams・html のどれか"] : []),
+    ...(L.lead ? ["lead（要らないなら false。短くするなら lead_short に理由）"] : []),
+  ];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
   return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match"].join(", ")}${extra}`;
 }

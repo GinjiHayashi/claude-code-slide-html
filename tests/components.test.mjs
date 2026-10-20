@@ -234,7 +234,7 @@ test("cycle：4つの輪は四角の角に置く。exit は輪の右側の箱か
   const cycle = (await import(path.join(COMP, "cycle.mjs"))).default;
   const items = ["a", "b", "c", "d"].map((label) => ({ label }));
   const html = cycle({ items }, { width: 600, height: 400 });
-  const pos = [...html.matchAll(/left:([\d.]+)px;top:([\d.]+)px/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  const pos = [...html.matchAll(/text-center text-body font-bold [^"]*" style="left:([\d.]+)px;top:([\d.]+)px/g)].map((m) => [Number(m[1]), Number(m[2])]);
   assert.equal(pos.length, 4);
   assert.deepEqual(new Set(pos.map((p) => p[0])).size, 2); // 左右の2列
   assert.deepEqual(new Set(pos.map((p) => p[1])).size, 2); // 上下の2段
@@ -242,4 +242,22 @@ test("cycle：4つの輪は四角の角に置く。exit は輪の右側の箱か
   assert.throws(() => cycle({ items, exit: { from: 1, label: "x" } }, {}), /右側の箱/);
   assert.throws(() => cycle({ items: [{ label: "a", caption: "c" }, ...items.slice(1)] }, {}), /row のときだけ/);
   assert.match(cycle({ items, shape: "row", back: "くり返す" }, {}), /くり返す/);
+});
+
+test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等間隔。frame で囲み、numbered: text で ①〜", async () => {
+  const cycle = (await import(path.join(COMP, "cycle.mjs"))).default;
+  const items = ["a", "b", "c", "d"].map((label) => ({ label }));
+  const html = cycle({ items, exit: { from: 2, label: "x" } }, { width: 1172, height: 400 });
+  const boxes = [...html.matchAll(/text-center text-body font-bold [^"]*" style="left:([\d.]+)px;top:([\d.]+)px;width:([\d.]+)px/g)].map((m) =>
+    m.slice(1).map(Number),
+  );
+  const xs = [...new Set(boxes.map(([x]) => x))].sort((a, b) => a - b);
+  const w = boxes[0][2];
+  assert.equal(xs.length, 3);
+  assert.ok(Math.abs(xs[1] - xs[0] - (xs[2] - xs[1])) < 0.2, `等間隔でない：${xs}`);
+  assert.ok(xs[1] - xs[0] > w);
+  const framed = cycle({ items, title: "良い循環", frame: true, tone: "primary", numbered: "text" }, { width: 560, height: 400 });
+  assert.match(framed, /bg-highlight/);
+  assert.match(framed, /①a/);
+  assert.throws(() => cycle({ items, numbered: "x" }, {}), /numbered は/);
 });

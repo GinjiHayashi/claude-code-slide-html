@@ -11,8 +11,10 @@ import { esc, check, R, O, optional, LINE } from "./_util.mjs";
 //   抜け出す先の箱は輪の右に置き、from の箱から右へ矢印を引く（ring のときだけ。from は輪の右側の箱にする）
 // - highlight：目立たせる箱（何番目か、の並び。1から）。抜け出す先の箱はいつも目立たせる
 // - tone：輪の色。ink（既定）／primary（線を青に。良い循環など）／muted（箱と線を灰色に。悪い循環など）
-// - title：輪の上の見出し。2つの輪を左右に並べて比べるときは、diagrams に cycle を2つ書き、それぞれに title を付ける
-// - numbered：false で番号の丸を付けない
+// - title：見出し。2つの輪を左右に並べて比べるときは、diagrams に cycle を2つ書き、それぞれに title を付ける
+// - frame：true で輪を囲みに入れ、見出しを囲みの左上に書く（tone が primary なら淡い青の面、ほかは灰色の点線の枠）
+// - numbered：番号の付け方。circle（箱の文字の頭に小さい丸。既定）／text（文字の頭に ①〜⑥）／false（付けない）
+// - 抜け出す先の箱があるときは、輪の箱と抜け出す先の箱を横に等間隔に並べる
 // opt: { width, height }（置く枠の大きさ。既定は 1172×440）
 
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
@@ -25,6 +27,7 @@ export const schema = {
   numbered: O,
   exit: optional({ from: R, label: R, text: O }),
   back: O,
+  frame: O,
 };
 
 const TONES = {
@@ -33,9 +36,16 @@ const TONES = {
   muted: { box: "bg-panel text-label border-gray-400", stroke: "stroke-gray-400", fill: "fill-gray-400", num: "bg-gray-400 text-on-primary" },
 };
 const HI = { box: "bg-primary text-on-primary border-primary", num: "bg-canvas text-primary" };
+const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥"];
+// 囲み（frame）の見た目と見出しの色。自由図の area の plain・soft と同じ
+const FRAME = {
+  ink: { look: "border-dashed border-gray-400", head: "text-label" },
+  muted: { look: "border-dashed border-gray-400", head: "text-label" },
+  primary: { look: "bg-highlight border-transparent", head: "text-ink" },
+};
 const BH = 72, // 箱の高さ（1行の字にゆとりのある高さ）
   TITLE_H = 40, // 見出しの高さ
-  GAP = 64, // 輪と抜け出す先の箱のすき間
+  PADF = 24, // 囲みの中のすき間
   f1 = (v) => v.toFixed(1);
 
 // 箱（中心 c、幅 w、高さ h）の縁の点のうち、点 p へ向かう線が出る点
@@ -69,11 +79,17 @@ export default function cycle(data, opt = {}) {
   if (!c) throw new Error("cycle: tone は ink・primary・muted のどれか");
   if (shape === "ring" && I.some((it) => it.caption)) throw new Error("cycle: caption は shape: row のときだけ書ける");
   if (shape === "row" && data.exit) throw new Error("cycle: exit は shape: ring のときだけ書ける");
+  if (![undefined, true, false, "circle", "text"].includes(data.numbered)) throw new Error("cycle: numbered は circle・text・false のどれか");
+  if (data.frame && shape === "row") throw new Error("cycle: frame は shape: ring のときだけ書ける");
   if (data.exit && !(Number.isInteger(data.exit.from) && data.exit.from >= 1 && data.exit.from <= I.length))
     throw new Error(`cycle: exit.from は 1〜${I.length} の整数`);
   const hi = new Set(data.highlight ?? []);
-  const W = opt.width ?? 1172,
-    H = opt.height ?? 440;
+  const OW = opt.width ?? 1172,
+    OH = opt.height ?? 440;
+  // 囲みがあるときは、囲みの中（すき間と見出しの分を引いた範囲）に輪を置く
+  const pad = data.frame ? PADF : 0;
+  const W = OW - 2 * pad,
+    H = OH - 2 * pad;
   const top = data.title ? TITLE_H : 0;
 
   // 箱の置き場所（中心）と大きさ
@@ -81,9 +97,9 @@ export default function cycle(data, opt = {}) {
   const svg = [],
     html = [];
   if (shape === "ring") {
-    // 抜け出す先があるときは、右に箱1つ分と矢印の幅（GAP の 1.5 倍）をあけ、残りに輪を置く
-    bw = data.exit ? Math.min(240, (W - 1.5 * GAP) * 0.3) : Math.min(260, W * 0.42);
-    const ringW = data.exit ? W - bw - 1.5 * GAP : W;
+    // 抜け出す先があるときは、輪の左右の箱と抜け出す先の箱が横に等間隔になるよう、輪の幅を (W + 箱の幅) / 2 にする
+    bw = data.exit ? Math.min(240, W * 0.24) : Math.min(260, W * 0.42);
+    const ringW = data.exit ? (W + bw) / 2 : W;
     bh = BH;
     // 箱を楕円の上に時計回りに置き、いちばん外の箱が枠の端に来るように広げる（4つなら四角の角になる）
     const n = I.length,
@@ -92,8 +108,12 @@ export default function cycle(data, opt = {}) {
     const span = (v) => [Math.min(...v), Math.max(...v)];
     const [x0, x1] = span(unit.map((u) => u[0])),
       [y0, y1] = span(unit.map((u) => u[1]));
+    // 囲みの中の3〜4つの輪は、箱を寄せて囲みの中央に置く（手作りの見本 A-1 の形。囲みの余白で、まとまりを見せる）
+    const compact = data.frame && n <= 4 && !data.exit;
+    const ringH = compact ? Math.min(H - top, 2 * bh + 96) : H - top;
+    const oy = top + (H - top - ringH) / 2;
     // 同じ高さに並ぶ箱どうしが重ならないよう、箱の幅を狭める（5・6つの輪の上下の段など）
-    const fy = (H - top - bh) / (y1 - y0),
+    const fy = (ringH - bh) / (y1 - y0),
       fx = 1 / (x1 - x0);
     for (let p = 0; p < n; p++)
       for (let q = p + 1; q < n; q++) {
@@ -101,7 +121,9 @@ export default function cycle(data, opt = {}) {
         const d = Math.abs(unit[p][0] - unit[q][0]) * fx; // 箱の中心の間の、枠の幅（から箱の幅を引いた分）に対する割合
         bw = Math.min(bw, (ringW * d - 56) / (1 + d)); // あいだに 56px（矢印が見える長さ）をあける
       }
-    centers = unit.map(([ux, uy]) => [bw / 2 + (ux - x0) * fx * (ringW - bw), top + bh / 2 + (uy - y0) * fy]);
+    const rw = compact ? Math.min(ringW, 2 * bw + 48) : ringW,
+      ox = (ringW - rw) / 2;
+    centers = unit.map(([ux, uy]) => [ox + bw / 2 + (ux - x0) * fx * (rw - bw), oy + bh / 2 + (uy - y0) * fy]);
     I.forEach((it, k) => {
       const a = centers[k],
         b = centers[(k + 1) % n];
@@ -164,17 +186,24 @@ export default function cycle(data, opt = {}) {
   // 箱（番号の丸＋文字）
   I.forEach((it, k) => {
     const on = hi.has(k + 1);
+    const style = data.numbered === false ? "none" : data.numbered === "text" ? "text" : "circle";
     const num =
-      data.numbered === false
-        ? ""
-        : `<span class="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-caption font-bold ${on ? HI.num : c.num}">${k + 1}</span>`;
-    html.push(box(centers[k], bw, bh, on ? HI.box : c.box, num, esc(it.label)));
+      style === "circle"
+        ? `<span class="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-caption font-bold ${on ? HI.num : c.num}">${k + 1}</span>`
+        : "";
+    html.push(box(centers[k], bw, bh, on ? HI.box : c.box, num, (style === "text" ? CIRCLED[k] : "") + esc(it.label)));
   });
-  const head = data.title ? `<div class="absolute left-0 top-0 text-heading font-bold text-ink">${esc(data.title)}</div>` : "";
-  return `<div class="relative mx-auto" style="width:${W}px;height:${H}px" data-kind="cycle">
-${head}
+  const F = FRAME[data.tone ?? "ink"];
+  const head = data.title
+    ? `<div class="absolute left-0 top-0 ${data.frame ? `px-[12px] py-[8px] text-body ${F.head}` : "text-heading text-ink"} font-bold">${esc(data.title)}</div>`
+    : "";
+  const inner = `<div class="absolute" style="left:${pad}px;top:${pad}px;width:${W}px;height:${H}px">
 <svg data-origin="generated" class="absolute left-0 top-0 overflow-visible" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${svg.join("")}</svg>
 ${html.join("\n")}
+</div>`;
+  return `<div class="relative mx-auto${data.frame ? ` rounded-panel border-2 ${F.look}` : ""}" style="width:${OW}px;height:${OH}px" data-kind="cycle">
+${head}
+${inner}
 </div>`;
 }
 

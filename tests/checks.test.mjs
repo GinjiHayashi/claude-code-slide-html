@@ -311,3 +311,36 @@ test("outline.md：箇条書きの型が本文のあるスライドの3割を超
   assert.equal(short(await check(body("S01", "時間がかかる"))), true);
   assert.equal(short(await check(body("S01", long))), false);
 });
+
+test("outline.md：同じ型・同じ図の型が3枚続く、1つの図の型が図のあるスライドの4割を超えると注意", async () => {
+  const lead = "- lead: " + "あ".repeat(144) + "。";
+  const fig = (id, layout, kind) => [
+    `## ${id}`,
+    `- layout: ${layout}`,
+    "- title: t",
+    lead,
+    "- idea: i",
+    "- match: そのまま",
+    ...(layout === "text-diagram" ? ["- body: [部署ごとに表の形が違うため、本部が手で貼り合わせている]"] : []),
+    kind === "kpi" ? "- diagram: {kind: kpi, items: [{label: a, value: '1'}]}" : "- diagram: {kind: steps, items: [{title: a}, {title: b}, {title: c}]}",
+  ];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(...s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings;
+  };
+  const has = (w, t) => w.some((x) => x.includes(t));
+  const w1 = await check(fig("S01", "title-diagram", "kpi"), fig("S02", "title-diagram", "kpi"), fig("S03", "title-diagram", "kpi"));
+  assert.ok(has(w1, "S01〜S03 の3枚が、同じスライドの型（title-diagram）"));
+  assert.ok(has(w1, "S01〜S03 の3枚が、同じ図の型（kpi）"));
+  const mixed = [
+    fig("S01", "title-diagram", "kpi"),
+    fig("S02", "text-diagram", "steps"),
+    fig("S03", "title-diagram", "kpi"),
+    fig("S04", "text-diagram", "steps"),
+    fig("S05", "title-diagram", "kpi"),
+  ];
+  const w2 = await check(...mixed);
+  assert.ok(!has(w2, "枚が、同じ"));
+  assert.ok(has(w2, "図の型 kpi が、図のあるスライド5枚のうち3枚（60%）"));
+});

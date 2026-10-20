@@ -97,7 +97,7 @@ async function visual(f, w, h, env) {
       v = `<div class="flex h-full gap-[48px]"><div class="flex w-[360px] shrink-0 flex-col justify-center">${stack}</div><div class="min-w-0 flex-1">${await diagram(b, w - 408, H, env)}</div></div>`;
     } else {
       const half = (w - 48) / 2;
-      v = `<div class="flex h-full gap-[48px]"><div class="min-w-0 flex-1">${await diagram(a, half, H, env)}</div><div class="min-w-0 flex-1">${await diagram(b, half, H, env)}</div></div>`;
+      v = `<div class="flex h-full gap-[48px]" data-diagrams><div class="min-w-0 flex-1">${await diagram(a, half, H, env)}</div><div class="min-w-0 flex-1">${await diagram(b, half, H, env)}</div></div>`;
     }
   } else v = await diagram(f.diagram, w, H, env);
   return `<div class="flex h-full flex-col"><div class="min-h-0 flex-1">${v}</div>${cap}</div>`;

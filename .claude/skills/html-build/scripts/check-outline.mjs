@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -295,10 +295,40 @@ export async function checkOutline(file) {
 export function layoutBalance(slides) {
   const body = slides.filter((s) => LAYOUTS[s.fields.layout]?.lead);
   const list = body.filter((s) => BULLETS.layouts.includes(s.fields.layout));
-  if (!body.length || list.length / body.length <= BULLETS.ratio) return [];
-  return [
-    `箇条書きの型（${BULLETS.layouts.join("・")}）が、本文のあるスライド${body.length}枚のうち${list.length}枚（${Math.round((100 * list.length) / body.length)}%）。${Math.round(BULLETS.ratio * 100)}%以下を目安に、図で表せるものは図にする（principles.md 5章）`,
-  ];
+  const out = [];
+  if (body.length && list.length / body.length > BULLETS.ratio)
+    out.push(
+      `箇条書きの型（${BULLETS.layouts.join("・")}）が、本文のあるスライド${body.length}枚のうち${list.length}枚（${Math.round((100 * list.length) / body.length)}%）。${Math.round(BULLETS.ratio * 100)}%以下を目安に、図で表せるものは図にする（principles.md 5章）`,
+    );
+  return [...out, ...variety(body)];
+}
+
+// 型と部品の偏り：同じスライドの型・同じ図の型の連続と、1つの図の型の割合（本文のあるスライドで数える）
+function variety(body) {
+  const out = [];
+  const runs = (key, what) => {
+    for (let i = 0; i < body.length; ) {
+      let j = i;
+      while (j + 1 < body.length && key(body[j + 1]) && key(body[j + 1]) === key(body[i])) j++;
+      if (key(body[i]) && j - i + 1 >= VARIETY.run)
+        out.push(`${body[i].id}〜${body[j].id} の${j - i + 1}枚が、同じ${what}（${key(body[i])}）。続けて同じ形にしない`);
+      i = j + 1;
+    }
+  };
+  const kinds = (s) => (s.fields.diagrams ?? (s.fields.diagram ? [s.fields.diagram] : [])).map((d) => d?.kind).filter(Boolean);
+  runs((s) => s.fields.layout, "スライドの型");
+  runs((s) => kinds(s).join("・"), "図の型");
+  const withFig = body.filter((s) => kinds(s).length);
+  if (withFig.length >= VARIETY.min) {
+    const n = {};
+    for (const s of withFig) for (const k of new Set(kinds(s))) n[k] = (n[k] ?? 0) + 1;
+    for (const [k, c] of Object.entries(n))
+      if (c / withFig.length > VARIETY.ratio)
+        out.push(
+          `図の型 ${k} が、図のあるスライド${withFig.length}枚のうち${c}枚（${Math.round((100 * c) / withFig.length)}%）。${Math.round(VARIETY.ratio * 100)}%以下を目安に、ほかの型も使う（diagram-catalog.md 4章）`,
+        );
+  }
+  return out;
 }
 
 // コマンドとして呼ばれたとき

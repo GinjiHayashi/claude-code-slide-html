@@ -82,6 +82,8 @@ export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項
 // 図を主役にする（design-reference/principles.md 5章）：箇条書きの型が、本文のあるスライド（lead のある型）の ratio を超えたら注意。
 // 箇条書きの1つ目の階層の項目が全角 minItem 字未満なら注意（書くときの目安は全角 goodItem 字以上）
 export const BULLETS = { layouts: ["title-body", "text-diagram", "two-column", "do-dont"], ratio: 0.3, minItem: 12, goodItem: 25 };
+// 型と部品の偏り：同じスライドの型・同じ図の型が run 枚続いたら注意。1つの図の型が、図のあるスライドの ratio を超えたら注意（図のあるスライドが min 枚以上のとき）
+export const VARIETY = { run: 3, ratio: 0.4, min: 5 };
 const COLUMN = { items: [1, 4], heading: 20 };
 export const LAYOUTS = {
   title: {

@@ -262,3 +262,47 @@ test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等�
   assert.match(framed, /bg-highlight/);
   assert.throws(() => cycle({ items, numbered: "x" }, {}), /numbered は/);
 });
+
+test("layers：3〜6層の帯。top・bottom で左に矢印とラベル、note で注記", async () => {
+  const layers = (await import(path.join(COMP, "layers.mjs"))).default;
+  const items = ["a", "b", "c"].map((label) => ({ label }));
+  const html = layers({ items, top: "上", bottom: "下", note: "層の並びは AI が整理したもの" }, {});
+  assert.match(html, /上<\/div>/);
+  assert.match(html, /※ 層の並びは AI が整理したもの/);
+  assert.doesNotMatch(layers({ items }, {}), /<svg/); // ラベルがなければ矢印を引かない
+  assert.throws(() => layers({ items: items.slice(0, 2) }, {}), /3〜6/);
+  assert.throws(() => layers({ items: [{ label: "a", tone: "red" }, ...items.slice(1)] }, {}), /tone は/);
+});
+
+test("hub：上の箱・帯・下の箱。下の箱は横に等間隔で、帯から線を下ろす", async () => {
+  const hub = (await import(path.join(COMP, "hub.mjs"))).default;
+  const items = ["a", "b", "c", "d"].map((label) => ({ label, text: "説明" }));
+  const html = hub({ top: { label: "上" }, hub: { label: "口", text: "説明" }, items }, { width: 1172, height: 440 });
+  const lines = [...html.matchAll(/d="M([\d.]+),[\d.]+V[\d.]+"/g)].map((m) => Number(m[1]));
+  assert.equal(lines.length, 5); // 上と帯の1本と、下の箱への4本
+  const xs = lines.slice(1);
+  assert.ok(
+    xs.every((x, k) => !k || Math.abs(x - xs[k - 1] - (xs[1] - xs[0])) < 0.2),
+    `等間隔でない：${xs}`,
+  );
+  assert.match(html, /口<span class="font-normal">（説明）/);
+  assert.throws(() => hub({ top: { label: "上" }, hub: { label: "口" }, items: items.slice(0, 1) }, {}), /2〜6/);
+});
+
+test("nested：外から内へ囲みを重ね、いちばん内側は青地", async () => {
+  const nested = (await import(path.join(COMP, "nested.mjs"))).default;
+  const html = nested({ items: [{ label: "外", text: "説明" }, { label: "中", tone: "soft" }, { label: "内" }] }, {});
+  assert.ok(html.indexOf("外") < html.indexOf("中") && html.indexOf("中") < html.indexOf("内"));
+  assert.match(html, /bg-primary[^>]*><span class="font-bold">内/);
+  assert.throws(() => nested({ items: [{ label: "a" }, { label: "b" }, { label: "c", tone: "soft" }] }, {}), /いちばん内側/);
+});
+
+test("flow-notes：流れの箱、説明の箱、帯を同じ列にそろえる", async () => {
+  const flowNotes = (await import(path.join(COMP, "flow-notes.mjs"))).default;
+  const items = ["a", "b", "c"].map((label) => ({ label, note: `${label}の説明` }));
+  const html = flowNotes({ items, base: { label: "帯" } }, {});
+  assert.match(html, /grid-template-columns:minmax\(0,1fr\) 56px minmax\(0,1fr\) 56px minmax\(0,1fr\)/);
+  assert.equal([...html.matchAll(/grid-row:3;grid-column:(\d)/g)].map((m) => m[1]).join(), "1,3,5"); // 説明は箱の真下
+  assert.match(html, /grid-row:5;grid-column:1 \/ -1">帯/);
+  assert.throws(() => flowNotes({ items: items.slice(0, 1) }, {}), /2〜5/);
+});

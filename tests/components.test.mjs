@@ -217,3 +217,48 @@ test("章の扉：title は2行まで書け、目次とパンくずでは1行に
   const toc = html.find((h) => h.includes('data-layout="toc"'));
   assert.ok(toc.includes(`実例 ${m[1]}`));
 });
+
+test("cards：見出しの帯と説明を同じ段でそろえ、まとめの帯を置ける。枚数と tone の誤りはエラー", async () => {
+  const cards = (await import(path.join(COMP, "cards.mjs"))).default;
+  const items = (n) => Array.from({ length: n }, (_, i) => ({ heading: `h${i}`, text: "説明" }));
+  const html = cards({ items: items(6), summary: { text: "まとめ" } }, { width: 1172, deck });
+  assert.equal((html.match(/grid-rows-subgrid/g) ?? []).length, 6);
+  assert.match(html, /grid-template-columns:repeat\(3,/);
+  assert.match(html, /grid-row:7;grid-column:1 \/ -1">まとめ/); // 2段（3行ずつ）のあと
+  assert.match(cards({ items: items(4) }, { deck }), /grid-template-columns:repeat\(2,/);
+  assert.throws(() => cards({ items: items(1) }, { deck }), /2〜6枚/);
+  assert.throws(() => cards({ items: [{ heading: "a", tone: "red" }, { heading: "b" }] }, { deck }), /tone は/);
+});
+
+test("cycle：4つの輪は四角の角に置く。exit は輪の右側の箱から、caption は row だけ", async () => {
+  const cycle = (await import(path.join(COMP, "cycle.mjs"))).default;
+  const items = ["a", "b", "c", "d"].map((label) => ({ label }));
+  const html = cycle({ items }, { width: 600, height: 400 });
+  const pos = [...html.matchAll(/text-center text-body font-bold [^"]*" style="left:([\d.]+)px;top:([\d.]+)px/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  assert.equal(pos.length, 4);
+  assert.deepEqual(new Set(pos.map((p) => p[0])).size, 2); // 左右の2列
+  assert.deepEqual(new Set(pos.map((p) => p[1])).size, 2); // 上下の2段
+  assert.equal(Math.min(...pos.map((p) => p[0])), 0); // 枠の端まで広げる
+  assert.throws(() => cycle({ items, exit: { from: 1, label: "x" } }, {}), /右側の箱/);
+  assert.throws(() => cycle({ items: [{ label: "a", caption: "c" }, ...items.slice(1)] }, {}), /row のときだけ/);
+  assert.match(cycle({ items, shape: "row", back: "くり返す" }, {}), /くり返す/);
+});
+
+test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等間隔。上下の段のあいだは 96px まで。frame で囲む", async () => {
+  const cycle = (await import(path.join(COMP, "cycle.mjs"))).default;
+  const items = ["a", "b", "c", "d"].map((label) => ({ label }));
+  const html = cycle({ items, exit: { from: 2, label: "x" } }, { width: 1172, height: 400 });
+  const boxes = [...html.matchAll(/text-center text-body font-bold [^"]*" style="left:([\d.]+)px;top:([\d.]+)px;width:([\d.]+)px/g)].map((m) =>
+    m.slice(1).map(Number),
+  );
+  const xs = [...new Set(boxes.map(([x]) => x))].sort((a, b) => a - b);
+  const w = boxes[0][2];
+  assert.equal(xs.length, 3);
+  assert.ok(Math.abs(xs[1] - xs[0] - (xs[2] - xs[1])) < 0.2, `等間隔でない：${xs}`);
+  assert.ok(xs[1] - xs[0] > w);
+  const ys = [...new Set(boxes.map(([, y]) => y))].sort((a, b) => a - b);
+  assert.equal(ys[1] - ys[0], 72 + 96); // 上下は左右と別に、箱のあいだ 96px
+  const framed = cycle({ items, title: "良い循環", frame: true, tone: "primary" }, { width: 560, height: 400 });
+  assert.match(framed, /bg-highlight/);
+  assert.throws(() => cycle({ items, numbered: "x" }, {}), /numbered は/);
+});

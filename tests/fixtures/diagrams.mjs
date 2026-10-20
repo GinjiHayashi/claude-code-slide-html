@@ -112,4 +112,6 @@ export const DIAGRAMS = {
     ],
   },
   dirtree: { tree: "project/\n  src/\n    * main.py  # 入口\n  README.md\n" },
+  cards: { items: [{ heading: "a", text: "説明" }, { heading: "b" }, { heading: "c", tone: "primary" }], summary: { text: "まとめ" } },
+  cycle: { items: [{ label: "a" }, { label: "b" }, { label: "c" }, { label: "d" }], exit: { from: 2, label: "抜ける" } },
 };

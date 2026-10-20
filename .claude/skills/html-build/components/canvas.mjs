@@ -14,9 +14,12 @@ import { loadAsset, inlineSvg } from "./_asset.mjs";
 //              tone?（plain＝白地に枠／primary＝青地に白い文字／soft＝淡い青の地／muted＝灰色。既定 plain）
 //              shape?（rect／pill／cylinder＝データベース／document＝書類（角の折れと罫線）／stack＝重なった束。既定 rect）
 //              align?（center＝形の中／above＝形の上／below＝形の下。文字を書く場所。既定 center）
-//   chevron … 太い矢印の形の箱（工程）。at・size?（既定 [2, 1]）・text・tone?（box と同じ）
+//              text_size?（body＝16px／heading＝20px。書かなければ、図の中の箱と chevron で1つにそろえる：
+//              形の中に字を書く箱がすべて高さ56px以上・幅160px以上なら heading、そうでなければ body）
+//              箱の高さは、格子の1行が許す範囲で、字の大きさに合わせた最小の高さ（body 64px・heading 72px）まで広げる
+//   chevron … 太い矢印の形の箱（工程）。at・size?（既定 [2, 1]）・text・tone?・text_size?（box と同じ）
 //   dot     … 点。at（中心）・text?（点の横の文字）・align?（right／left／above／below。既定 below）・tone?（ink／primary／muted。既定 ink）
-//   badge   … 番号の丸。text（数字や1〜2字）・tone?（primary／ink／muted。既定 primary）
+//   badge   … 番号の丸。text（数字や1〜2字）・tone?（primary／ink／muted。既定 primary）・size?（small＝直径24px。既定は32px）
 //              置き方は3つ：on（形の id）と corner（tl／tr／bl／br。既定 tl）で、形の外に角と端をそろえて置く。
 //              on と inside: true で、形の中の左（corner が tr・br なら右）に、縦は中央にそろえ、端から一定のすき間で置く
 //              （形の文字は番号の分だけ内側に寄る）。または at（中心）で自由に置く
@@ -79,6 +82,7 @@ export const schema = {
       labels: O,
       max: O,
       point: O,
+      text_size: O,
     },
   ],
 };
@@ -86,10 +90,10 @@ export const schema = {
 export const FIELDS = {
   area: { req: ["at", "size"], opt: ["text", "icon", "tone", "id"] },
   frame: { req: ["at", "size"], opt: ["shape", "text", "id"] },
-  box: { req: ["at", "text"], opt: ["size", "caption", "icon", "tone", "shape", "align", "id"] },
-  chevron: { req: ["at", "text"], opt: ["size", "tone", "id"] },
+  box: { req: ["at", "text"], opt: ["size", "caption", "icon", "tone", "shape", "align", "text_size", "id"] },
+  chevron: { req: ["at", "text"], opt: ["size", "tone", "text_size", "id"] },
   dot: { req: ["at"], opt: ["text", "align", "tone", "id"] },
-  badge: { req: ["text"], opt: ["at", "on", "corner", "inside", "tone", "id"] },
+  badge: { req: ["text"], opt: ["at", "on", "corner", "inside", "tone", "size", "id"] },
   line: { req: ["from", "to"], opt: ["via", "curve", "arrow", "dash", "tone", "text"] },
   brace: { req: ["from", "to"], opt: ["text", "align"] },
   note: { req: ["at", "text"], opt: ["size", "to", "id"] },
@@ -145,18 +149,23 @@ const MARK = {
   primary: { fill: "fill-primary", bg: "bg-primary", stroke: "stroke-primary", text: "text-on-primary" },
   navy: { fill: LINE.fill, bg: LINE.bg, stroke: LINE.stroke, text: "text-on-primary" },
 };
+// 箱の字の大きさ（text_size）と、その字のときの箱の最小の高さ
+const TEXT_SIZE = { body: { cls: "text-body", minH: 64 }, heading: { cls: "text-heading", minH: 72 } };
 const STYLE = { heading: "text-heading font-bold", body: "text-body", caption: "text-caption", kpi: "text-kpi font-bold" };
 const ALIGN = { left: "justify-start text-left", center: "justify-center text-center", right: "justify-end text-right" };
 const DOT_R = 12,
   ICON_BIG = 64,
   ICON_SMALL = 24,
   BADGE = 32,
+  BADGE_S = 24, // badge の size: small
   NB_GAP = 12, // 形の中の番号の丸と、形の端のすき間
   ARROW = 44, // 面の矢印の大きさ（正方形の辺）
   RING = 18, // 注目の丸の半径
   TAIL = 32, // 吹き出しのしっぽの長さの上限
   LABEL_H = 36, // 形の上・下に書く文字の高さ
   PAD = 8; // 箱と格子の線のすき間
+const badgeD = (s) => (s.size === "small" ? BADGE_S : BADGE); // 番号の丸の直径
+const badgeText = (s) => (s.size === "small" ? "text-caption" : "text-body");
 const f1 = (v) => v.toFixed(1);
 // 縦軸の上限：最大の値を、1・2・2.5・5・10 × 10^n のどれかに切り上げる
 const niceMax = (v) => {
@@ -225,7 +234,7 @@ export default function canvas(data, opt = {}) {
     if (TONES[s.type]) oneOf(s, "tone", TONES[s.type], i);
     if (SHAPES[s.type]) oneOf(s, "shape", SHAPES[s.type], i);
     if (s.at) pair(s.at, "at", i);
-    if (s.size && pair(s.size, "size", i).some((n) => n <= 0)) throw new Error(`canvas: shapes[${i + 1}] の size は正の数にする`);
+    if (s.size && s.type !== "badge" && pair(s.size, "size", i).some((n) => n <= 0)) throw new Error(`canvas: shapes[${i + 1}] の size は正の数にする`);
     // 線・括弧・吹き出しの先の [x, y]（id で指すものは除く）も格子の中に置く
     for (const k of ["from", "to"]) if (["line", "brace", "note"].includes(s.type) && Array.isArray(s[k])) inside(pair(s[k], k, i), [0, 0], i);
     if (s.type === "line") for (const p of s.via ?? []) inside(pair(p, "via の点", i), [0, 0], i);
@@ -236,7 +245,9 @@ export default function canvas(data, opt = {}) {
     if (s.type === "dot" || s.type === "brace") oneOf(s, "align", SIDES, i);
     if (s.type === "text") oneOf(s, "style", Object.keys(STYLE), i), oneOf(s, "align", Object.keys(ALIGN), i);
     if (s.type === "line") oneOf(s, "arrow", ["end", "both", "none"], i);
+    if (s.type === "box" || s.type === "chevron") oneOf(s, "text_size", Object.keys(TEXT_SIZE), i);
     if (s.type === "badge") {
+      oneOf(s, "size", ["small"], i);
       if (!s.at === !s.on) throw new Error(`canvas: shapes[${i + 1}] の badge は、at か on のどちらか1つで置く`);
       if (s.at && (s.corner !== undefined || s.inside !== undefined)) throw new Error(`canvas: shapes[${i + 1}] の corner・inside は on と一緒に書く`);
       oneOf(s, "corner", CORNERS, i);
@@ -320,6 +331,13 @@ export default function canvas(data, opt = {}) {
   };
 
   // 形の見えている範囲（px の [x, y, w, h]）。箱は格子の線から PAD だけ内側で、上・下に文字を書くときはその分を除く
+  // 箱と chevron の字の大きさ。書かなければ、形の中に字を書くものすべてで1つにそろえる
+  const inText = S.filter((s) => (s.type === "box" || s.type === "chevron") && s.align !== "above" && s.align !== "below");
+  const fitsHeading = inText.every((s) => {
+    const [w, h] = px(s.size ?? [2, 1]);
+    return h - 2 * PAD >= 56 && w - 2 * PAD >= 160;
+  });
+  const textSize = (s) => s.text_size ?? (fitsHeading ? "heading" : "body");
   const bounds = (s) => {
     if (s.type === "ring") {
       const [x, y] = ringAt(s);
@@ -334,6 +352,11 @@ export default function canvas(data, opt = {}) {
       [w, h] = px(s.size ?? (["text", "note"].includes(s.type) ? [3, 1] : [2, 1]));
     if (["area", "frame", "text", "people", "cubes", "plot", "chart"].includes(s.type)) return [x, y, w, h];
     const b = [x + PAD, y + PAD, w - 2 * PAD, h - 2 * PAD];
+    if ((s.type === "box" || s.type === "chevron") && s.align !== "above" && s.align !== "below") {
+      // 1行の字でも窮屈にならないよう、字の大きさに合わせた最小の高さまで広げる（格子の行の高さを超えない）
+      const mh = Math.min(TEXT_SIZE[textSize(s)].minH, h);
+      if (b[3] < mh) return [b[0], y + (h - mh) / 2, b[2], mh];
+    }
     if (s.align === "above") return [b[0], b[1] + LABEL_H, b[2], b[3] - LABEL_H];
     if (s.align === "below") return [b[0], b[1], b[2], b[3] - LABEL_H];
     return b;
@@ -345,7 +368,7 @@ export default function canvas(data, opt = {}) {
     if (!t) throw new Error(`canvas: shapes[${i + 1}] の badge の on「${s.on}」という id の形がない`);
     const [x, y, w, h] = bounds(t);
     const c = s.corner ?? "tl",
-      r = BADGE / 2,
+      r = badgeD(s) / 2,
       g = 6;
     const left = c[1] === "l",
       top = c[0] === "t";
@@ -360,7 +383,7 @@ export default function canvas(data, opt = {}) {
     const [x, y, w, h] = bounds(s);
     return [x + w / 2, y + h / 2];
   };
-  const RADIUS = { dot: DOT_R + 2, badge: BADGE / 2 + 2, icon: ICON_BIG / 2 + 4, ring: RING + 2 };
+  const RADIUS = { dot: DOT_R + 2, icon: ICON_BIG / 2 + 4, ring: RING + 2 };
   const end = (ref, toward, i) => {
     if (Array.isArray(ref)) return px(pair(ref, "from・to", i));
     const s = ids[ref];
@@ -368,9 +391,10 @@ export default function canvas(data, opt = {}) {
     const c = center(s, i);
     const [dx, dy] = [toward[0] - c[0], toward[1] - c[1]];
     if (!dx && !dy) return c;
-    if (RADIUS[s.type]) {
+    const rr = s.type === "badge" ? badgeD(s) / 2 + 2 : RADIUS[s.type];
+    if (rr) {
       const l = Math.hypot(dx, dy);
-      return [c[0] + (dx / l) * RADIUS[s.type], c[1] + (dy / l) * RADIUS[s.type]];
+      return [c[0] + (dx / l) * rr, c[1] + (dy / l) * rr];
     }
     const [, , bw, bh] = bounds(s);
     const [w, h] = [bw / 2, bh / 2];
@@ -435,14 +459,14 @@ export default function canvas(data, opt = {}) {
       const c = BOX[tone];
       const shape = s.type === "chevron" ? "chevron" : (s.shape ?? "rect");
       const out = s.align === "above" || s.align === "below";
-      const big = !out && h >= 56 && w >= 160 ? "text-heading" : "text-body";
+      const big = out ? "text-body" : TEXT_SIZE[textSize(s)].cls;
       const ic = s.icon ? `<span class="flex shrink-0">${icon(s, ICON_SMALL)}</span>` : "";
       const inside = `${ic}<span>${esc(s.text)}</span>`;
       const st = `class="${c.fill} ${c.stroke}" stroke-width="2" stroke-linejoin="round"`;
       let pad = [0, 0, 0, 0]; // 文字が線に重ならないためのすき間（上・右・下・左）
       const nb = inner[s.id]; // 形の中の番号の丸
       const nbRight = nb && nb.corner?.[1] === "r";
-      const nbPad = nb ? `;padding-${nbRight ? "right" : "left"}:${BADGE + 2 * NB_GAP}px` : "";
+      const nbPad = nb ? `;padding-${nbRight ? "right" : "left"}:${badgeD(nb) + 2 * NB_GAP}px` : "";
       if (shape === "rect" || shape === "pill") {
         html.push(
           box(
@@ -505,14 +529,15 @@ export default function canvas(data, opt = {}) {
       if (nb) {
         // 文字の入る範囲の縦の中央に、端から NB_GAP あけて置く
         const [ty, th] = [y + pad[0], h - pad[0] - pad[2]];
-        if (th < BADGE + 8) throw new Error(`canvas: shapes[${nb.i + 1}] の番号の丸が形「${s.id}」に入らない（形の高さを大きくする）`);
-        const bx = nbRight ? x + w - pad[1] - NB_GAP - BADGE : x + pad[3] + NB_GAP;
+        const D = badgeD(nb);
+        if (th < D + 8) throw new Error(`canvas: shapes[${nb.i + 1}] の番号の丸が形「${s.id}」に入らない（形の高さを大きくする）`);
+        const bx = nbRight ? x + w - pad[1] - NB_GAP - D : x + pad[3] + NB_GAP;
         const bg = {
           primary: tone === "primary" ? "bg-canvas text-primary" : "bg-primary text-on-primary",
           ink: `${LINE.bg} text-on-primary`,
           muted: "bg-gray-400 text-on-primary",
         }[nb.tone ?? "primary"];
-        html.push(box(bx, ty + (th - BADGE) / 2, BADGE, BADGE, `flex items-center justify-center rounded-full text-body font-bold ${bg}`, esc(nb.text)));
+        html.push(box(bx, ty + (th - D) / 2, D, D, `flex items-center justify-center rounded-full ${badgeText(nb)} font-bold ${bg}`, esc(nb.text)));
       }
       if (out) {
         // 形の上か下に文字を書く（文字は黒。アイコンも同じ色）
@@ -521,7 +546,7 @@ export default function canvas(data, opt = {}) {
       }
       if (s.caption)
         html.push(
-          `<div class="absolute text-center text-caption text-label" style="left:${x0}px;top:${y0 + h0 - PAD + 4}px;width:${w0}px">${esc(s.caption)}</div>`,
+          `<div class="absolute text-center text-caption text-label" style="left:${x0}px;top:${f1(out ? y0 + h0 - PAD + 4 : y + h + 4)}px;width:${w0}px">${esc(s.caption)}</div>`,
         );
     } else if (s.type === "dot") {
       const [x, y] = px(s.at),
@@ -540,13 +565,12 @@ export default function canvas(data, opt = {}) {
       }
     } else if (s.type === "badge") {
       if (s.inside) return; // 箱と一緒に描いた
-      const [x, y] = badgeAt(s, i);
-      if (x - BADGE / 2 < 0 || y - BADGE / 2 < 0 || x + BADGE / 2 > W || y + BADGE / 2 > H)
+      const [x, y] = badgeAt(s, i),
+        D = badgeD(s);
+      if (x - D / 2 < 0 || y - D / 2 < 0 || x + D / 2 > W || y + D / 2 > H)
         throw new Error(`canvas: shapes[${i + 1}] の badge が枠の外に出る（corner を変えるか、inside: true にする）`);
       const bg = { primary: "bg-primary", ink: LINE.bg, muted: "bg-gray-400" }[tone];
-      html.push(
-        box(x - BADGE / 2, y - BADGE / 2, BADGE, BADGE, `flex items-center justify-center rounded-full text-body font-bold text-on-primary ${bg}`, esc(s.text)),
-      );
+      html.push(box(x - D / 2, y - D / 2, D, D, `flex items-center justify-center rounded-full ${badgeText(s)} font-bold text-on-primary ${bg}`, esc(s.text)));
     } else if (s.type === "line") {
       const c = INK[tone];
       const via = (s.via ?? []).map((p) => px(pair(p, "via の点", i)));

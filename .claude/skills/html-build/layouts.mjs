@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import { esc, LINE } from "./components/_util.mjs";
+import { esc, inline, LINE } from "./components/_util.mjs";
 import { loadAsset, inlineSvg } from "./components/_asset.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 import { SLIDE, SPACE } from "./scripts/spec.mjs";
@@ -18,12 +18,11 @@ const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01�
 const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む
 
 // ---- 文字 ----
-// **語句** → 太字（components.md 4.2）、`コード` → 文中のコード（4.3）。コードの中の ** は太字にしない
-const strong = (s) =>
-  String(s ?? "")
-    .split(/(`[^`]+`)/)
-    .map((p, i) => (i % 2 ? `<code>${esc(p.slice(1, -1))}</code>` : esc(p).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')))
-    .join("");
+const strong = inline; // **語句** と `コード`（_util.mjs）
+const oneLine = (t) =>
+  String(t ?? "")
+    .trim()
+    .replace(/\s*\n\s*/g, " "); // 2行で書いた章の扉の title を、目次とパンくずでは1行にする
 const TITLE = `m-0 flex items-center gap-[24px] text-title font-bold text-primary before:block before:h-[1.25em] before:w-[8px] before:shrink-0 before:translate-y-[0.06em] before:bg-primary before:content-['']`;
 const STRIP_LEFT = `<div data-deco class="absolute bottom-0 left-0 top-0 w-strip bg-primary"></div>`;
 const STRIP_BOTTOM = `<div data-deco class="absolute inset-x-0 bottom-0 h-strip bg-primary"></div>`;
@@ -132,7 +131,8 @@ const LAYOUTS = {
       `<div class="px-slide-x pt-slide-top"><h2 class="${TITLE}">${esc(s.fields.title ?? "目次")}</h2>
 <ol class="m-0 mt-title-gap grid list-none grid-flow-col gap-x-[48px] p-0 ${ctx.chapters.length > TOC_ROWS ? "grid-cols-2" : "grid-cols-1"}" style="grid-template-rows:repeat(${Math.min(TOC_ROWS, Math.ceil(ctx.chapters.length / (ctx.chapters.length > TOC_ROWS ? 2 : 1)))},auto)">${ctx.chapters.map((c, i) => `<li class="flex items-baseline gap-[32px] border-b border-line py-[20px]"><span class="w-[48px] text-heading font-bold text-blue-600">${String(i + 1).padStart(2, "0")}</span><span class="text-heading font-bold text-ink">${esc(c)}</span></li>`).join("")}</ol></div>`,
     ),
-  // 章の扉：左に章番号・進み具合の点・タイトル・説明、右にトピック（layout-catalog 3.2）
+  // 章の扉：左に章番号・進み具合の点・タイトル・説明、右にトピック（layout-catalog 3.2）。トピックがなければ左を横いっぱいに使う。
+  // title は2行まで（表紙と同じく「|」で書き、改行したところで改行する）
   section: (s, ctx) => {
     const f = s.fields,
       n = ctx.chapterNo;
@@ -141,14 +141,14 @@ const LAYOUTS = {
       .join("");
     const topics = f.topics?.length
       ? `<div class="border-l-2 border-line pl-[32px]"><div class="text-body font-bold text-label">トピック</div><ol class="m-0 mt-[8px] list-decimal pl-[24px] text-body text-ink">${f.topics.map((t) => `<li class="py-[4px]">${esc(t)}</li>`).join("")}</ol></div>`
-      : "<div></div>";
+      : "";
     return section(
       s,
       ctx,
       `${STRIP_LEFT}
-<div class="absolute inset-y-0 left-[80px] right-slide-x grid grid-cols-[1fr_400px] items-center gap-[64px]">
+<div class="absolute inset-y-0 left-[80px] right-slide-x grid ${topics ? "grid-cols-[1fr_400px]" : "grid-cols-1"} items-center gap-[64px]">
 <div><div class="text-heading font-bold text-blue-600">CHAPTER ${NN(n)}<span class="ml-[16px] inline-flex gap-[6px] align-middle">${dots}</span></div>
-<h2 class="m-0 mt-[8px] text-section font-bold text-primary">${esc(f.title)}</h2>${f.description ? `<p class="m-0 mt-[24px] text-body text-ink">${strong(f.description)}</p>` : ""}</div>
+<h2 class="m-0 mt-[8px] text-section font-bold text-primary">${esc(String(f.title).trim()).replace(/\n/g, "<br>")}</h2>${f.description ? `<p class="m-0 mt-[24px] text-body text-ink">${strong(f.description)}</p>` : ""}</div>
 ${topics}</div>`,
     );
   },
@@ -237,14 +237,14 @@ ${topics}</div>`,
 
 /** outline（parseOutline の戻り値）から、スライドの HTML を順に返す */
 export async function renderDeck(outline) {
-  const chapters = outline.slides.filter((s) => s.fields.layout === "section").map((s) => s.fields.title);
+  const chapters = outline.slides.filter((s) => s.fields.layout === "section").map((s) => oneLine(s.fields.title));
   const deck = { dir: outline.dir, assets: outline.meta.assets ?? [] }; // 画像・アイコンの素材（outline.md の先頭の assets）
   const ctx = { chapters, chapter: null, chapterNo: 0, env: { comps: {}, deck } };
   const out = [];
   for (const s of outline.slides) {
     if (s.fields.layout === "section") {
       ctx.chapterNo++;
-      ctx.chapter = s.fields.title;
+      ctx.chapter = oneLine(s.fields.title);
     }
     out.push(await LAYOUTS[s.fields.layout](s, ctx));
   }

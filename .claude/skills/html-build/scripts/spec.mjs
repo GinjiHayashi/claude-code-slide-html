@@ -86,7 +86,13 @@ export const LAYOUTS = {
     author: { org: 40, name: 20 },
   },
   toc: { required: [], optional: ["title"], text: { title: 30 }, chapters: 12 },
-  section: { required: ["title"], optional: ["description", "topics"], text: { title: 16, description: 120 }, list: { topics: [3, 6, 20] } },
+  section: {
+    required: ["title"],
+    optional: ["description", "topics"],
+    text: { title: 16, description: 120 },
+    lines: { title: 2 },
+    list: { topics: [3, 6, 20] },
+  },
   "title-body": { required: ["title", "body"], optional: [...BODY, "numbered"], lead: true, text: { title: 30 }, list: { body: [1, 5, 110, true] } },
   "text-diagram": {
     required: ["title", "body"],

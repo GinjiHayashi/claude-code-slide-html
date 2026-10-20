@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, LINE } from "./_util.mjs";
 
 // table：正確な値を一覧で読ませる。8行×6列まで。
 // data: { columns: [string], rows: [[...]], highlight?: [行の番号（1から）], align?: ["left"|"right"|"center"], style? }
@@ -10,6 +10,7 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 //   zebra  白と薄いグレーを1行おきに。線なし
 //   light  見出しを淡い青の地に青い文字、白地＋横線。最も軽い
 //   light-zebra  light の見出し＋白と薄いグレーを1行おきに。線なし
+// 文字のセルの `…` は、本文と同じく文中のコード（Roboto Mono・淡い地。components.md 4.3）にする。記号は出さない。
 // 数値の列は既定で右寄せし、列の中で小数の桁数を揃える（3 と 2.6 が並ぶなら 3.0 と書く）。見出し行は primary の塗りに白文字。
 
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
@@ -33,7 +34,7 @@ export default function table(data) {
   if (!ST) throw new Error(`table: style は grid・panel・lines・zebra・light・light-zebra のどれか`);
   const align = columns.map((_, j) => data.align?.[j] ?? (rows.every((r) => typeof r[j] === "number") ? "right" : "left"));
   const digits = columns.map((_, j) => Math.max(0, ...rows.map((r) => (typeof r[j] === "number" ? (String(r[j]).split(".")[1] ?? "").length : 0))));
-  const fmt = (v, j) => (typeof v === "number" ? v.toLocaleString("ja-JP", { minimumFractionDigits: digits[j], maximumFractionDigits: digits[j] }) : esc(v));
+  const fmt = (v, j) => (typeof v === "number" ? v.toLocaleString("ja-JP", { minimumFractionDigits: digits[j], maximumFractionDigits: digits[j] }) : inline(v)); // 文字のセルの `…` はコードの字（Roboto Mono）で出す
   const cls = { left: "text-left", right: "text-right", center: "text-center" };
   const head = columns.map((c, j) => `<th class="${ST.th} px-[16px] py-[10px] font-bold ${cls[align[j]]}">${esc(c)}</th>`).join("");
   const body = rows

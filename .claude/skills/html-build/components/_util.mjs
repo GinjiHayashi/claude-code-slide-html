@@ -5,6 +5,13 @@
 /** HTML に埋め込む文字を安全にする */
 export const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+/** 文中の書き方を HTML にする：**語句** → 太字（components.md 4.2）、`コード` → 文中のコード（4.3）。コードの中の ** は太字にしない */
+export const inline = (s) =>
+  String(s ?? "")
+    .split(/(`[^`]+`)/)
+    .map((p, i) => (i % 2 ? `<code>${esc(p.slice(1, -1))}</code>` : esc(p).replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')))
+    .join("");
+
 /** 数値を3桁区切りにする。数値でなければそのまま返す */
 export const num = (v) => (typeof v === "number" ? v.toLocaleString("ja-JP") : esc(v));
 

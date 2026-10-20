@@ -168,3 +168,52 @@ test("枠線：囲みの型（two-column・do-dont・grid-4）、表の既定（
   const card = canvas({ shapes: [{ type: "area", at: [0, 0], size: [4, 3], tone: "card" }] }, { width: 1172, height: 440, deck });
   assert.match(card, new RegExp(`border-2 bg-canvas ${LINE.border}`));
 });
+
+test("部品の直し：表の `…` はコードの字、kpi は狭い枠で縦に積む、丸の小、箱の字は図でそろう、流れ図の col・row は 0 にそろえる", async () => {
+  const table = (await import(path.join(COMP, "table.mjs"))).default;
+  const t = table({ columns: ["コマンド", "働き"], rows: [["`/init`", "`CLAUDE.md` を作る"]] });
+  assert.match(t, /<code>\/init<\/code>/);
+  assert.doesNotMatch(t, /`/);
+
+  const kpi = (await import(path.join(COMP, "kpi.mjs"))).default;
+  const items = ["a", "b", "c", "d"].map((label) => ({ label, value: "1" }));
+  assert.match(kpi({ items }, { width: 1172 }), /grid-rows-subgrid/);
+  assert.match(kpi({ items }, { width: 572 }), /grid-cols-subgrid/);
+
+  const canvas = (await import(path.join(COMP, "canvas.mjs"))).default;
+  const opt = { width: 1172, height: 440, deck };
+  const two = canvas(
+    {
+      shapes: [
+        { type: "box", id: "a", at: [0, 1], size: [3, 2], text: "大" },
+        { type: "box", id: "b", at: [4, 1], size: [1, 1], text: "小" },
+        { type: "badge", on: "b", text: "1", size: "small" },
+      ],
+    },
+    opt,
+  );
+  assert.doesNotMatch(two, /text-heading/); // 小さい箱に合わせて、大きい箱も body
+  assert.match(two, /width:24\.0px;height:24\.0px/);
+  assert.match(canvas({ shapes: [{ type: "box", at: [0, 0], text: "a", text_size: "heading" }] }, opt), /text-heading/);
+  assert.throws(() => canvas({ shapes: [{ type: "badge", at: [1, 1], text: "1", size: "big" }] }, opt), /size は small/);
+
+  const fc = (await import(path.join(COMP, "flowchart.mjs"))).default;
+  const nodes = (b) => [0, 1, 2].map((k) => ({ id: `n${k}`, label: `n${k}`, col: k + b, row: b }));
+  const edges = [
+    { from: "n0", to: "n1" },
+    { from: "n1", to: "n2" },
+  ];
+  assert.equal(fc({ nodes: nodes(1), edges }, { width: 572, height: 400 }), fc({ nodes: nodes(0), edges }, { width: 572, height: 400 }));
+});
+
+test("章の扉：title は2行まで書け、目次とパンくずでは1行にまとめる", async () => {
+  const dir = tempDeck();
+  const file = path.join(dir, "outline.md");
+  const src = fs.readFileSync(file, "utf8");
+  const m = src.match(/- layout: section\n- title: (.+)\n/);
+  fs.writeFileSync(file, src.replace(m[0], `- layout: section\n- title: |\n    実例\n    ${m[1]}\n`));
+  const html = await renderDeck(readOutline(file));
+  assert.ok(html.find((h) => h.includes('data-layout="section"')).includes(`実例<br>${m[1]}`));
+  const toc = html.find((h) => h.includes('data-layout="toc"'));
+  assert.ok(toc.includes(`実例 ${m[1]}`));
+});

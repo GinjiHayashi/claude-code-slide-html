@@ -285,3 +285,29 @@ test("outline.md：lead は目安より短いと注意（lead_short に理由を
   assert.equal(leadWidth(zen(LEAD.target[1])), LEAD.base);
   assert.ok(leadWidth(zen(190)) > LEAD.base);
 });
+
+test("outline.md：箇条書きの型が本文のあるスライドの3割を超える・箇条書きの項目が短すぎると注意", async () => {
+  const lead = "- lead: " + "あ".repeat(144) + "。";
+  const body = (id, items) => [`## ${id}`, "- layout: title-body", "- title: t", lead, `- body: [${items}]`];
+  const chart = (id) => [
+    `## ${id}`,
+    "- layout: title-diagram",
+    "- title: t",
+    lead,
+    "- idea: i",
+    "- match: そのまま",
+    "- diagram: {kind: kpi, items: [{label: a, value: '1'}]}",
+  ];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(...s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings;
+  };
+  const long = "部署ごとに表の形が違うため、本部が手で貼り合わせている";
+  const ratio = (w) => w.some((x) => x.includes("箇条書きの型（"));
+  assert.equal(ratio(await check(body("S01", long), body("S02", long), chart("S03"))), true); // 2/3
+  assert.equal(ratio(await check(body("S01", long), chart("S02"), chart("S03"), chart("S04"))), false); // 1/4
+  const short = (w) => w.some((x) => x.includes("短すぎる"));
+  assert.equal(short(await check(body("S01", "時間がかかる"))), true);
+  assert.equal(short(await check(body("S01", long))), false);
+});

@@ -73,6 +73,9 @@ LEAD.base = (Math.ceil(LEAD.target[1] / LEAD.lines) + 2) * LEAD.px; // 896
 // 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
 export const BOLD = { perItem: 1, perSlide: 3 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
+// 図を主役にする（design-reference/principles.md 5章）：箇条書きの型が、本文のあるスライド（lead のある型）の ratio を超えたら注意。
+// 箇条書きの1つ目の階層の項目が全角 minItem 字未満なら注意（書くときの目安は全角 goodItem 字以上）
+export const BULLETS = { layouts: ["title-body", "text-diagram", "two-column", "do-dont"], ratio: 0.3, minItem: 12, goodItem: 25 };
 const COLUMN = { items: [1, 4], heading: 20 };
 export const LAYOUTS = {
   title: {

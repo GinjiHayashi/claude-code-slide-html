@@ -41,7 +41,7 @@ export async function build(deckDir) {
   // 承認ゲート：単独で呼んだときは止めずに注意として記録する（承認前の試しのビルド。build-log.md の gate: false で区別する）
   const gate = checkGate(deckDir, "build");
   chk.gate = gate.ok;
-  chk.warnings.unshift(...gate.errors.map((e) => `承認ゲート：${e}`));
+  chk.warnings.unshift(...[...gate.errors, ...gate.notices].map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
   const outDir = path.join(deckDir, "build");

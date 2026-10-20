@@ -13,6 +13,7 @@ contact:
   email: data@example.jp
 pdf: true
 max_subagents: 3
+factcheck: 最後に1回
 ---
 
 ## 目的・この資料で決めたいこと

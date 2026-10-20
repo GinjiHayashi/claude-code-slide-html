@@ -9,7 +9,12 @@
 ```markdown
 ---
 deck_id: 2026-10-24-report-automation
+round: 最後                                    # どの回か。brief.md の factcheck が「構成のあとと最後の2回」のときだけ書く（構成のあと・最後）
 ---
+
+## 信頼して使う資料
+
+inputs/references/book-summary.md は書籍の要約として採用（brief.md）。資料と一致した記述は確かめたものとし、原本とは照らしていない。
 
 ## FC-101
 - slide: S04                                   # スライドの番号（outline.md の見出し）
@@ -41,6 +46,8 @@ deck_id: 2026-10-24-report-automation
 |---|---|---|---|
 | S04 | 〇〇 提供開始 | 対象の公式サイト | https://example.com/release-notes |
 ```
+
+- 「## 信頼して使う資料」：`brief.md` の「信頼して使う資料」があるときに、その資料の扱いを1行で書く（読んだ人が、どの記述を原本と照らしていないかわかるように）。なければ見出しごと書かない。
 
 ## 区分（level）
 

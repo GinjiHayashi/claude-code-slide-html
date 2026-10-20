@@ -19,7 +19,8 @@
 
 - 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間の答えを受けた hook だけが書く。AI は書かない（`.claude/settings.json` で禁止）。
 - 承認済みかどうかは自分で判断せず、`make-slides/scripts/gate.mjs` か `status.mjs` で確かめる。頼み方は `make-slides` の「承認の頼み方」に従う。
-- 承認後に内容を変えた場合は、文を変えたスライドについてファクトチェックからやり直す。見た目だけの変更は承認のやり直しだけで済む（分け方は `slide-factcheck`）。
+- 承認は brief.md → outline.md → outline.md と factcheck.md → deck.html の4回。ファクトチェックの時期（`brief.md` の `factcheck`）は既定で「最後に1回」（ビルドと見た目の直しのあと）。「構成のあとと最後の2回」も選べる（`make-slides` の「全体の流れ」）。
+- 最後のファクトチェックの承認のあとに内容を変えた場合は、文を変えたスライドについてファクトチェックからやり直す。見た目だけの変更は承認のやり直しだけで済む（分け方は `slide-factcheck`）。
 
 ## フォルダ
 

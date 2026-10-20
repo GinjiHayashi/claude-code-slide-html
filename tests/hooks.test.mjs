@@ -155,3 +155,61 @@ test("request --merge と approve-hook：PR の番号・マージ先・head の�
     execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), dir, "--merge", "7"], { stdio: "pipe", env: { ...process.env, ...h.env } }),
   );
 });
+
+// protect-check：一時のリポジトリ（.claude/ と CLAUDE.md）で、会話の始め（start）とターンの終わり（stop）を流す
+function checkRepo() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "protect-check-"));
+  fs.mkdirSync(path.join(root, ".claude", "skills"), { recursive: true });
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "a\n");
+  fs.writeFileSync(path.join(root, "CLAUDE.md"), "x\n");
+  const transcript = path.join(root, "transcript.jsonl");
+  fs.writeFileSync(transcript, "");
+  const session_id = `t-${Math.random()}`;
+  const hook = (mode, extra = {}) => {
+    const out = execFileSync(process.execPath, [path.join(SCRIPTS, "protect-check.mjs"), mode], {
+      input: JSON.stringify({ session_id, transcript_path: transcript, permission_mode: "default", ...extra }),
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: root, SLIDE_HARNESS_MODE: "slides" },
+    });
+    return out.trim() ? JSON.parse(out) : null;
+  };
+  // 会話の記録に、Edit の呼び出しとその結果を足す
+  const toolEdit = (file, is_error = false) => {
+    const id = `toolu_${Math.random().toString(36).slice(2)}`;
+    const lines = [
+      { type: "assistant", message: { content: [{ type: "tool_use", id, name: "Edit", input: { file_path: path.join(root, file) } }] } },
+      { type: "user", message: { content: [{ type: "tool_result", tool_use_id: id, is_error }] } },
+    ];
+    fs.appendFileSync(transcript, lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
+  };
+  hook("start");
+  return { root, hook, toolEdit };
+}
+
+test("protect-check：許可された Edit によるハーネスの変更は伝えず、Bash などでの変更は伝える", () => {
+  const { root, hook, toolEdit } = checkRepo();
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "b\n");
+  toolEdit(".claude/skills/a.md");
+  assert.equal(hook("stop"), null);
+  // 次のターンにも同じファイルを Edit で直した：伝えない
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "c\n");
+  toolEdit(".claude/skills/a.md");
+  assert.equal(hook("stop"), null);
+  // Edit の記録がない変更（Bash の中の書き込みなど）：伝える。前のターンの Edit の記録は使わない
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "d\n");
+  fs.writeFileSync(path.join(root, "CLAUDE.md"), "y\n");
+  const r = hook("stop");
+  assert.equal(r?.decision, "block");
+  assert.match(r.reason, /\.claude\/skills\/a\.md（変わった）、CLAUDE\.md（変わった）/);
+});
+
+test("protect-check：失敗した Edit や、確認を飛ばすモードでの Edit は、許可された変更として扱わない", () => {
+  const a = checkRepo();
+  fs.writeFileSync(path.join(a.root, "CLAUDE.md"), "y\n");
+  a.toolEdit("CLAUDE.md", true);
+  assert.equal(a.hook("stop")?.decision, "block");
+  const b = checkRepo();
+  fs.writeFileSync(path.join(b.root, "CLAUDE.md"), "y\n");
+  b.toolEdit("CLAUDE.md");
+  assert.equal(b.hook("stop", { permission_mode: "bypassPermissions" })?.decision, "block");
+});

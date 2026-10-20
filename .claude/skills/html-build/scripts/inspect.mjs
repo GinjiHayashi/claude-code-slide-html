@@ -7,7 +7,11 @@ import { SLIDE, SPACE } from "./spec.mjs";
 // 機械的なチェック：deck.html をブラウザ（Playwright の Chromium）で開いて測る。
 // 内容を変える自動修正はしない。結果は build.mjs が build-log.md に書く。
 // - overflow  はみ出し：スライドの外、本文の枠（data-frame）の外に出た要素。部品・文章・独自の表現を区別しない（components.md 4.1）
-// - overlap   重なり：文字どうしが重なっている
+// - overlap   重なり：文字どうし、図の線のラベルと箱が重なっている
+// - boxover   箱からのはみ出し：図の箱（枠線か地の色のある要素）の文字が、その箱の外に出ている
+// 次の3つは「注意」（不合格にしない。build.mjs が build-log.md の注意の節に書く）
+// - align     端のそろい：同じ行に並ぶカードの見出し・数字などの上端、diagrams の2つの図の上端（kpi を左に積む形は除く。上下の中央に置く決まり）がそろっていない
+// - offset    片寄り：図が枠の中で左右に片寄っている、または下に寄っている
 // - margin    余白不足：左右 slide-x・上下 slide-bottom（theme.css）の余白に入り込んだ要素（表紙・扉の帯など、data-deco の飾りは除く）
 // - color     トークン外の色：theme.css の色（--color-*）以外が使われている
 // - text      文字が小さすぎる：11px 未満（フッターの 11px が最小。図の中は 12px 以上）
@@ -56,7 +60,7 @@ function measure({ tokens, mx, my }) {
   const SVG = "http://www.w3.org/2000/svg";
   const SHAPES = new Set(["path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan"]);
   const ok = new Set([...tokens, "rgba(0, 0, 0, 0)"]);
-  const out = { overflow: [], overlap: [], margin: [], color: [], text: [], lead: [] };
+  const out = { overflow: [], overlap: [], boxover: [], margin: [], color: [], text: [], lead: [], align: [], offset: [] };
   const slides = [...document.querySelectorAll(".slide")];
   const hidden = (e) => e.closest(".notes") || e.closest(".katex-mathml") || (e.closest(".katex") && e.closest("svg"));
   const name = (e) => {
@@ -161,6 +165,104 @@ function measure({ tokens, mx, my }) {
           if (!out.overlap.includes(msg)) out.overlap.push(msg);
         }
       }
+    // ---- 図の中の検査 ----
+    // 箱：枠線（上と左）か地の色のある、図の中の HTML の要素
+    const isBox = (e) => {
+      if (e.namespaceURI === SVG || !e.closest("[data-kind]")) return false;
+      const cs = getComputedStyle(e);
+      return cs.backgroundColor !== "rgba(0, 0, 0, 0)" || (parseFloat(cs.borderTopWidth) > 0 && parseFloat(cs.borderLeftWidth) > 0);
+    };
+    const hit = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 2 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 2;
+    const rect = (e) => {
+      const r = e.getBoundingClientRect();
+      return { l: r.left, t: r.top, r: r.right, b: r.bottom };
+    };
+    // 箱からのはみ出し：文字の範囲が、いちばん近くの囲む箱の外に 1px より多く出ている（要素ごとに、いちばん大きい分を1件）
+    const over = new Map();
+    for (const x of texts) {
+      if (x.e.namespaceURI === SVG || !x.e.closest("[data-kind]")) continue;
+      let b = x.e;
+      while (b && !b.hasAttribute("data-kind") && !isBox(b)) b = b.parentElement;
+      if (!b || b.hasAttribute("data-kind")) continue;
+      const B = rect(b);
+      const d = Math.max(B.l - x.l, x.r - B.r, B.t - x.t, x.b - B.b);
+      if (d > 1 && d > (over.get(x.e)?.d ?? 0)) over.set(x.e, { b, d });
+    }
+    for (const [e, { b, d }] of over) out.boxover.push(`${id}: ${name(e)} が${b === e ? "" : `、箱 ${name(b)} の`}枠から ${Math.ceil(d)}px はみ出している`);
+    // 線のラベルと箱の重なり：図の SVG の文字が、図の中の小さな箱（図の面積の4分の1未満。囲みは除く）に重なっている
+    for (const k of sl.querySelectorAll("[data-kind]")) {
+      const K = rect(k),
+        area = (K.r - K.l) * (K.b - K.t);
+      const boxes = [...k.querySelectorAll("*")].filter((e) => isBox(e) && !e.querySelector("svg text"));
+      const small = boxes.filter((e) => {
+        const r = rect(e);
+        return (r.r - r.l) * (r.b - r.t) < area / 4;
+      });
+      for (const x of texts.filter((x) => x.e.namespaceURI === SVG && k.contains(x.e)))
+        for (const b of small)
+          if (hit(x, rect(b))) {
+            const msg = `${id}: 線のラベル ${name(x.e)} と箱 ${name(b)} が重なっている`;
+            if (!out.overlap.includes(msg)) out.overlap.push(msg);
+          }
+    }
+    // 端のそろい（カード）：同じ上端に並ぶ箱（2つ以上。どれも文字の要素が2つ以上）で、k 番目の文字の上端が 2px より多くずれている
+    const ownText = (e) => [...e.querySelectorAll("*")].filter((c) => [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+    for (const p of sl.querySelectorAll("[data-kind], [data-kind] *")) {
+      // 文字を縦に積む箱（grid・縦の flex・block）だけ。横の flex は文字を上下の中央に置く箱なので除く
+      const stacked = (e) => {
+        const cs = getComputedStyle(e);
+        return !cs.display.includes("flex") || cs.flexDirection.startsWith("column");
+      };
+      const kids = [...p.children].filter((c) => isBox(c) && stacked(c));
+      const groups = [];
+      for (const c of kids) {
+        const t = rect(c).t,
+          g = groups.find((g) => Math.abs(g.t - t) <= 2);
+        g ? g.items.push(c) : groups.push({ t, items: [c] });
+      }
+      for (const g of groups) {
+        if (g.items.length < 2) continue;
+        const lists = g.items.map(ownText);
+        if (lists.some((l) => l.length < 2)) continue;
+        const n = Math.min(...lists.map((l) => l.length));
+        for (let k = 0; k < n; k++) {
+          const tops = lists.map((l) => rect(l[k]).t);
+          const d = Math.max(...tops) - Math.min(...tops);
+          if (d > 2) {
+            out.align.push(`${id}: 横に並ぶ箱の ${name(lists[0][k])} などの上端が ${Math.round(d)}px ずれている`);
+            break;
+          }
+        }
+      }
+    }
+    // 端のそろい（diagrams）：左右に並べた2つの図の、見えるものの上端
+    // 見えるものの範囲：SVG は図形と文字ごと（svg の枠そのものは広いので使わない）、HTML は visible の要素
+    const drawn = (e) =>
+      [e, ...e.querySelectorAll("*")]
+        .filter((c) => !hidden(c) && (c.namespaceURI === SVG ? SHAPES.has(c.tagName.toLowerCase()) && !c.closest("defs, clipPath, mask, marker") : visible(c)))
+        .map(rect)
+        .filter((r) => r.r - r.l > 0 || r.b - r.t > 0);
+    const contentTop = (e) => Math.min(...drawn(e).map((r) => r.t));
+    for (const d of sl.querySelectorAll("[data-diagrams]")) {
+      const tops = [...d.children].map(contentTop).filter(Number.isFinite);
+      if (tops.length === 2 && Math.abs(tops[0] - tops[1]) > 2)
+        out.align.push(`${id}: 左右の2つの図の上端が ${Math.round(Math.abs(tops[0] - tops[1]))}px ずれている`);
+    }
+    // 片寄り：図の見えるものの範囲が、図を置いた枠の中で左右に片寄っている、または下に寄っている（上に寄せるのは決まりなので除く）
+    for (const k of sl.querySelectorAll("[data-kind]")) {
+      if (k.parentElement.closest("[data-kind]")) continue; // 自由図の中に置いた図は除く
+      const C = rect(k.parentElement);
+      const parts = drawn(k);
+      if (!parts.length) continue;
+      const l = Math.min(...parts.map((r) => r.l)) - C.l,
+        r = C.r - Math.max(...parts.map((r) => r.r)),
+        t = Math.min(...parts.map((r) => r.t)) - C.t,
+        b = C.b - Math.max(...parts.map((r) => r.b));
+      const lim = (v) => Math.max(80, 0.15 * v);
+      if (Math.abs(l - r) > lim(C.r - C.l))
+        out.offset.push(`${id}: 図（${k.dataset.kind}）が枠の${l > r ? "右" : "左"}に寄っている（左 ${Math.round(l)}px・右 ${Math.round(r)}px）`);
+      if (t - b > lim(C.b - C.t)) out.offset.push(`${id}: 図（${k.dataset.kind}）が枠の下に寄っている（上 ${Math.round(t)}px・下 ${Math.round(b)}px）`);
+    }
     // 説明文の行数
     for (const e of sl.querySelectorAll("[data-lead]")) {
       const lines = Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));

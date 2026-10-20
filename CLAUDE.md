@@ -19,7 +19,7 @@
 
 - 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間の答えを受けた hook だけが書く。AI は書かない（`.claude/settings.json` で禁止）。
 - 承認済みかどうかは自分で判断せず、`make-slides/scripts/gate.mjs` か `status.mjs` で確かめる。頼み方は `make-slides` の「承認の頼み方」に従う。
-- 承認後に内容を変えた場合は、変えたスライドについてファクトチェックからやり直す。
+- 承認後に内容を変えた場合は、文を変えたスライドについてファクトチェックからやり直す。見た目だけの変更は承認のやり直しだけで済む（分け方は `slide-factcheck`）。
 
 ## フォルダ
 

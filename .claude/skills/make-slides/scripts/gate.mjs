@@ -5,11 +5,12 @@
 // - outline：brief.md が承認済み。outline-draft.md（人間の構成の草案）があれば、それも承認済み
 // - factcheck：brief.md（と草案）が承認済みで、outline.md がある。outline.md は単独では承認せず、factcheck.md と一緒に承認する
 // - build：outline.md と factcheck.md が承認済みで、factcheck.md の書式にエラーがなく、P0 にすべて人間の判断（decision）が書かれている。
-//   さらに、factcheck.md を承認したときから outline.md のスライドが変わっていない（変わったスライドはファクトチェックし直す）
+//   さらに、factcheck.md を承認したときから outline.md のスライドの文が変わっていない（文が変わったスライドはファクトチェックし直す。
+//   見た目だけの変更は、outline.md の承認のやり直しで済む。文と見た目の分け方は spec.mjs の LOOK）
 // 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
 import fs from "fs";
 import path from "path";
-import { sha256, slideHashes, readApprovals, latest } from "./approvals.mjs";
+import { sha256, slideHashes, slideDigests, slideChanges, describeChanges, readApprovals, latest } from "./approvals.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
 import { isMain } from "../../../lib/common.mjs";
 
@@ -23,8 +24,12 @@ const IF_EXISTS = { outline: ["outline-draft.md"], factcheck: ["outline-draft.md
 // 承認は要らないが、ないと進めないもの
 const EXISTS = { factcheck: ["outline.md"] };
 
-// factcheck.md の承認のときから変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
+// factcheck.md の承認のときから文が変わった outline.md のスライド（記録がなければ null）。先頭の設定（meta）は見ない
+// - 記録に outline_text があれば、id か文の sha256 でスライドを対応づけ、文が変わったものだけを返す
+// - 古い記録（outline_slides だけ）は、見出しごとに全体の sha256 で比べる
 export function factcheckedChanges(approval, outlineText) {
+  const digests = approval?.outline_text && slideDigests(outlineText);
+  if (digests) return slideChanges(approval.outline_text, digests).text;
   if (!approval?.outline_slides) return null;
   const now = slideHashes(outlineText),
     then = approval.outline_slides;
@@ -50,7 +55,9 @@ export function checkGate(deckDir, stage) {
     const text = fs.readFileSync(file);
     if (a.sha256 === sha256(text)) continue;
     let where = "";
-    if (a.slides) {
+    const now = a.slide_text && slideDigests(text.toString("utf8"));
+    if (now) where = `。変わったところ：${describeChanges(slideChanges(a.slide_text, now))}`;
+    else if (a.slides) {
       const now = slideHashes(text.toString("utf8"));
       const ids = new Set([...Object.keys(a.slides), ...Object.keys(now)]);
       where = `。変わったところ：${[...ids].filter((k) => a.slides[k] !== now[k]).join("、")}`;
@@ -68,7 +75,7 @@ export function checkGate(deckDir, stage) {
       if (changed === null) errors.push("factcheck.md の承認に、そのときの outline.md の記録がない。factcheck.md を承認し直す");
       else if (changed.length)
         errors.push(
-          `ファクトチェックのあとに outline.md のスライドが変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`,
+          `ファクトチェックのあとに outline.md のスライドの文が変わった：${changed.join("、")}（そのスライドをファクトチェックし直し、factcheck.md を承認し直す）`,
         );
     }
   }

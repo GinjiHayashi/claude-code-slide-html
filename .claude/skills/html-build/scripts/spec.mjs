@@ -124,11 +124,27 @@ export const LAYOUTS = {
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
 // どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
-export const COMMON = ["layout", "notes", "claims", "html", "idea", "match"];
+// id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
+export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match"];
+export const SLIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // match：idea の絵を部品で描けるか。そのまま＝部品を使う。意味が欠ける・描けない＝独自に描く（「：」のあとに理由）
 export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
 // 図を書く項目（visual の型だけ）
 export const VISUAL = ["diagram", "diagrams"];
+
+// 文と見た目（承認のあとの変更で、ファクトチェックをやり直すかを決める分け方。make-slides/scripts/approvals.mjs）
+// - 見た目：LOOK の項目（とその中身）と、真偽値（true・false）。並び・大きさ・色・形・アイコン・強調・図の型など
+// - 文：ほかの文字列と数値のすべて（title・lead・本文・図の中の字・データの数値・notes・source・claims など）
+// - 文の比べ方：太字とコードの印（** と `）、空白と改行は除いて比べる（改行の位置や太字だけの直しは文の変更にしない）
+// - 迷う項目は文に入れる（やり直しが1回増えるだけで済む。見た目に入れると、確かめていない文が通るため）
+export const LOOK = [
+  // スライド
+  ..."layout id idea match lead_short numbered".split(" "),
+  // 図の型・置き方・大きさ
+  ..."kind type at size grid col row via curve corner inside on wrap radius direction".split(" "),
+  // 見た目の選び方
+  ..."tone shape icon style align text_size frame highlight dash fit sort legend lang".split(" "),
+];
 
 // 型に書ける項目のすべて
 export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(L.lead ? ["lead", "lead_short"] : [])]);

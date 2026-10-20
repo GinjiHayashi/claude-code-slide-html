@@ -55,6 +55,8 @@ export const KINDS = [
   "image",
   "canvas",
   "dirtree",
+  "cards",
+  "cycle",
 ];
 
 // ---- スライドの型 ----

@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { esc, inline, LINE } from "./components/_util.mjs";
-import { loadAsset, inlineSvg } from "./components/_asset.mjs";
+import cards from "./components/cards.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 import { SLIDE, SPACE } from "./scripts/spec.mjs";
 
@@ -198,12 +198,13 @@ ${topics}</div>`,
           })
           .join("")}</div>`,
     ),
+  // 4つの要点：cards の部品で描く（4枚・2列・番号の丸。icon があれば番号の代わりにアイコン）
   "grid-4": (s, ctx) =>
-    page(
-      s,
-      ctx,
-      () =>
-        `<div class="grid h-full grid-cols-2 grid-rows-2 gap-[24px]">${s.fields.items.map((it, i) => `<div class="rounded-panel border-2 ${LINE.border} bg-panel p-[24px]"><div class="flex items-center gap-[12px] text-heading font-bold text-ink">${it.icon ? `<span class="flex shrink-0 text-primary">${inlineSvg(loadAsset("grid-4", it.icon, ctx.env.deck), it.icon, 32)}</span>` : `<span class="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-primary text-body text-on-primary">${i + 1}</span>`}${esc(it.heading)}</div><p class="m-0 mt-[12px] text-body text-ink">${strong(it.text)}</p></div>`).join("")}</div>`,
+    page(s, ctx, (w) =>
+      cards(
+        { items: s.fields.items.map(({ heading, text, icon }) => ({ heading, text, icon })), columns: 2, numbered: true },
+        { width: w, deck: ctx.env.deck },
+      ),
     ),
   // チェックリスト：済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）
   checklist: (s, ctx) => {

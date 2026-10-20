@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import { esc } from "./components/_util.mjs";
+import { esc, LINE } from "./components/_util.mjs";
 import { loadAsset, inlineSvg } from "./components/_asset.mjs";
 import { leadWidth, width, plain, LEAD } from "./scripts/outline.mjs";
 import { SLIDE, SPACE } from "./scripts/spec.mjs";
@@ -13,9 +13,9 @@ import { SLIDE, SPACE } from "./scripts/spec.mjs";
 
 const COMP = path.join(path.dirname(fileURLToPath(import.meta.url)), "components");
 const BODY_W = SLIDE.width - 2 * SPACE.x; // 1172
-const LINE = 27.2;
+const LINE_H = 27.2; // text-body（16px）の1行の高さ（行の高さ 1.7）
 const NN = (n) => String(n).padStart(2, "0"); // 章番号は2桁（CHAPTER 01）
-const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む // text-body（16px）の1行の高さ（行の高さ 1.7）
+const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし、1列目を埋めてから2列目に進む
 
 // ---- 文字 ----
 // **語句** → 太字（components.md 4.2）、`コード` → 文中のコード（4.3）。コードの中の ** は太字にしない
@@ -55,7 +55,7 @@ function page(s, ctx, inner) {
   let lead = "";
   if (typeof f.lead === "string") {
     lead = `<p class="m-0 mt-[32px] text-body text-ink" data-lead style="width:${leadWidth(f.lead)}px">${strong(f.lead)}</p>`;
-    top += 32 + leadLines(f.lead) * LINE + 32;
+    top += 32 + leadLines(f.lead) * LINE_H + 32;
   } else top += SPACE.titleGap; // 説明文がないときは title-gap
   const h = Math.floor(SLIDE.height - 64 - top);
   const body = inner(BODY_W, h);
@@ -181,7 +181,7 @@ ${topics}</div>`,
         `<div class="grid h-full grid-cols-2 gap-[48px]">${["left", "right"]
           .map((k, i) => {
             const c = s.fields[k];
-            return `<div class="rounded-panel ${i ? "bg-highlight" : "bg-panel"} p-[32px]">${c.heading ? `<div class="mb-[24px] text-heading font-bold ${i ? "text-primary" : "text-ink"}">${esc(c.heading)}</div>` : ""}${bullets(c.items)}</div>`;
+            return `<div class="rounded-panel border-2 ${LINE.border} ${i ? "bg-highlight" : "bg-panel"} p-[32px]">${c.heading ? `<div class="mb-[24px] text-heading font-bold ${i ? "text-primary" : "text-ink"}">${esc(c.heading)}</div>` : ""}${bullets(c.items)}</div>`;
           })
           .join("")}</div>`,
     ),
@@ -194,7 +194,7 @@ ${topics}</div>`,
           .map((k) => {
             const ok = k === "do",
               c = s.fields[k];
-            return `<div class="flex h-full flex-col rounded-panel bg-panel"><div class="h-[8px] rounded-t-panel ${ok ? "bg-success" : "bg-error"}"></div><div class="p-[32px]"><div class="mb-[24px] flex items-center gap-[12px] text-heading font-bold ${ok ? "text-success" : "text-error"}"><span class="text-title leading-none">${ok ? "◯" : "×"}</span>${esc(c.heading ?? (ok ? "良い例" : "悪い例"))}</div>${bullets(c.items)}</div></div>`;
+            return `<div class="flex h-full flex-col overflow-hidden rounded-panel border-2 ${LINE.border} bg-panel"><div class="h-[8px] ${ok ? "bg-success" : "bg-error"}"></div><div class="p-[32px]"><div class="mb-[24px] flex items-center gap-[12px] text-heading font-bold ${ok ? "text-success" : "text-error"}"><span class="text-title leading-none">${ok ? "◯" : "×"}</span>${esc(c.heading ?? (ok ? "良い例" : "悪い例"))}</div>${bullets(c.items)}</div></div>`;
           })
           .join("")}</div>`,
     ),
@@ -203,7 +203,7 @@ ${topics}</div>`,
       s,
       ctx,
       () =>
-        `<div class="grid h-full grid-cols-2 grid-rows-2 gap-[24px]">${s.fields.items.map((it, i) => `<div class="rounded-panel bg-panel p-[24px]"><div class="flex items-center gap-[12px] text-heading font-bold text-ink">${it.icon ? `<span class="flex shrink-0 text-primary">${inlineSvg(loadAsset("grid-4", it.icon, ctx.env.deck), it.icon, 32)}</span>` : `<span class="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-primary text-body text-on-primary">${i + 1}</span>`}${esc(it.heading)}</div><p class="m-0 mt-[12px] text-body text-ink">${strong(it.text)}</p></div>`).join("")}</div>`,
+        `<div class="grid h-full grid-cols-2 grid-rows-2 gap-[24px]">${s.fields.items.map((it, i) => `<div class="rounded-panel border-2 ${LINE.border} bg-panel p-[24px]"><div class="flex items-center gap-[12px] text-heading font-bold text-ink">${it.icon ? `<span class="flex shrink-0 text-primary">${inlineSvg(loadAsset("grid-4", it.icon, ctx.env.deck), it.icon, 32)}</span>` : `<span class="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-primary text-body text-on-primary">${i + 1}</span>`}${esc(it.heading)}</div><p class="m-0 mt-[12px] text-body text-ink">${strong(it.text)}</p></div>`).join("")}</div>`,
     ),
   // チェックリスト：済みは青の塗りとチェック、未済みは空の枠と太字（形でも区別する）
   checklist: (s, ctx) => {

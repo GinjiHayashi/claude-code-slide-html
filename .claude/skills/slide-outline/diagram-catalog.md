@@ -42,7 +42,7 @@
 | `combo` | 量（棒）と推移（線）を同時に | 棒と線を1系列ずつ。軸は左右に分ける | SVG |
 | `donut` | 全体が明らかなときの構成比 | 5項目まで（超える分は「その他」）。12時から時計回りに大きい順。多くの場合は `hbar` の方が正確に伝わる | SVG |
 | `scatter` | 2つの量の関係 | 点は50まで。ラベルは注目する点だけ | SVG |
-| `table` | 正確な値を一覧で読ませる | 8行×6列まで。数値は右寄せし、小数の桁を列で揃える。見出し行は `primary` の塗りに白文字 | CSS |
+| `table` | 正確な値を一覧で読ませる | 8行×6列まで。数値は右寄せし、小数の桁を列で揃える。見出し行は `primary` の塗りに白文字。既定の見た目は `grid`（外枠と行の区切りの線）。ほかの見た目（`style`）は `table.mjs` の冒頭 | CSS |
 
 ### 2.2 構造・時間
 
@@ -104,7 +104,7 @@ d3・KaTeX は、license-notice の許可済み一覧に載っているものだ
 
 | 形のなかま | 形（type） |
 |---|---|
-| 囲む・置く | `area`（囲み）、`frame`（画面の枠：browser・phone）、`box`（箱：rect・pill・cylinder・document・stack）、`chevron`（工程）、`text`、`icon` |
+| 囲む・置く | `area`（囲み。カードとして使うときは `tone: card` の実線の枠）、`frame`（画面の枠：browser・phone）、`box`（箱：rect・pill・cylinder・document・stack）、`chevron`（工程）、`text`、`icon` |
 | つなぐ・示す | `line`（細い線と矢印）、`arrow`（近くの形の間に置く太い矢印。44px の正方形）、`brace`（中括弧）、`note`（吹き出し）、`badge`（番号の丸）、`dot`、`ring`（注目の丸） |
 | 数や並びを見せる | `cubes`（立方体のリスト・行列。色を付けて区別）、`plot`（小さな折れ線）、`people`（人の数）、`chart`（一覧の型の部品をそのまま中に置く） |
 

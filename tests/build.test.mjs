@@ -33,3 +33,15 @@ test("フォントのサブセット化：同じ文字なら毎回同じバイ�
   execFileSync("sleep", ["1.1"]); // フォントの時刻は秒の単位なので、秒をまたがせる
   assert.equal(run("b.css"), a);
 });
+
+test("shots：指定したスライドを 1280×720 の PNG に撮り、ない番号はエラーにする", async () => {
+  const { shots } = await import(path.join(SKILLS, "html-build/scripts/shots.mjs"));
+  const dir = tempDeck();
+  await assert.rejects(shots(dir, ["S01"]), /先にビルドする/);
+  assert.equal((await build(dir)).ok, true);
+  const [file] = await shots(dir, ["S01"]);
+  assert.equal(file, path.join(dir, "build", "shots", "S01.png"));
+  const png = fs.readFileSync(file);
+  assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1280, 720]); // IHDR の幅と高さ
+  await assert.rejects(shots(dir, ["S99"]), /deck\.html にないスライド：S99/);
+});

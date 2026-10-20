@@ -9,7 +9,7 @@
 3. スライドの型は `layout-catalog.md`、図の型は `diagram-catalog.md` から選ぶ。新しい型を作らない。図は、先に `outline.md` の `idea` で見せたい絵を決め、一覧の部品でそのまま描けるとき（`match: そのまま`）だけその部品を使い、ほかは自由図（`canvas`）で描く。`canvas` でも描けないときだけ独自の表現で描く。図表は HTML/CSS/SVG で作る。外部の作図ツール（Mermaid など）は使わない。
 4. 固定ファイル（下記）はスライド作成中に変更しない。合うスライドの型がなければ近い型で代替し、どのスライドをなぜ代替したかを人間に報告する（図は原則3のとおり）。
 5. 人間の承認が必要な工程では、承認されるまで次へ進まない。
-6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。
+6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。はみ出し・重なり・端のそろい・余白の偏りは、機械的な確認として AI が画像で見てよい（`npm run shots`）。良し悪し（好み）は判断しない。
 7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
 8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・フォント・アイコン集は `registry.yaml` に登録済みのものだけを使う。アイコンは AI がアイコン集（Phosphor）から探して選ぶ。デッキごとの写真などの画像は、人間が `inputs/` に置き、`outline.md` の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。ライセンス表記は書かない（スクリプトが生成する）。
@@ -30,7 +30,7 @@
 |---|---|---|
 | `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、メモなど） | 人間が置く。AI は書き換えない |
 | フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml` | 人間と AI（`approvals.yaml` は hook だけ） |
-| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` | ビルドのスクリプトだけ。手で直さない |
+| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外） | ビルドのスクリプトだけ。手で直さない |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。
 

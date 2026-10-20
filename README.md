@@ -128,7 +128,7 @@ npm run setup                          # npm のパッケージ、Chromium と O
 npm run build -- examples/sample-deck  # 見本をビルドして確かめる
 ```
 
-`npm run setup` の途中で sudo のパスワードを聞かれます。Chromium が使う OS のライブラリ（`libnss3` など）を apt で入れるためです。最後に Chromium が起動するかを確かめ、足りないものがあればそこで止まって、入れ方を表示します。
+`npm run setup` の途中で sudo のパスワードを聞かれます。Chromium が使う OS のライブラリ（`libnss3` など）を apt で入れるためです。最後に Chromium が起動するかを確かめ、足りないものがあればそこで止まって、入れ方を表示します。AI がスライドを画像にして確かめるときも、この Chromium を使います（`npm run shots`）。PDF を画像にする道具（`pdftoppm` など）は入れなくてかまいません。
 
 エラーなく終わり、`examples/sample-deck/build/deck.html` をブラウザで開けば準備完了です。
 

@@ -57,6 +57,10 @@ export const KINDS = [
   "dirtree",
   "cards",
   "cycle",
+  "layers",
+  "hub",
+  "nested",
+  "flow-notes",
 ];
 
 // ---- スライドの型 ----

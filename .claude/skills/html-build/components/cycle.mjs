@@ -6,15 +6,16 @@ import { esc, check, R, O, optional, LINE } from "./_util.mjs";
 //   ring は箱を楕円の上に時計回りに置く（4つなら四角の角、3つなら逆三角、5・6つなら五角・六角）。1つ目は左上
 // - arrow：その箱から次の箱への矢印に添える短い文字（例：失敗あり）
 // - caption：箱の下の説明（row のときだけ。2行まで）
-// - back：row の戻る線に添える文字（例：小刻みにくり返す）
+// - back：row の戻る線の下に添える文字（例：小刻みにくり返す）
 // - exit：輪から抜け出す先。{ from（何番目の箱から。1から）, label（抜け出す先の箱）, text?（矢印に添える文字） }
 //   抜け出す先の箱は輪の右に置き、from の箱から右へ矢印を引く（ring のときだけ。from は輪の右側の箱にする）
 // - highlight：目立たせる箱（何番目か、の並び。1から）。抜け出す先の箱はいつも目立たせる
 // - tone：輪の色。ink（既定）／primary（線を青に。良い循環など）／muted（箱と線を灰色に。悪い循環など）
 // - title：見出し。2つの輪を左右に並べて比べるときは、diagrams に cycle を2つ書き、それぞれに title を付ける
 // - frame：true で輪を囲みに入れ、見出しを囲みの左上に書く（tone が primary なら淡い青の面、ほかは灰色の点線の枠）
-// - numbered：番号の付け方。circle（箱の文字の頭に小さい丸。既定）／text（文字の頭に ①〜⑥）／false（付けない）
+// - numbered：false で番号の丸を付けない（既定は付ける）
 // - 抜け出す先の箱があるときは、輪の箱と抜け出す先の箱を横に等間隔に並べる
+// - 輪の上下の段のあいだは 96px までにして、枠の上下の中央に置く（左右の間隔とは別に決める）
 // opt: { width, height }（置く枠の大きさ。既定は 1172×440）
 
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
@@ -36,7 +37,6 @@ const TONES = {
   muted: { box: "bg-panel text-label border-gray-400", stroke: "stroke-gray-400", fill: "fill-gray-400", num: "bg-gray-400 text-on-primary" },
 };
 const HI = { box: "bg-primary text-on-primary border-primary", num: "bg-canvas text-primary" };
-const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥"];
 // 囲み（frame）の見た目と見出しの色。自由図の area の plain・soft と同じ
 const FRAME = {
   ink: { look: "border-dashed border-gray-400", head: "text-label" },
@@ -46,6 +46,8 @@ const FRAME = {
 const BH = 72, // 箱の高さ（1行の字にゆとりのある高さ）
   TITLE_H = 40, // 見出しの高さ
   PADF = 24, // 囲みの中のすき間
+  GAP_V = 96, // 輪の上下の段の箱のあいだ（これより広げない。左右の間隔とは別に決める）
+  BACK_V = 48, // row の戻る線の縦の長さ
   f1 = (v) => v.toFixed(1);
 
 // 箱（中心 c、幅 w、高さ h）の縁の点のうち、点 p へ向かう線が出る点
@@ -79,7 +81,7 @@ export default function cycle(data, opt = {}) {
   if (!c) throw new Error("cycle: tone は ink・primary・muted のどれか");
   if (shape === "ring" && I.some((it) => it.caption)) throw new Error("cycle: caption は shape: row のときだけ書ける");
   if (shape === "row" && data.exit) throw new Error("cycle: exit は shape: ring のときだけ書ける");
-  if (![undefined, true, false, "circle", "text"].includes(data.numbered)) throw new Error("cycle: numbered は circle・text・false のどれか");
+  if (![undefined, true, false].includes(data.numbered)) throw new Error("cycle: numbered は true か false");
   if (data.frame && shape === "row") throw new Error("cycle: frame は shape: ring のときだけ書ける");
   if (data.exit && !(Number.isInteger(data.exit.from) && data.exit.from >= 1 && data.exit.from <= I.length))
     throw new Error(`cycle: exit.from は 1〜${I.length} の整数`);
@@ -108,9 +110,12 @@ export default function cycle(data, opt = {}) {
     const span = (v) => [Math.min(...v), Math.max(...v)];
     const [x0, x1] = span(unit.map((u) => u[0])),
       [y0, y1] = span(unit.map((u) => u[1]));
-    // 囲みの中の3〜4つの輪は、箱を寄せて囲みの中央に置く（手作りの見本 A-1 の形。囲みの余白で、まとまりを見せる）
+    // 囲みの中の3〜4つの輪は、箱を左右にも寄せて囲みの中央に置く（手作りの見本 A-1 の形。囲みの余白で、まとまりを見せる）
     const compact = data.frame && n <= 4 && !data.exit;
-    const ringH = compact ? Math.min(H - top, 2 * bh + 96) : H - top;
+    // 上下は、段どうしの箱のあいだが GAP_V を超えないところまで広げ、枠の上下の中央に置く
+    const ys = unit.map((u) => u[1]).sort((a, b) => a - b);
+    const dMin = Math.min(...ys.slice(1).map((y, k) => y - ys[k]).filter((d) => d > 1e-6)); // 段と段の間（いちばん狭いところ）
+    const ringH = Math.min(H - top, bh + ((bh + GAP_V) * (y1 - y0)) / dMin);
     const oy = top + (H - top - ringH) / 2;
     // 同じ高さに並ぶ箱どうしが重ならないよう、箱の幅を狭める（5・6つの輪の上下の段など）
     const fy = (ringH - bh) / (y1 - y0),
@@ -166,32 +171,33 @@ export default function cycle(data, opt = {}) {
           `<div class="absolute text-center text-body text-ink" style="left:${f1(centers[k][0] - bw / 2)}px;top:${f1(oy + bh + 8)}px;width:${f1(bw)}px">${esc(it.caption)}</div>`,
         );
     });
-    const by = oy + bh + capH + 32;
+    const ys = oy + bh + (capH ? capH + 8 : 0),
+      by = ys + BACK_V;
     const last = centers[n - 1],
       first = centers[0];
     svg.push(
       arrow(
         [
-          [last[0], oy + bh + (capH ? capH + 8 : 0)],
+          [last[0], ys],
           [last[0], by],
           [first[0], by],
-          [first[0], oy + bh + (capH ? capH + 8 : 0)],
+          [first[0], ys],
         ],
         c,
       ),
     );
-    if (data.back) svg.push(label((first[0] + last[0]) / 2, by, data.back));
+    // 戻る線の文字は、線に重ねず線の下に置く
+    if (data.back) svg.push(label((first[0] + last[0]) / 2, by + 22, data.back));
   }
 
   // 箱（番号の丸＋文字）
   I.forEach((it, k) => {
     const on = hi.has(k + 1);
-    const style = data.numbered === false ? "none" : data.numbered === "text" ? "text" : "circle";
     const num =
-      style === "circle"
-        ? `<span class="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-caption font-bold ${on ? HI.num : c.num}">${k + 1}</span>`
-        : "";
-    html.push(box(centers[k], bw, bh, on ? HI.box : c.box, num, (style === "text" ? CIRCLED[k] : "") + esc(it.label)));
+      data.numbered === false
+        ? ""
+        : `<span class="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-caption font-bold ${on ? HI.num : c.num}">${k + 1}</span>`;
+    html.push(box(centers[k], bw, bh, on ? HI.box : c.box, num, esc(it.label)));
   });
   const F = FRAME[data.tone ?? "ink"];
   const head = data.title

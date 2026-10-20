@@ -244,7 +244,7 @@ test("cycle：4つの輪は四角の角に置く。exit は輪の右側の箱か
   assert.match(cycle({ items, shape: "row", back: "くり返す" }, {}), /くり返す/);
 });
 
-test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等間隔。frame で囲み、numbered: text で ①〜", async () => {
+test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等間隔。上下の段のあいだは 96px まで。frame で囲む", async () => {
   const cycle = (await import(path.join(COMP, "cycle.mjs"))).default;
   const items = ["a", "b", "c", "d"].map((label) => ({ label }));
   const html = cycle({ items, exit: { from: 2, label: "x" } }, { width: 1172, height: 400 });
@@ -256,8 +256,9 @@ test("cycle：exit があると、輪の箱と抜け出す先の箱が横に等�
   assert.equal(xs.length, 3);
   assert.ok(Math.abs(xs[1] - xs[0] - (xs[2] - xs[1])) < 0.2, `等間隔でない：${xs}`);
   assert.ok(xs[1] - xs[0] > w);
-  const framed = cycle({ items, title: "良い循環", frame: true, tone: "primary", numbered: "text" }, { width: 560, height: 400 });
+  const ys = [...new Set(boxes.map(([, y]) => y))].sort((a, b) => a - b);
+  assert.equal(ys[1] - ys[0], 72 + 96); // 上下は左右と別に、箱のあいだ 96px
+  const framed = cycle({ items, title: "良い循環", frame: true, tone: "primary" }, { width: 560, height: 400 });
   assert.match(framed, /bg-highlight/);
-  assert.match(framed, /①a/);
   assert.throws(() => cycle({ items, numbered: "x" }, {}), /numbered は/);
 });

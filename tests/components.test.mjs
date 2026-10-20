@@ -153,3 +153,18 @@ test("canvas：格子からはみ出す形と、ない id への線はエラー"
     ),
   );
 });
+
+test("枠線：囲みの型（two-column・do-dont・grid-4）、表の既定（grid）、自由図の card に、箱と同じ線を付ける", async () => {
+  const { LINE } = await import(path.join(COMP, "_util.mjs"));
+  const html = await renderDeck(readOutline(path.join(tempDeck(), "outline.md")));
+  for (const layout of ["two-column", "do-dont", "grid-4"]) {
+    const section = html.find((h) => h.includes(`data-layout="${layout}"`));
+    assert.ok(section?.includes(`border-2 ${LINE.border}`), layout);
+  }
+  const table = (await import(path.join(COMP, "table.mjs"))).default;
+  assert.match(table(DIAGRAMS.table), new RegExp(`^<div class="overflow-hidden rounded-panel border-2 ${LINE.border}">`));
+  assert.doesNotMatch(table({ ...DIAGRAMS.table, style: "zebra" }), new RegExp(LINE.border));
+  const canvas = (await import(path.join(COMP, "canvas.mjs"))).default;
+  const card = canvas({ shapes: [{ type: "area", at: [0, 0], size: [4, 3], tone: "card" }] }, { width: 1172, height: 440, deck });
+  assert.match(card, new RegExp(`border-2 bg-canvas ${LINE.border}`));
+});

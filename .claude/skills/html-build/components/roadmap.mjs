@@ -4,7 +4,7 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 // data: { periods: [string], lanes: [{ name, items: [{ start, end, label, highlight? }] }] }
 // - start・end は periods の名前で書く（例 "2026年4月"）。end を含む。
 // - 期間は8列まで、レーンは4まで。同じレーンの棒は重ねない（重なるならレーンを分ける）。
-// - 見出し行は table と同じ primary の塗りに白文字。レーンは白と薄いグレーを交互にする（表の既定 zebra と揃える）。
+// - 見出し行は table と同じ primary の塗りに白文字。レーンは白と薄いグレーを交互にする（表の style: zebra と揃える）。
 // - 棒は白地に枠。highlight の棒は primary の塗りに白文字。
 
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）

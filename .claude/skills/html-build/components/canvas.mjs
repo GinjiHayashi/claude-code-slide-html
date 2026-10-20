@@ -7,7 +7,7 @@ import { loadAsset, inlineSvg } from "./_asset.mjs";
 // data: { grid?: [列, 行]（既定 [12, 6]）, shapes: [形] }
 // 形（type ごとに使う項目）：
 //   area    … 囲み。at（左上）・size（幅, 高さ）・text?（左上の見出し）・icon?（見出しの左の小さなアイコン）
-//              tone?（plain＝点線の枠／soft＝淡い青の面／focus＝青の点線で注目させる。既定 plain）
+//              tone?（plain＝点線の枠／soft＝淡い青の面／focus＝青の点線で注目させる／card＝実線の枠の白いカード。既定 plain）
 //   frame   … 画面の枠。at・size・shape?（browser／phone。既定 browser）・text?（browser はアドレスの欄、phone は上の帯の文字）
 //              中身は、ほかの形を枠の上に重ねて描く（枠は囲みと同じく、いちばん下に描く）
 //   box     … 箱。at（左上）・size?（既定 [2, 1]）・text・caption?（箱の下の説明）・icon?（文字の左の小さなアイコン）
@@ -103,7 +103,7 @@ export const FIELDS = {
   ring: { req: [], opt: ["at", "on", "point", "tone", "id"] },
 };
 const TONES = {
-  area: ["plain", "soft", "focus"],
+  area: ["plain", "soft", "focus", "card"],
   box: ["plain", "primary", "soft", "muted"],
   chevron: ["plain", "primary", "soft", "muted"],
   dot: ["ink", "primary", "muted"],
@@ -404,9 +404,14 @@ export default function canvas(data, opt = {}) {
     const tone = s.tone ?? TONES[s.type]?.[0];
     if (s.type === "area") {
       const [x, y, w, h] = bounds(s);
-      const look = { plain: "border-dashed border-gray-400", soft: "bg-highlight border-transparent", focus: "border-dashed border-primary" }[tone];
+      const look = {
+        plain: "border-dashed border-gray-400",
+        soft: "bg-highlight border-transparent",
+        focus: "border-dashed border-primary",
+        card: `bg-canvas ${LINE.border}`,
+      }[tone];
       const head = s.text
-        ? `<div class="flex items-center gap-[8px] px-[12px] py-[8px] text-body font-bold ${tone === "focus" ? "text-primary" : "text-label"}">${s.icon ? `<span class="flex">${icon(s, ICON_SMALL)}</span>` : ""}${esc(s.text)}</div>`
+        ? `<div class="flex items-center gap-[8px] px-[12px] py-[8px] text-body font-bold ${tone === "focus" ? "text-primary" : tone === "card" ? "text-ink" : "text-label"}">${s.icon ? `<span class="flex">${icon(s, ICON_SMALL)}</span>` : ""}${esc(s.text)}</div>`
         : "";
       back.push(box(x, y, w, h, `rounded-panel border-2 ${look}`, head));
     } else if (s.type === "frame") {

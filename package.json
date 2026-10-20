@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "node .claude/skills/html-build/scripts/setup.mjs",
     "build": "node .claude/skills/html-build/scripts/build.mjs",
+    "shots": "node .claude/skills/html-build/scripts/shots.mjs",
     "test": "node --test \"tests/*.test.mjs\"",
     "create-slide-repo": "node scripts/create-slide-repo.mjs",
     "update-harness": "node scripts/update-harness.mjs"

@@ -2,9 +2,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { execFileSync } from "child_process";
-import { SKILLS, tempDeck, rootOf } from "./helpers.mjs";
+import { ROOT, SKILLS, tempDeck, rootOf } from "./helpers.mjs";
 
 const SCRIPTS = path.join(SKILLS, "make-slides/scripts");
 const run = (script, input, env = {}) => {
@@ -62,7 +63,7 @@ test("protect-bash：ハーネスの開発中は .claude/ と CLAUDE.md に確�
 
 test("protect-edit：スライド作成中はハーネスのファイルの編集に確認を出し、開発中は出さない", () => {
   assert.equal(edit(".claude/skills/html-build/theme.css"), "ask");
-  assert.equal(edit(path.join(process.cwd(), "CLAUDE.md")), "ask");
+  assert.equal(edit(path.join(ROOT, "CLAUDE.md")), "ask");
   assert.equal(edit("decks/a/outline.md"), "allow");
   assert.equal(edit(".claude/skills/html-build/theme.css", "dev"), "allow");
 });
@@ -76,14 +77,24 @@ test("harnessDev：ハーネスのリポジトリ（decks/.gitignore を git で
       [
         "--input-type=module",
         "-e",
-        `import { harnessDev } from ${JSON.stringify(path.resolve(".claude/lib/common.mjs"))}; console.log(harnessDev(${JSON.stringify(root)}))`,
+        `import { harnessDev } from ${JSON.stringify(path.join(ROOT, ".claude/lib/common.mjs"))}; console.log(harnessDev(${JSON.stringify(root)}))`,
       ],
       {
         encoding: "utf8",
         env,
       },
     ).trim();
-  assert.equal(check(process.cwd()), "true");
+  // テストを動かすリポジトリの種類（ハーネスかスライド用か）に左右されないよう、一時のリポジトリを2つ作って比べる
+  const repo = (tracked) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-dev-"));
+    execFileSync("git", ["init", "--quiet", root]);
+    fs.mkdirSync(path.join(root, "decks"));
+    fs.writeFileSync(path.join(root, "decks", ".gitignore"), "*\n");
+    if (tracked) execFileSync("git", ["-C", root, "add", "-f", "decks/.gitignore"]);
+    return root;
+  };
+  assert.equal(check(repo(true)), "true");
+  assert.equal(check(repo(false)), "false"); // ファイルを置いただけ（git で管理していない）では開発中にならない
   const { root } = requested();
   assert.equal(check(root), "false");
 });

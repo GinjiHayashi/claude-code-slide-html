@@ -18,7 +18,9 @@ const LEVEL = ["P0", "P1", "要確認"];
 const DECISION = ["修正する", "残す", "削除する", "出典を足す"];
 const REQUIRED = ["slide", "claim_id", "target", "level", "problem"];
 const OPTIONAL = ["sources", "suggestion", "decision", "decision_note"];
-const OTHER = ["問題がなかった記述", "検索の記録"]; // 指摘以外の見出し（自由に書く）
+const OTHER = ["信頼して使う資料", "問題がなかった記述", "検索の記録"]; // 指摘以外の見出し（自由に書く）
+// round：どの回のファクトチェックか（brief.md の factcheck が「構成のあとと最後の2回」のときに書く。書かなければ「最後」）
+export const ROUND = ["構成のあと", "最後"];
 
 export function checkFactcheck(text, banned = bannedDomains()) {
   const errors = [];
@@ -26,7 +28,9 @@ export function checkFactcheck(text, banned = bannedDomains()) {
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id）がない");
   else {
     try {
-      if (!YAML.parse(m[1])?.deck_id) errors.push("先頭の設定に deck_id がない");
+      const meta = YAML.parse(m[1]) ?? {};
+      if (!meta.deck_id) errors.push("先頭の設定に deck_id がない");
+      if (meta.round !== undefined && !ROUND.includes(meta.round)) errors.push(`先頭の設定の round は ${ROUND.join("・")} のどちらか`);
     } catch (e) {
       errors.push(`先頭の設定が YAML として読めない：${e.message.split("\n")[0]}`);
     }

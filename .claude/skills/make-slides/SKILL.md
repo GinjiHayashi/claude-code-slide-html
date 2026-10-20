@@ -9,17 +9,25 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 ## 全体の流れ
 
-ワークフローの全体像はこの節にまとめてある（工程ごとの細かい手順は各スキル）。人間の承認は3回。
+ワークフローの全体像はこの節にまとめてある（工程ごとの細かい手順は各スキル）。人間の承認は4回。工程の番号は `status.mjs` の「工程」と同じ。
+
+ファクトチェックの時期は、`brief.md` の `factcheck` でデッキごとに選ぶ（ヒアリングで聞く）。既定は「最後に1回」。
 
 ```
 依頼 → 1a 取り込み（slide-intake） → 1b ヒアリング（slide-hearing）
      → 承認1：brief.md（構成の草案があれば outline-draft.md も）
-     → 2 構成と調査（slide-outline、researcher） → 3 ファクトチェック（slide-factcheck、fact-checker）
-     → 承認2：outline.md と factcheck.md（まとめて1回）
-     → 4・5 ビルド（html-build。検査とライセンスの照合を含む） → 6 最終確認
-     → 承認3：build/deck.html → 完成（スライド用リポジトリなら develop への PR）
+     → 2 構成と調査（slide-outline、researcher）
+     → 承認2：outline.md
+     → 3 HTML 作成（html-build。検査とライセンスの照合を含む）と、見た目の確認・直し
+     → 4 ファクトチェック（slide-factcheck、fact-checker）
+     → 承認3：outline.md と factcheck.md（まとめて1回）
+     → 5 最終確認
+     → 承認4：build/deck.html → 完成（スライド用リポジトリなら develop への PR）
 
-直すとき：中身・見た目 → 2 に戻る（文を変えたスライドだけ 3 をやり直し、承認2から。見た目だけなら 3 はやり直さない）。前提 → 1b に戻る（下の「直すとき」）
+「構成のあとと最後の2回」のとき：2 のあとに 2b ファクトチェック（構成のあと。数値と結論を支える事実だけ）を行い、
+承認2を outline.md と factcheck.md の2つにする。4 では、2b で確かめていない記述と、2b のあとに文が変わったスライドを確かめる。
+
+直すとき：中身・見た目 → 2 に戻る（文を変えたスライドだけ 4 をやり直し、承認3から。見た目だけなら 4 はやり直さない）。前提 → 1b に戻る（下の「直すとき」）
 ```
 
 - **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
@@ -44,15 +52,18 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 |---|---|---|---|---|
 | 0 開始・1a 事前情報の取り込み | `slide-intake` | `decks/<deck-id>/`、`brief.md`（草案） | 入力に足りないものを聞くとき | 入力から brief.md を書き、ヒアリングへ |
 | 1b ヒアリング | `slide-hearing` | `brief.md` | 質問（聞き方は `slide-hearing/questions.md`）。brief.md（と outline-draft.md）の承認 | — |
-| 2 構成 | `slide-outline` | `outline.md`、`research.md` | モードごとの相談（章立ての案、修正案、問題の報告） | 調査（`researcher`）。構成ができたら、承認を頼まずにファクトチェックへ |
-| 3 ファクトチェック | `slide-factcheck` | `factcheck.md` | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | fact-checker の実行 |
-| 4 HTML 作成・5 ライセンス | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml` | ビルドが不合格で、内容を変える直しが要るとき | factcheck.md の承認のあと、ゲートが通ればそのままビルドする |
-| 6 最終確認 | なし（人間） | — | build/deck.html の承認 | — |
+| 2 構成 | `slide-outline` | `outline.md`、`research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
+| 2b ファクトチェック（構成のあと。「2回」のときだけ） | `slide-factcheck` | `factcheck.md`（`round: 構成のあと`） | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | fact-checker の実行 |
+| 3 HTML 作成（ライセンスを含む） | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml` | ビルドが不合格で、内容を変える直しが要るとき。見た目の直しを人間に頼まれたとき | 構成の承認のあと、ゲートが通ればそのままビルドする。見た目の直しは、承認を頼まずに直してビルドし直す |
+| 4 ファクトチェック | `slide-factcheck` | `factcheck.md` | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | 見た目の直しが済んだら、そのまま fact-checker を実行する |
+| 5 最終確認 | なし（人間） | — | build/deck.html の承認 | — |
 | 承認の確認 | なし | — | 人間の答え待ち。答えは hook が記録する | — |
 
 - **承認を頼むとき**は、下の「承認の頼み方」に従う。答えが「直して」なら、そのスキルの手順に戻って直す。
 - **ビルド**は `html-build` で行う（承認の確認は `html-build` の手順1）。止められたら理由を人間に伝え、`status.mjs` の「次に」に戻る。検査の不合格は、ふつうは構成の工程の試しのビルド（`slide-outline` の手順6）で片付いている。
-- **ビルドが不合格**のときは、`html-build` の「不合格のとき」に従う。内容を変えない直し（改行や太字の位置、図のラベルの略し方など、主張・数値・順序が変わらないもの）は `outline.md` を直してビルドし直してよい。ただし `outline.md` を変えたので、承認をやり直す。文が変わったスライドは、ファクトチェックもやり直す（下の「直すとき」）。
+- **ビルドが不合格**のときは、`html-build` の「不合格のとき」に従う。内容を変えない直し（改行や太字の位置、図のラベルの略し方など、主張・数値・順序が変わらないもの）は `outline.md` を直してビルドし直してよい。
+  - 工程 3 のうちは、構成の承認のあとに `outline.md` を直しても、承認は頼み直さない（ゲートは注意を出すだけ）。工程 4 のあとの承認3で、変わったところをまとめて見てもらう。
+  - 工程 4 のあと（承認3のあと）に `outline.md` を直したら、承認3をやり直す。文が変わったスライドは、ファクトチェックもやり直す（下の「直すとき」）。
   - 内容を変える直し、内容を変えるかどうか迷う直しは、人間に報告して判断を仰ぐ。
   - brief.md の「構成の進め方」が「決まっている」なら、人間が書いた文は字数のためでも変えず、どこが収まらないかを伝えて人間に聞く（`slide-outline`）。
 
@@ -61,24 +72,24 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`）。依頼は `approval-request.yaml` に書かれる。
 2. そのあとで「outline.md と factcheck.md を承認しますか？承認なら「承認」とだけ答えてください」のように聞く。承認になるのは、短い同意の語（「承認」「OK」「はい」など）だけの答え。ほかの言葉が混じると hook は判断できないとして記録しないので、もう一度聞く。
 3. 答えは hook が判定して記録し、結果を伝えてくる。AI は記録しない。承認した人として、git の `user.name` が記録される（空なら記録されない）。人間が自分の名前を設定した環境で使う。
-4. 承認されたかは自分で判断せず、`status.mjs` か `gate.mjs decks/<deck-id> <outline|factcheck|build>` で確かめる。
+4. 承認されたかは自分で判断せず、`status.mjs` か `gate.mjs decks/<deck-id> <outline|factcheck|build|final>` で確かめる。
 
-## 最終確認（工程6）
+## 最終確認（工程5）
 
 1. 人間に、`decks/<deck-id>/build/deck.html` をブラウザで開いて見てもらうよう頼む（`deck.pdf` があればそれも）。AI は `deck.html` を読まない。
 2. 合わせて、`build-log.md` の注意（図が3つ以上のスライド、`html:` を使ったスライドなど）を伝え、見た目を確かめるときの確認表として `design-reference/checklist.md` を示す（AI は見た目をレビューしない。確かめるのは人間）。
 3. 「承認の頼み方」で `build/deck.html` の承認を頼む。
 4. 直してほしいと言われたら、下の「直すとき」に進む。承認されたら `status.mjs` が「完成」になる。
 
-## 直すとき（工程7）
+## 直すとき
 
 人間の直したい内容で、戻る工程を決める。`deck.html` は直さない。
 
 | 直したい内容 | 戻る工程 | やること |
 |---|---|---|
 | 目的・聞き手・長さなど前提が変わる | 1b ヒアリング | `slide-hearing` で brief.md を直して承認し直し、そのあと構成から見直す |
-| スライドの中身（文、数値、並び、足す・削る） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、そのスライドをファクトチェックし直して、outline.md と factcheck.md を承認し直す |
-| 見た目のうち outline.md で決まるもの（型、図の型、置き方、大きさ、改行、太字） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、outline.md と factcheck.md を承認し直す（ファクトチェックはやり直さない） |
+| スライドの中身（文、数値、並び、足す・削る） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、そのスライドをファクトチェックし直し、outline.md と factcheck.md を承認し直す |
+| 見た目のうち outline.md で決まるもの（型、図の型、置き方、大きさ、改行、太字） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、outline.md と factcheck.md を承認し直す（ファクトチェックはやり直さない） |
 | 色・フォント・部品の形など、固定ファイルで決まるもの | 直さない | 固定ファイルは変えない（CLAUDE.md）。人間に理由を伝えて判断を仰ぐ |
 
 - outline.md を直したら、文を変えたスライドはファクトチェックからやり直す。ゲートが、ファクトチェックのあとに文が変わったスライドの番号を出す（`slide-factcheck` の手順 2〜5 をそのスライドだけで行い、outline.md と factcheck.md を承認し直す）。見た目だけの変更は、承認のやり直しだけで済む（文と見た目の分け方は `slide-factcheck` の手順 9 のあと）。
@@ -95,7 +106,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
    - 「人間に聞く」なら、理由を伝えて答えを待つ。コミットしていない変更は消さない。
    - squash マージのあとは、元のブランチも残っている。そこで直しを始めない（マージ済みの古い中身のため）。
 2. **コミット**：承認が記録されるたびに、そのデッキのフォルダだけをコミットする（承認の記録 `approvals.yaml` と、承認された内容が同じコミットに入るように）。
-   - 最終確認より前：`git add decks/<deck-id> ':(exclude)decks/<deck-id>/build' && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md と factcheck.md を承認`）。直しの途中でビルドした `build/` は入れない。
+   - 最終確認より前：`git add decks/<deck-id> ':(exclude)decks/<deck-id>/build' && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md を承認`、`outline.md と factcheck.md を承認`）。直しの途中でビルドした `build/` は入れない。
    - 最終確認：`git add decks/<deck-id> && git commit -m "feat(<deck-id>): build/deck.html を承認（最終確認）"`。ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）を入れる（承認した成果物そのものを残すため）。
    - 種類の後ろの `(<deck-id>)` は、どのデッキのコミットかを示すため（README「コミットメッセージ」）。
    - 今いるブランチが `feature/<deck-id>`（か `-fix`）であることを、コミットの前に確かめる。違えば止めて人間に伝える。
@@ -120,7 +131,7 @@ AI が実行するスクリプト：
 | ファイル | 中身 |
 |---|---|
 | `scripts/status.mjs` | デッキの現在地（工程・状態・次に使うスキル・理由）を、ファイルと承認の記録とゲートから判定する |
-| `scripts/gate.mjs` | 工程に進めるか（outline・factcheck・build）を承認の記録で判定する |
+| `scripts/gate.mjs` | 工程に進めるか（outline・factcheck・build・final）を承認の記録で判定する。final は最終確認の前 |
 | `scripts/branch.mjs` | スライド用リポジトリで、デッキの作業をどのブランチで行うか（新規・続き・直し）を決める |
 | `scripts/request.mjs` | 承認の依頼を出す（approval-request.yaml を書く） |
 | `scripts/approvals.mjs` | 承認の記録の読み書き（ほかのスクリプトが使う） |

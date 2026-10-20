@@ -31,6 +31,23 @@ test("brief.md：max_subagents は 1〜10 の整数", () => {
   assert.equal(brief("おまかせ"), true);
 });
 
+test("brief.md：factcheck は「最後に1回」か「構成のあとと最後の2回」", () => {
+  const brief = (v) => checkBrief(`---\ndeck_id: 2026-10-17-x\nfactcheck: ${v}\n---\n`).errors.some((e) => e.includes("factcheck"));
+  assert.equal(brief("最後に1回"), false);
+  assert.equal(brief("構成のあとと最後の2回"), false);
+  assert.equal(brief("毎回"), true);
+});
+
+test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた資料が inputs/ になければエラー", () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "brief.md");
+  const base = fs.readFileSync(f, "utf8");
+  assert.ok(!checkBrief(base).missing.includes("信頼して使う資料")); // 見出しのない前からのデッキは聞かない
+  assert.ok(checkBrief(base + "\n## 信頼して使う資料\n").missing.includes("信頼して使う資料"));
+  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- inputs/references/summary.md は書籍の要約として採用。原本との照合は不要\n");
+  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("「信頼して使う資料」の inputs/references/summary.md")));
+});
+
 test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
   const dir = tempDeck();
   fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
@@ -260,7 +277,7 @@ test("factcheck.md：「引用しない」のドメインを根拠にすると�
 
 test("brief のチェック：空の項目を questions.md の表の順に出す（deck_id は最後）", () => {
   const text =
-    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\nmax_subagents:\n---\n\n" +
+    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\nmax_subagents:\nfactcheck:\n---\n\n" +
     [
       "目的・この資料で決めたいこと",
       "聞き手と前提知識",
@@ -269,6 +286,7 @@ test("brief のチェック：空の項目を questions.md の表の順に出す
       "調査が必要な項目",
       "必ず入れる要素・入れない要素",
       "構成の進め方",
+      "信頼して使う資料",
     ]
       .map((h) => `## ${h}\n`)
       .join("\n");

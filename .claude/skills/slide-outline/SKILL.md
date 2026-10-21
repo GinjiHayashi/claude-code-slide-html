@@ -101,13 +101,13 @@ AI が章立ての案を出し、相談しながら固める。
 
 ## ファイル
 
-| ファイル                         | 中身                                                                                                         |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `outline-template.md`            | outline.md の書き方（全体の形、型ごとの項目、図、文章）                                                      |
-| `structure-framework.md`         | 構成のフレームワーク（ゴールの定義、知識マップ、説明の順序、ストーリー、スライド単位）                       |
+| ファイル | 中身 |
+|---|---|
+| `outline-template.md` | outline.md の書き方（全体の形、型ごとの項目、図、文章） |
+| `structure-framework.md` | 構成のフレームワーク（ゴールの定義、知識マップ、説明の順序、ストーリー、スライド単位） |
 | `structure-framework-sources.md` | 構成のフレームワークの出典と、推測・独自に整理した範囲（人が根拠を確かめるとき用。構成を作るときは読まない） |
-| `scripts/check-knowledge.mjs`    | 知識マップ（knowledge-map.md）を検査し、説明の順序の候補（Must の概念の層と、同じ層の中の並べ方）を出す      |
-| `scripts/story.mjs`              | 構成を見せるときの、タイトルだけの一覧と問いの連鎖（問い、タイトル、新出、使う概念）                         |
-| `scripts/check-structure.mjs`    | 構成の草案（outline-draft.md）と outline.md を比べ、変えたところと AI が埋めたところを出す                   |
-| `layout-catalog.md`              | スライドの型の一覧（固定）                                                                                   |
-| `diagram-catalog.md`             | 図の型の一覧（固定）                                                                                         |
+| `scripts/check-knowledge.mjs` | 知識マップ（knowledge-map.md）を検査し、説明の順序の候補（Must の概念の層と、同じ層の中の並べ方）を出す |
+| `scripts/story.mjs` | 構成を見せるときの、タイトルだけの一覧と問いの連鎖（問い、タイトル、新出、使う概念） |
+| `scripts/check-structure.mjs` | 構成の草案（outline-draft.md）と outline.md を比べ、変えたところと AI が埋めたところを出す |
+| `layout-catalog.md` | スライドの型の一覧（固定） |
+| `diagram-catalog.md` | 図の型の一覧（固定） |

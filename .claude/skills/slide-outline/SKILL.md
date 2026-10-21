@@ -42,7 +42,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
    - エラーは直して、もう一度チェックする。エラーが0件になってから人間に見せる。`claims` の ID が research.md にない、使わなくなった主張を指している、もエラーになる。知識マップがあるときは、前方参照（`uses` の概念がまだ `new` になっていない）と、どこでも `new` にならない Must もエラーになる。
    - 「決まっている」のとき、直すのに人間の文を変える必要があるエラー（字数の上限など）は、自分で直さずに人間に聞く。
    - 注意（文字数の目安、図の数、太字の数、独自の表現、箇条書きの型の多さと短い項目、同じ型・図の型の続きと偏り、順序がないのに steps、答える問いがない、同じ概念を2回 new、adept の不足）は、人間に見せるときに伝える。
-   - エラーが0件になったら、試しにビルドする：`node .claude/skills/html-build/scripts/build.mjs decks/<deck-id>`（承認の前なので、ゲートは注意として記録されるだけ）。はみ出し・3行を超えた説明文など、検査の不合格はここで直す。承認のあとに見つかると、直すたびにビルドと確認をやり直すことになるため。`deck.html` は読まず、`build-log.md` の結果だけを見る。直し方は `html-build` の「不合格のとき」。図を新しく作った・直したスライドは、`html-build` の「画像で確かめる」のとおり撮って確かめる。承認のあとには、もう一度ビルドする（`status.mjs` が「試しのビルドのまま」と示す）。
+   - エラーが0件になったら、試しにビルドする：`node .claude/skills/html-build/scripts/build.mjs decks/<deck-id>`（承認の前なので、ゲートは注意として記録されるだけ）。はみ出し・3行を超えた説明文など、検査の不合格はここで直す。承認のあとに見つかると、直すたびにビルドと確認をやり直すことになるため。`deck.html` は読まず、`build-log.md` の結果だけを見る。直し方は `html-build` の「不合格のとき」。図を新しく作った・直したスライドは、`html-build` の「画像で確かめる」のとおり撮って確かめる。承認のあとは、試しのビルドのあとに outline.md が変わっていなければ、ビルドし直さずに `node .claude/skills/html-build/scripts/build.mjs decks/<deck-id> --regate` で記録（`build-log.md` の承認ゲート）だけ直す。変わっていればビルドし直す（どちらかは `status.mjs` が示す）。
    - 草案があるときは `node .claude/skills/slide-outline/scripts/check-structure.mjs decks/<deck-id>` で草案と比べる。エラー（草案が確認されていない、確認のあとに変わった、「決まっている」なのに草案がない）は先に解決する。
 8. **見せて、直す**：次の順で伝える。
    1. スライドの一覧（番号、型、タイトル。図のあるスライドは、図の型か「独自」と `match`）と、発表時間・枚数の目安との比べ（枚数を数えて並べるだけ。1枚あたりの時間などは計算しない）。知識マップを作ったときは、`check-knowledge.mjs` の「説明の順序の候補」も並べ、層の順と違う並びにしたスライドは理由を書く（`structure-framework.md` 3章）。さらに `node .claude/skills/slide-outline/scripts/story.mjs decks/<deck-id>` の一覧（問いの連鎖とタイトル）をそのまま見せ、話が通るかを `design-reference/checklist.md` の「構成」で確かめてもらう。AI は話が通るかを判定しない。
@@ -79,7 +79,7 @@ description: 承認済みの brief.md をもとに、人間の構成の草案と
 - まず、草案（`outline-draft.md`）を outline.md に写す。
 - 調査と `design-reference` の基本方針をもとに、修正案を出す。1つの案ごとに、どのスライドを・どう変えるか・なぜか（調査の主張の ID や、基本方針の該当箇所）を書く。
 - 採用するかは人間が決める。採用された案だけ outline.md に反映する。採用されなかった案は、もう一度は出さない。
-- 手順 8 と、承認を頼むとき（`slide-factcheck` の手順 9）に `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
+- 手順 8 と、承認を頼むとき（手順 9。「2回」のときは `slide-factcheck` の手順 9）に `check-structure.mjs` の「変えた」を見せ、採用された案と合っているかを人間に確かめてもらう。
 
 ### 相談して決めたい
 
@@ -104,7 +104,8 @@ AI が章立ての案を出し、相談しながら固める。
 | ファイル | 中身 |
 |---|---|
 | `outline-template.md` | outline.md の書き方（全体の形、型ごとの項目、図、文章） |
-| `structure-framework.md` | 構成のフレームワーク（ゴールの定義、知識マップ、説明の順序、ストーリー、スライド単位）と出典 |
+| `structure-framework.md` | 構成のフレームワーク（ゴールの定義、知識マップ、説明の順序、ストーリー、スライド単位） |
+| `structure-framework-sources.md` | 構成のフレームワークの出典と、推測・独自に整理した範囲（人が根拠を確かめるとき用。構成を作るときは読まない） |
 | `scripts/check-knowledge.mjs` | 知識マップ（knowledge-map.md）を検査し、説明の順序の候補（Must の概念の層と、同じ層の中の並べ方）を出す |
 | `scripts/story.mjs` | 構成を見せるときの、タイトルだけの一覧と問いの連鎖（問い、タイトル、新出、使う概念） |
 | `scripts/check-structure.mjs` | 構成の草案（outline-draft.md）と outline.md を比べ、変えたところと AI が埋めたところを出す |

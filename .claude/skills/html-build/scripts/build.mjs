@@ -20,7 +20,7 @@ import { appendWork } from "../../make-slides/scripts/worklog.mjs";
 import { isMain, python } from "../../../lib/common.mjs";
 
 // ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
-// 使い方：node build.mjs decks/<deck-id>
+// 使い方：node build.mjs decks/<deck-id>（--regate：承認の前の試しのビルドを、ビルドし直さずに承認済みとして記録し直す）
 // 1. 書式チェック（check-outline.mjs）。エラーがあれば止める。承認ゲート（gate.mjs）が通らなければ注意として記録する
 // 2. スライドを組み立てる（layouts.mjs と components/）
 // 3. Tailwind の CLI で、使っているクラスだけの CSS を作る（theme.css のトークンを含む）
@@ -277,12 +277,41 @@ function buildLog(outline, r) {
   return L.join("\n");
 }
 
+// 承認の前の試しのビルド（gate: false）を、ビルドし直さずに承認済みとして記録し直す（slide-outline の手順 7 → 承認のあと）。
+// 試しのビルドのあとに outline.md も deck.html も変わっておらず、いまゲートが通るときだけ。build-log.md の gate と、承認ゲートの注意だけを書き直す
+export function regate(deckDir) {
+  const outDir = path.join(deckDir, "build");
+  const read = (f) => (fs.existsSync(path.join(outDir, f)) ? fs.readFileSync(path.join(outDir, f), "utf8") : null);
+  const sha = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  const log = read("build-log.md"),
+    manifest = read("assets-manifest.yaml");
+  if (!log || !manifest || !fs.existsSync(path.join(outDir, "deck.html"))) return { ok: false, error: "試しのビルドの結果がない。ビルドする" };
+  if (!/^gate: false$/m.test(log)) return { ok: false, error: "build-log.md が試しのビルド（gate: false）ではない" };
+  const m = YAML.parse(manifest);
+  if (m.outline_sha256 !== sha(path.join(deckDir, "outline.md"))) return { ok: false, error: "試しのビルドのあとに outline.md が変わった。ビルドし直す" };
+  if (m.deck_sha256 !== sha(path.join(outDir, "deck.html"))) return { ok: false, error: "deck.html がビルドのあとに変わった。ビルドし直す" };
+  const gate = checkGate(deckDir, "build");
+  if (!gate.ok) return { ok: false, error: `承認ゲートが通らない：${gate.errors.join("、")}` };
+  if (gate.notices.length) return { ok: false, error: `承認のあとに変わったところがあるので、ビルドし直す：${gate.notices.join("、")}` };
+  let out = log.replace(/^gate: false$/m, "gate: true").replace(/^- 承認ゲート：.*\n/gm, "");
+  out = out.replace(/(### 注意（人が確認する）\n\n)(?=\n## 機械的な検査)/, "$1なし\n");
+  out = out.replace(/^(- 日時：.*)$/m, `$1（${new Date().toISOString()} に承認ゲートだけ記録し直した）`);
+  fs.writeFileSync(path.join(outDir, "build-log.md"), out);
+  appendWork(deckDir, { event: "build", ok: /^ok: true$/m.test(log), gate: true, regate: true });
+  return { ok: true };
+}
+
 // コマンドとして呼ばれたとき
 if (isMain(import.meta.url)) {
   const dir = process.argv[2];
   if (!dir) {
-    console.error("使い方：node build.mjs decks/<deck-id>");
+    console.error("使い方：node build.mjs decks/<deck-id> [--regate]");
     process.exit(2);
+  }
+  if (process.argv.includes("--regate")) {
+    const r = regate(dir);
+    console.log(r.ok ? "試しのビルドを、承認のあとのビルドとして記録し直した（ビルドはし直していない）" : `記録し直せない：${r.error}`);
+    process.exit(r.ok ? 0 : 1);
   }
   const r = await build(dir);
   for (const e of r.check.errors) console.log(`エラー  ${e}`);

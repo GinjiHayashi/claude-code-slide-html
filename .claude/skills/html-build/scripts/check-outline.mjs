@@ -267,7 +267,7 @@ export async function checkOutline(file) {
     if (hasFigure && !f.idea) warn(s, "図のイメージ（idea）がない。部品を選ぶ前に、見せたい絵を1〜3行で書く");
     if (hasFigure && match == null) warn(s, `match がない（${MATCHES.join("・")}）`);
     if (!hasFigure && (f.idea || match != null)) warn(s, "idea・match があるのに図がない");
-    // idea は足していかず、今の絵の説明に書き換える（change の統合。make-slides の「直すとき」）
+    // idea は足していかず、今の絵の説明に書き換える（change の統合。make-slides/fixing.md）
     if (typeof f.idea === "string") {
       const lines = f.idea.replace(/\n+$/, "").split("\n").length;
       const n = width(plain(f.idea));
@@ -277,7 +277,7 @@ export async function checkOutline(file) {
     // change：人間が書く図の変更の指示。図を直したら idea に統合して空にする
     if (f.change != null && typeof f.change !== "string") err(s, "change は文章で書く（図の変更の指示）");
     else if (typeof f.change === "string" && f.change.trim())
-      warn(s, "図の変更の指示（change）が残っている。図を直して idea に統合し、change を空にする（make-slides の「直すとき」）");
+      warn(s, "図の変更の指示（change）が残っている。図を直して idea に統合し、change を空にする（make-slides/fixing.md）");
     if (match != null && !matchKind) err(s, `match は ${MATCHES.join("・")} のどれかで始める`);
     else if (matchKind && matchKind !== MATCHES[0] && !/^[^：:]+[：:]\s*\S/.test(match))
       err(s, `match が「${matchKind}」のときは「：」のあとに、何が欠けるか・なぜ描けないかを書く`);

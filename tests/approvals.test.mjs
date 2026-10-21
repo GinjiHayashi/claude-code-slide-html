@@ -4,12 +4,13 @@ import assert from "node:assert/strict";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { execFileSync } from "child_process";
 import { SKILLS, tempDeck } from "./helpers.mjs";
 
 const { judge, recordApproval, slideHashes, slideDigests, slideChanges, readApprovals, YAML } = await import(
   path.join(SKILLS, "make-slides/scripts/approvals.mjs")
 );
-const { checkGate } = await import(path.join(SKILLS, "make-slides/scripts/gate.mjs"));
+const { checkGate, checkCombined } = await import(path.join(SKILLS, "make-slides/scripts/gate.mjs"));
 const { deckStatus } = await import(path.join(SKILLS, "make-slides/scripts/status.mjs"));
 const approve = (dir, target) => recordApproval(dir, target, { approved_by: "test", approved_at: "2026-10-18T00:00:00Z", answer: "OK" });
 const FC = "---\ndeck_id: 2026-10-17-report-automation\n---\n\n## 問題がなかった記述\n";
@@ -217,7 +218,7 @@ test("現在地（最後に1回）：構成 → HTML 作成 → ファクトチ�
   built(dir);
   assert.deepEqual([deckStatus(dir).stage, deckStatus(dir).state], ["4 ファクトチェック", "factcheck.md がない"]);
   fs.writeFileSync(path.join(dir, "factcheck.md"), FC);
-  assert.deepEqual([deckStatus(dir).stage, deckStatus(dir).state], ["4 ファクトチェック", "構成とファクトチェックの承認待ち"]);
+  assert.deepEqual([deckStatus(dir).stage, deckStatus(dir).state], ["4 ファクトチェック", "構成とファクトチェックの承認待ち（最終確認と一緒に頼める）"]);
   approve(dir, "factcheck.md");
   assert.equal(deckStatus(dir).stage, "5 最終確認");
   approve(dir, "build/deck.html");
@@ -305,4 +306,86 @@ test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）�
   // 承認の前の試しのビルド（gate: false）のままなら、ビルドし直す
   fs.writeFileSync(path.join(dir, "build", "build-log.md"), "---\nok: true\ngate: false\n---\n");
   assert.equal(deckStatus(dir).state, "承認の前の試しのビルドのまま");
+});
+
+test("regate：承認の前の試しのビルドは、outline.md が変わっていなければビルドし直さずに記録だけ直す", async () => {
+  const { regate } = await import(path.join(SKILLS, "html-build/scripts/build.mjs"));
+  const dir = tempDeck();
+  fs.writeFileSync(path.join(dir, "factcheck.md"), FC);
+  approve(dir, "brief.md");
+  built(dir);
+  const log = path.join(dir, "build", "build-log.md");
+  const trial =
+    "---\nok: true\ngate: false\n---\n\n- 日時：x\n\n### 注意（人が確認する）\n\n- 承認ゲート：outline.md が承認されていない\n\n## 機械的な検査（inspect.mjs）\n";
+  fs.writeFileSync(log, trial);
+  // 承認の前は記録し直せない
+  assert.equal(regate(dir).ok, false);
+  approve(dir, "outline.md");
+  assert.match(deckStatus(dir).next, /--regate/);
+  assert.equal(regate(dir).ok, true);
+  const out = fs.readFileSync(log, "utf8");
+  assert.match(out, /^gate: true$/m);
+  assert.ok(!out.includes("- 承認ゲート："));
+  assert.match(out, /### 注意（人が確認する）\n\nなし\n/);
+  assert.notEqual(deckStatus(dir).state, "承認の前の試しのビルドのまま");
+  // 試しのビルドのあとに outline.md が変わったら、ビルドし直す
+  fs.writeFileSync(log, trial);
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("3割", "4割"));
+  assert.equal(regate(dir).ok, false);
+});
+
+test("承認と最終確認をまとめる：ファクトチェックで文を直していなければ、outline.md・factcheck.md・deck.html を1回で頼める", () => {
+  const request = (dir, ...t) => execFileSync(process.execPath, [path.join(SKILLS, "make-slides/scripts/request.mjs"), dir, ...t], { stdio: "pipe" });
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box));
+  approve(dir, "brief.md");
+  approve(dir, "outline.md");
+  // 見た目だけ直してビルドし、ファクトチェックで直しがなかった
+  fs.writeFileSync(f, mk(S.title, S.lead, S.box).replace("size: [2, 1], text: 入力", "size: [3, 1], text: 入力"));
+  built(dir);
+  fs.writeFileSync(path.join(dir, "factcheck.md"), FC);
+  assert.deepEqual(checkCombined(dir).errors, []);
+  assert.match(deckStatus(dir).state, /最終確認と一緒に頼める/);
+  assert.match(deckStatus(dir).next, /outline\.md factcheck\.md build\/deck\.html/);
+  // 3つのうち一部と deck.html の組み合わせは頼めない
+  assert.throws(
+    () => request(dir, "factcheck.md", "build/deck.html"),
+    (e) => /3つを1回で頼むときだけ/.test(e.stderr.toString()),
+  );
+  request(dir, "outline.md", "factcheck.md", "build/deck.html");
+  fs.rmSync(path.join(dir, "approval-request.yaml"));
+  for (const t of ["outline.md", "factcheck.md", "build/deck.html"]) approve(dir, t);
+  assert.equal(deckStatus(dir).stage, "完成");
+
+  // ファクトチェックで文を直したら、分けて頼む
+  const two = tempDeck();
+  const g = path.join(two, "outline.md");
+  approve(two, "brief.md");
+  approve(two, "outline.md");
+  fs.writeFileSync(g, fs.readFileSync(g, "utf8").replace("3割", "4割"));
+  built(two);
+  fs.writeFileSync(path.join(two, "factcheck.md"), FC);
+  assert.ok(checkCombined(two).errors.some((e) => e.includes("文を変えた：文：S")));
+  assert.equal(deckStatus(two).state, "構成とファクトチェックの承認待ち");
+  assert.throws(
+    () => request(two, "outline.md", "factcheck.md", "build/deck.html"),
+    (e) => /分けて頼む/.test(e.stderr.toString()),
+  );
+  request(two, "outline.md", "factcheck.md");
+  // ビルドが古いときも分けて頼む
+  const three = tempDeck();
+  approve(three, "brief.md");
+  approve(three, "outline.md");
+  built(three);
+  fs.writeFileSync(path.join(three, "build", "build-log.md"), "---\nok: true\ngate: false\n---\n");
+  fs.writeFileSync(path.join(three, "factcheck.md"), FC);
+  assert.ok(checkCombined(three).errors.some((e) => e.includes("試しのビルド")));
+});
+
+test("status：decks/ のフォルダ名と brief.md の deck_id が違えば、注意を添える（同じなら出さない）", () => {
+  const note = (r) => r.reasons.some((x) => x.includes("rename-deck.mjs"));
+  assert.equal(note(deckStatus(tempDeck())), false);
+  assert.equal(note(deckStatus(tempDeck("2026-10-24-other-name"))), true);
 });

@@ -6,11 +6,12 @@
 // - 工程：1a 事前情報の取り込み → 1b ヒアリング → 2 構成 → 3 HTML 作成（見た目の確認・直しを含む）→ 4 ファクトチェック → 5 最終確認 → 完成
 //   ファクトチェックの時期（brief.md の factcheck）が「構成のあとと最後の2回」なら、2 構成のあとに 2b ファクトチェック（構成のあと）が入る
 //   承認：brief.md → outline.md（2回なら factcheck.md と一緒に）→ outline.md と factcheck.md（最後のファクトチェックのあと）→ build/deck.html
+//   ファクトチェックで outline.md の文を直していなければ、最後の2つは1回にまとめて頼める（gate.mjs の checkCombined）
 // - 承認の依頼が出ていれば、何より先に「人間の答え待ち」を返す
 import fs from "fs";
 import path from "path";
 import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest, targetName } from "./approvals.mjs";
-import { checkGate, factcheckedChanges, timing, round } from "./gate.mjs";
+import { checkGate, checkCombined, factcheckedChanges, timing, round } from "./gate.mjs";
 import { checkBrief, checkSources } from "../../slide-hearing/scripts/check-brief.mjs";
 import { checkStructure } from "../../slide-outline/scripts/check-structure.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
@@ -35,8 +36,9 @@ function factcheckBlock(at, fcFile, stage, next) {
   return null;
 }
 
-export function deckStatus(deckDir) {
-  const at = (stage, state, next, reasons = []) => ({ deck: path.basename(deckDir), stage, state, next, reasons });
+// sources: false で資料（reference/）の検査を省く（作業記録の hook が毎ターン呼ぶため。資料の sha256 を毎回計算しない）
+export function deckStatus(deckDir, { sources = true } = {}) {
+  let at = (stage, state, next, reasons = []) => ({ deck: path.basename(deckDir), stage, state, next, reasons });
   if (!fs.existsSync(deckDir)) return at("0 開始", "デッキのフォルダがない", "slide-intake（new-deck.mjs でフォルダを作る）");
   const approvals = readApprovals(deckDir);
 
@@ -51,7 +53,14 @@ export function deckStatus(deckDir) {
   const briefFile = path.join(deckDir, "brief.md");
   if (!fs.existsSync(briefFile)) return at("1a 事前情報の取り込み", "brief.md がない", "slide-intake");
   const b = checkBrief(read(briefFile));
-  b.errors.push(...checkSources(b.sections, deckDir));
+  // デッキ（decks/<deck-id>/）のフォルダ名と brief.md の deck_id が違えば、どの工程でも注意を添える（rename-deck.mjs の使い忘れ）
+  const id = b.meta?.deck_id;
+  if (id && path.basename(path.dirname(path.resolve(deckDir))) === "decks" && id !== path.basename(deckDir)) {
+    const base = at;
+    const note = `注意：フォルダ名（${path.basename(deckDir)}）と brief.md の deck_id（${id}）が違う。名前を変えるときは slide-intake/scripts/rename-deck.mjs を使う`;
+    at = (...a) => ((r) => ({ ...r, reasons: [...r.reasons, note] }))(base(...a));
+  }
+  if (sources) b.errors.push(...checkSources(b.sections, deckDir));
   if (b.errors.length) return at("1a 事前情報の取り込み", "brief.md に書式の誤り", "slide-intake（直して check-brief.mjs を0件にする）", b.errors);
   // 承認済みで変わっていない brief.md は、あとから増えた項目（max_subagents など）が空でもヒアリングに戻さない（空の項目は既定の値で進む）
   if ((b.missing.length && approved(deckDir, approvals, "brief.md") !== "承認済み") || b.questions.length)
@@ -106,7 +115,15 @@ export function deckStatus(deckDir) {
   const logMeta = frontMatter(log);
   const meta = logMeta ? YAMLlib.parse(logMeta[1]) : {};
   // 承認の前の試しのビルド（slide-outline の手順 7）は、承認のあとにビルドし直す
-  if (meta?.gate === false) return at("3 HTML 作成", "承認の前の試しのビルドのまま", "html-build（ビルドし直す）");
+  // outline.md が承認のときのままなら、ビルドし直さずに記録だけ直す（build.mjs --regate。ゲートの注意がないときだけ）
+  if (meta?.gate === false)
+    return at(
+      "3 HTML 作成",
+      "承認の前の試しのビルドのまま",
+      g.notices.length
+        ? "html-build（ビルドし直す）"
+        : "html-build（試しのビルドのあとに outline.md は変わっていないので、ビルドし直さずに `node .claude/skills/html-build/scripts/build.mjs decks/<deck-id> --regate` で記録だけ直す）",
+    );
   if (meta?.ok !== true)
     return at("3 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);
 
@@ -129,6 +146,14 @@ export function deckStatus(deckDir) {
   if (!gf.ok) {
     // 文が変わったスライドがなければ（見た目だけの変更なら）、ファクトチェックはし直さず、承認だけを頼み直す
     const lookOnly = gf.errors.every((e) => e.startsWith("outline.md が承認後に変更されている"));
+    // ファクトチェックで outline.md の文を直していなければ、最終確認と一緒に1回で頼める
+    if (checkCombined(deckDir).ok)
+      return at(
+        fcStage,
+        "構成とファクトチェックの承認待ち（最終確認と一緒に頼める）",
+        "slide-factcheck の手順 9（文を直していないので、ファクトチェックはし直さない。make-slides の「最終確認」の 1・2 のあとに、`request.mjs decks/<deck-id> outline.md factcheck.md build/deck.html` で1回で承認してもらう）",
+        [...gf.errors, ...structure()],
+      );
     return at(
       fcStage,
       "構成とファクトチェックの承認待ち",
@@ -143,7 +168,7 @@ export function deckStatus(deckDir) {
   const fin = approved(deckDir, approvals, "build/deck.html");
   if (fin !== "承認済み")
     return at("5 最終確認", "人間の最終確認待ち", "人間に build/deck.html をブラウザで見てもらい、承認を頼む", [`build/deck.html：${fin}`]);
-  return at("完成", "最終確認まで承認済み", "なし（直すときは make-slides の「直すとき」）");
+  return at("完成", "最終確認まで承認済み", "なし（直すときは make-slides/fixing.md）");
 }
 
 // コマンドとして呼ばれたとき

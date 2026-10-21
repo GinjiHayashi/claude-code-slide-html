@@ -19,6 +19,7 @@ npm run build -- decks/<deck-id>
 Chromium を指定するときは、環境変数 `CHROMIUM_PATH` にパスを入れる（なければ Playwright が入れたものを使う）。
 
 - 終了コードが 0 なら合格。1 なら不合格で、理由は `decks/<deck-id>/build/build-log.md` に書かれている。
+- 構成の承認の前の試しのビルド（`slide-outline` の手順 7）のあとに outline.md が変わっていなければ、ビルドし直さずに `node .claude/skills/html-build/scripts/build.mjs decks/<deck-id> --regate` で、`build-log.md` の承認ゲートの記録だけを直す（`status.mjs` が示す）。
 - 書き出すもの（すべて `decks/<deck-id>/build/` の中）：`deck.html`、`assets-manifest.yaml`、`build-log.md`。`outline.md` が `pdf: true` で合格したときは `deck.pdf` も。
 - 初めて使う環境では、README の「セットアップ」を先に行う。
 
@@ -57,7 +58,7 @@ npm run shots -- decks/<deck-id> S13 S33
 | 記録の見出し | 直し方 |
 |---|---|
 | 書式チェックのエラー | 行番号の場所を `outline-template.md` に合わせて直す |
-| はみ出し・余白不足・文字の重なり | 文字数を減らす、改行の位置を変える、図のデータの数を減らす。内容を変える直しは人間に報告して判断を仰ぐ |
+| はみ出し・余白不足・文字の重なり | 文字数を減らす、改行の位置を変える、図のデータの数を減らす。内容を変える直しは人間に報告して判断を仰ぐ。人間が自分で直した文と「決まっている」の草案の文は変えず、どこが収まらないかを伝えて人間に聞く（CLAUDE.md 原則10）。草案があるときは、直す前に `slide-outline/scripts/check-structure.mjs` でそのスライドの文が草案のままかを確かめる |
 | 箱からのはみ出し（図の箱の文字）・線のラベルと箱の重なり | 箱の文字を短くするか、図の大きさ（`canvas` の `size` など）を変える。ラベルは線の短い区間を避けるか、ラベルを短くする |
 | 文字が小さすぎる・トークン外の色 | 多くは `html:` の独自の表現が原因。トークンのクラスに直す |
 | 説明文が3行を超えた | 説明文（lead）を短くする |

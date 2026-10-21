@@ -12,6 +12,8 @@
 //   outline.md のスライドの文が変わっていない（文が変わったスライドはファクトチェックし直す。見た目だけの変更は、承認のやり直しで済む。
 //   文と見た目の分け方は spec.mjs の LOOK）
 // 「承認済み」＝ approvals.yaml の最後の承認の sha256 が、今のファイルと一致する。違えば「承認後に変更あり」
+// checkCombined()：最後のファクトチェックの承認（outline.md と factcheck.md）と最終確認（build/deck.html）を1回で頼めるか。
+//   ファクトチェックで outline.md の文を直していない（構成の承認のあとに文が変わったスライドがない）ときだけ。直したときは、今までどおり2回に分ける
 import fs from "fs";
 import path from "path";
 import YAML from "yaml";
@@ -138,6 +140,37 @@ export function checkGate(deckDir, stage) {
     }
   }
   return { ok: !errors.length, errors, notices };
+}
+
+// ファクトチェックの承認と最終確認を1回で頼めるか（request.mjs decks/<deck-id> outline.md factcheck.md build/deck.html）
+// - final のゲートで止まる理由が、outline.md・factcheck.md の承認のやり直しだけ（この依頼で片付くもの）
+// - outline.md の最後の承認のときから、スライドの文が変わっていない（見た目だけの変更はよい）。ファクトチェックで直したなら、分けて頼む
+// - いまの outline.md でビルドした deck.html があり、検査に合格していて、試しのビルド（gate: false）ではない
+const REAPPROVE = /^(outline\.md|factcheck\.md) が承認(されていない|後に変更されている)|^factcheck\.md の承認に/;
+export function checkCombined(deckDir) {
+  const errors = checkGate(deckDir, "final").errors.filter((e) => !REAPPROVE.test(e));
+  const of = path.join(deckDir, "outline.md");
+  const a = latest(readApprovals(deckDir), "outline.md");
+  const now = fs.existsSync(of) && slideDigests(fs.readFileSync(of, "utf8"));
+  if (!a?.slide_text || !now) errors.push("outline.md の承認に、スライドごとの文の記録がない（承認と最終確認を分けて頼む）");
+  else {
+    const c = slideChanges(a.slide_text, now);
+    if (c.text.length || c.removed.length)
+      errors.push(`outline.md の承認のあとに文を変えた：${describeChanges(c)}（ファクトチェックで直したので、承認と最終確認を分けて頼む）`);
+  }
+  const build = path.join(deckDir, "build");
+  const deck = path.join(build, "deck.html"),
+    manifestFile = path.join(build, "assets-manifest.yaml");
+  const manifest = fs.existsSync(manifestFile) ? YAML.parse(fs.readFileSync(manifestFile, "utf8")) : null;
+  if (!fs.existsSync(deck) || !manifest) errors.push("build/deck.html がない（ビルドする）");
+  else {
+    if (!fs.existsSync(of) || manifest.outline_sha256 !== sha256(fs.readFileSync(of))) errors.push("いまの outline.md でビルドしていない（ビルドし直す）");
+    if (manifest.deck_sha256 !== sha256(fs.readFileSync(deck))) errors.push("deck.html がビルドのあとに変わった（ビルドし直す）");
+    const log = meta(path.join(build, "build-log.md"));
+    if (log.ok !== true) errors.push("ビルドの検査に合格していない（build-log.md）");
+    if (log.gate === false) errors.push("承認の前の試しのビルドのまま（build.mjs --regate かビルドし直す）");
+  }
+  return { ok: !errors.length, errors };
 }
 
 // コマンドとして呼ばれたとき

@@ -6,17 +6,28 @@
 // - 依頼を出したら、AI は「outline.md を承認しますか？」と聞く。承認になるのは「OK」「承認します」など短い同意の語だけの答え（approvals.mjs の judge()）
 // - PR のマージ：request.mjs decks/<deck-id> --merge <PR の番号>。PR の番号・マージ先・今の head のコミットと、失敗しているチェックを書く。
 //   承認されたら、merge.mjs がマージする（AI は gh pr merge を直接使わない）
+// - ハーネスの更新の PR（デッキがない）：request.mjs decks/_harness --merge <PR の番号>。feature/harness-update → develop と develop → main だけ（github.mjs）
 // - 依頼は同時に1つのデッキだけ。ほかのデッキに残っている依頼は消す（人間の答えがどのデッキへのものか、取り違えないように）
 import fs from "fs";
 import path from "path";
 import { TARGETS, YAML, sha256, REQUEST } from "./approvals.mjs";
-import { MERGE_METHOD, mergeMethod, prInfo } from "./github.mjs";
+import { MERGE_METHOD, mergeMethod, prInfo, isHarness, harnessPrError } from "./github.mjs";
 
 const [deckDir, ...targets] = process.argv.slice(2);
 const merge = targets[0] === "--merge";
 if (!deckDir || !targets.length || (merge ? targets.length !== 2 || !/^\d+$/.test(targets[1]) : targets.some((t) => !TARGETS.includes(t)))) {
-  console.error(`使い方：node request.mjs decks/<deck-id> <${TARGETS.join("|")}>…\n      node request.mjs decks/<deck-id> --merge <PR の番号>`);
+  console.error(
+    `使い方：node request.mjs decks/<deck-id> <${TARGETS.join("|")}>…\n      node request.mjs decks/<deck-id> --merge <PR の番号>\n      node request.mjs decks/_harness --merge <PR の番号>（ハーネスの更新の PR）`,
+  );
   process.exit(2);
+}
+// ハーネスの更新の PR：デッキの代わりに decks/_harness に記録する（なければ作る）。頼めるのはマージだけ
+if (isHarness(deckDir)) {
+  if (!merge) {
+    console.error("decks/_harness で頼めるのは、ハーネスの更新の PR のマージ（--merge）だけ");
+    process.exit(2);
+  }
+  fs.mkdirSync(deckDir, { recursive: true });
 }
 let req;
 if (merge) {
@@ -28,6 +39,11 @@ if (merge) {
   }
   if (!MERGE_METHOD[p.base]) {
     console.error(`PR #${p.pr} のマージ先は ${p.base}。マージを承認で頼めるのは ${Object.keys(MERGE_METHOD).join("・")} への PR だけ`);
+    process.exit(2);
+  }
+  const bad = isHarness(deckDir) && harnessPrError(p);
+  if (bad) {
+    console.error(bad);
     process.exit(2);
   }
   req = {

@@ -77,6 +77,16 @@ test("文中のコード：`…` を <code> にし、中の ** は太字にし�
   assert.ok(html.includes("<code>a**b**</code> で <strong"));
 });
 
+test("説明文（lead）の強調は青の太字、本文の太字は黒のまま（components.md 4.2）", async () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("各部門が作った表を本部が", "各部門が作った表を**本部**が"));
+  const html = (await renderDeck(readOutline(f))).join("\n");
+  assert.ok(html.includes('作った表を<strong class="font-bold text-primary">本部</strong>が'));
+  const rest = html.replace(/<p [^>]*data-lead[^>]*>.*?<\/p>/g, "");
+  assert.ok(rest.includes('<strong class="font-bold">') && !rest.includes('<strong class="font-bold text-primary">'), "本文の太字は青にしない");
+});
+
 test("image：assets にない素材は止まり、アイコンは色を currentColor にして埋め込む", async () => {
   const image = (await import(path.join(COMP, "image.mjs"))).default;
   assert.throws(() => image({ src: "inputs/nothing.png", alt: "x" }, { deck }), /assets にない/);

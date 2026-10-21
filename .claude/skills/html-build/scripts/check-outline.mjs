@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -116,13 +116,12 @@ export async function checkOutline(file) {
         }
     }
 
-    // 箇条書き（太字を数えるため、説明文もここに入れる）
+    // 箇条書き（太字を数えるため）
     const bullets = [];
     if (lead) {
       if (f.lead === undefined || f.lead === null || f.lead === "") err(s, "説明文（lead）がない。要らないスライドは lead: false と書く");
       else if (f.lead !== false && typeof f.lead !== "string") err(s, "lead は文章か false にする");
       else if (typeof f.lead === "string") {
-        bullets.push(f.lead);
         if (f.lead.trim().includes("\n")) err(s, "lead は改行せずに1つの文章で書く（行の折り返しはビルドが決める）");
         const n = width(plain(f.lead));
         if (n > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${n}字。${LEAD_LIMIT}字まで）`);
@@ -213,6 +212,16 @@ export async function checkOutline(file) {
     bullets.forEach((t) => bolds(t) > BOLD.perItem && warn(s, `太字が1項目に${bolds(t)}か所ある（目安は${BOLD.perItem}か所）：${plain(t).slice(0, 20)}…`));
     const total = bullets.reduce((a, t) => a + bolds(t), 0);
     if (total > BOLD.perSlide) warn(s, `太字が1枚に${total}か所ある（目安は${BOLD.perSlide}か所まで）`);
+    // 説明文の強調（components.md 4.2、数は spec.mjs の LEAD_BOLD）。本文の太字とは別に数える
+    if (typeof f.lead === "string") {
+      const em = (f.lead.match(/\*\*(.+?)\*\*/g) ?? []).map((t) => width(plain(t)));
+      if (em.length > LEAD_BOLD.max) warn(s, `lead の強調が${em.length}か所ある（${LEAD_BOLD.max}か所まで。目安は${LEAD_BOLD.good}か所）`);
+      em.forEach((n) => n > LEAD_BOLD.chars && warn(s, `lead の強調に全角${n}字のものがある（1か所は${LEAD_BOLD.chars}字まで。文ではなく語句を囲む）`));
+      const sum = em.reduce((a, n) => a + n, 0);
+      const all = width(plain(f.lead));
+      if (all && sum / all > LEAD_BOLD.ratio)
+        warn(s, `lead の強調が全体の${Math.round((sum / all) * 100)}%ある（${Math.round(LEAD_BOLD.ratio * 100)}%まで。強調ばかりだと目立たない）`);
+    }
 
     // 図：名前が一覧にあるか、データが部品の決まりに合うか（部品を実際に呼んで確かめる）
     const ds = f.diagrams ?? (f.diagram ? [f.diagram] : []);

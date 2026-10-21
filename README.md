@@ -230,7 +230,9 @@ Word と PowerPoint は直接読めないので、PDF かテキストに書き�
 
 ```text
 decks/<deck-id>/
-├── inputs/        渡した資料（AI は書き換えない）
+├── inputs/        渡した資料（AI は書き換えない。git に入れない）
+├── reference/     渡した資料を md にしたものと一覧（git に入れる。以降はここを読む）
+├── assets/        スライドに載せる画像（inputs/ から移したもの）
 ├── brief.md       前提
 ├── outline.md     スライドの元ファイル（直すときはここ）
 ├── research.md    調査の結果と出典

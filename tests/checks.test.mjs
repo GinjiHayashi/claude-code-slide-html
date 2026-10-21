@@ -44,6 +44,8 @@ test("brief.md：信頼して使う資料は、見出しがあって空なら聞
   const base = fs.readFileSync(f, "utf8");
   assert.ok(!checkBrief(base).missing.includes("信頼して使う資料")); // 見出しのない前からのデッキは聞かない
   assert.ok(checkBrief(base + "\n## 信頼して使う資料\n").missing.includes("信頼して使う資料"));
+  fs.mkdirSync(path.join(dir, "inputs"));
+  fs.copyFileSync(path.join(dir, "assets", "screen-entry.png"), path.join(dir, "inputs", "screen-entry.png")); // 入力の一覧にある元の資料
   const r = checkBrief(base + "\n## 信頼して使う資料\n\n- inputs/references/summary.md は書籍の要約として採用。原本との照合は不要\n");
   assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("「信頼して使う資料」の inputs/references/summary.md")));
 });

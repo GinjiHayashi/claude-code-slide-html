@@ -94,11 +94,11 @@ const html = bar(data, { width: 1172, height: 440 });
 |---|---|---|
 | 写真・画面の写し | `image` の部品（`diagram: {kind: image, src, alt, fit?}`） | 角を `rounded-panel`（8）で切り抜き、`line` の色の 1px の枠を付ける。`cover`（既定）は枠いっぱいに広げてはみ出す分を切る。`contain` は切らずに比を保って収める |
 | 1色のアイコンを大きく1つ | `image` の部品の `src` に `phosphor:<名前>`。または人間の SVG に `icon: true` | 色を `primary` に差し替え、枠の中央に置く |
-| カードの見出しの印 | `grid-4`・`cards` の items に `icon: phosphor:<名前>`（または `inputs/….svg`） | 番号の丸の代わりに、見出しの左に 24px のアイコンを見出しと同じ色で置く |
+| カードの見出しの印 | `grid-4`・`cards` の items に `icon: phosphor:<名前>`（または `assets/….svg`） | 番号の丸の代わりに、見出しの左に 24px のアイコンを見出しと同じ色で置く |
 | 自由図の中のアイコン | `canvas` の `icon`（単体）、`box`・`area` の `icon`（文字の横） | 大きさは2つだけ：単体は 64px、文字の横は 24px。色は黒・紺・灰色・白だけ（箱の中は文字と同じ色） |
 
 - アイコンは、まずアイコン集（Phosphor の塗り。`registry.yaml` の id: phosphor）から選ぶ。AI が `node .claude/skills/html-build/scripts/icons.mjs <英語の語>` でタグから探し、`phosphor:<名前>` と書く。`assets` には書かない。
-- 写真・画面の写しと、アイコン集にないアイコンは、人間が `inputs/` に置き、`outline.md` の先頭の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。
+- 写真・画面の写しと、アイコン集にないアイコンは、人間が `inputs/` に置いたものを `assets/` に移し、`outline.md` の先頭の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。
 - アイコンの SVG は、塗りと線の色を `currentColor` に置き換え、スクリプトや外部の参照を外して埋め込む。色は `theme.css` のトークンになる。
 - 画像の大きさ（px）は部品が枠の大きさと画像の比から計算する。`outline.md` に寸法を書かない。
 
@@ -117,7 +117,7 @@ const html = bar(data, { width: 1172, height: 440 });
 | `map`（shape） | `license-notice/assets/natural-earth/japan-prefectures.json` | 部品が読み込む。作り直すときは `scripts/make-japan-map.mjs`。クレジットに「Made with Natural Earth.」 |
 | `code`・文中のコード | Roboto Mono。shiki（ビルド時だけ） | `<code>` の中の文字だけにサブセット化して埋め込む。コードのないデッキには入らない。クレジットに OFL-1.1 |
 | `image`・`grid-4`・`cards` の icon | Phosphor Icons（`phosphor:<名前>`） | 使ったアイコンの SVG だけを埋め込む。MIT |
-| `image`・`grid-4`・`cards` の icon | デッキの素材（`inputs/` の画像・アイコン） | `outline.md` の `assets` に書いたものだけ。credits スライドに出どころとライセンス |
+| `image`・`grid-4`・`cards` の icon | デッキの素材（`assets/` の画像・アイコン） | `outline.md` の `assets` に書いたものだけ。credits スライドに出どころとライセンス |
 | すべて | Noto Sans JP | 使う文字だけにサブセット化して埋め込む |
 
 素材はすべて `license-notice/registry.yaml` に登録済みのものだけを使う。

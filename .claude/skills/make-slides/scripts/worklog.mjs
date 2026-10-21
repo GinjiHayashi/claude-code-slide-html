@@ -17,7 +17,8 @@ export const WORKLOG = "worklog.jsonl";
 // 1行を足す。stage を渡さなければ、今の工程（status.mjs）を入れる
 export function appendWork(deckDir, entry) {
   try {
-    if (!fs.existsSync(deckDir)) return;
+    // デッキ（decks/<deck-id>/）だけに書く。見本（examples/）のビルドでは書かない
+    if (!fs.existsSync(deckDir) || path.basename(path.dirname(path.resolve(deckDir))) !== "decks") return;
     const stage = entry.stage ?? currentStage(deckDir);
     const line = { at: new Date().toISOString(), ...entry, ...(stage ? { stage } : {}) };
     fs.appendFileSync(path.join(deckDir, WORKLOG), JSON.stringify(line) + "\n");

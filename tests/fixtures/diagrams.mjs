@@ -103,7 +103,7 @@ export const DIAGRAMS = {
   venn: { sets: [{ label: "A" }, { label: "B" }] },
   math: { tex: "E = mc^2" },
   code: { lang: "python", code: "print(1)\n" },
-  image: { src: "inputs/screen-entry.png", alt: "画面" },
+  image: { src: "assets/screen-entry.png", alt: "画面" },
   canvas: {
     shapes: [
       { type: "box", id: "a", at: [1, 2], text: "入力" },

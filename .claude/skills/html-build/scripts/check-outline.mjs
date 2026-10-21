@@ -41,7 +41,7 @@ export async function checkOutline(file) {
   else if (!DECK_ID.test(o.meta.deck_id)) errors.push(`deck_id「${o.meta.deck_id}」は YYYY-MM-DD-<短い英語名> の形にする`);
   if (!o.meta.title) errors.push("先頭の設定に title（デッキの題名）がない");
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf", "assets"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
-  // デッキの素材（画像・アイコン）：license-notice/policy.md 5章
+  // デッキの素材（画像・アイコン）：license-notice/policy.md 5章。スライドに載せる画像は assets/ に置く（inputs/ は git の管理外）
   const assets = o.meta.assets ?? [];
   const deck = { dir: o.dir, assets: Array.isArray(assets) ? assets : [] };
   const usedAssets = new Set();
@@ -54,7 +54,9 @@ export async function checkOutline(file) {
         if (!["src", "credit", "license", "url"].includes(k)) errors.push(`${where} に知らない項目「${k}」がある（src・credit・license・url）`);
       for (const k of ["src", "credit", "license"]) if (!a[k]) errors.push(`${where} に ${k} がない（出どころとライセンスを書く）`);
       if (!a.src) return;
-      if (!/^inputs\/[^/].*/.test(a.src) || a.src.includes("..")) errors.push(`${where} の src「${a.src}」は inputs/ の中のファイルにする`);
+      if (!/^(assets|inputs)\/[^/].*/.test(a.src) || a.src.includes("..")) errors.push(`${where} の src「${a.src}」は assets/ の中のファイルにする`);
+      else if (a.src.startsWith("inputs/"))
+        warnings.push(`${where} の src「${a.src}」は inputs/ にある。inputs/ は git に入らず、ほかの端末でビルドできないので、assets/ に移して src を直す`);
       else if (!fs.existsSync(path.join(o.dir, a.src))) errors.push(`${where} の src「${a.src}」のファイルがない`);
       if (assets.findIndex((x) => x?.src === a.src) !== n) errors.push(`${where} の src「${a.src}」が重複している`);
     });

@@ -55,3 +55,6 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 | `scripts/new-deck.mjs` | デッキのフォルダと空の brief.md を作る |
 | `scripts/rename-deck.mjs` | デッキの名前（deck-id）を変える（フォルダ・ブランチ・`deck_id`） |
 | `scripts/xlsx.py` | Excel（.xlsx）を標準ライブラリだけで読む |
+| `scripts/reference.mjs` | `inputs/` の資料を md にして `reference/` に入れ、一覧（`index.md`）を作り、検査する（`reference-format.md`） |
+| `scripts/to-md.py` | 資料1つを md にする（Excel・Word・PowerPoint・PDF・テキスト）。`reference.mjs` が呼ぶ |
+| `reference-format.md` | `reference/` のフォルダと md の形、変換の方法 |

@@ -306,3 +306,9 @@ test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）�
   fs.writeFileSync(path.join(dir, "build", "build-log.md"), "---\nok: true\ngate: false\n---\n");
   assert.equal(deckStatus(dir).state, "承認の前の試しのビルドのまま");
 });
+
+test("status：decks/ のフォルダ名と brief.md の deck_id が違えば、注意を添える（同じなら出さない）", () => {
+  const note = (r) => r.reasons.some((x) => x.includes("rename-deck.mjs"));
+  assert.equal(note(deckStatus(tempDeck())), false);
+  assert.equal(note(deckStatus(tempDeck("2026-10-24-other-name"))), true);
+});

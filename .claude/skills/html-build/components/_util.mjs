@@ -53,6 +53,18 @@ export function check(kind, data, schema, where = "") {
   }
 }
 
+/** 数の決まり（各部品の limits）：{ 名前: [最小, 最大] }。最小が0なら「最大まで」。正はここで、schema.mjs が出す */
+export const range = ([lo, hi]) => (lo ? (lo === hi ? `${lo}` : `${lo}〜${hi}`) : `${hi}まで`);
+export function within(kind, limits, key, n) {
+  const [lo, hi] = limits[key];
+  if (n < lo || n > hi) throw new Error(`${kind}: ${key}は${range(limits[key])}（今は${n}）`);
+}
+/** limits を人が読める1行にする（schema.mjs が出す） */
+export const describeLimits = (limits) =>
+  Object.entries(limits)
+    .map(([k, v]) => (Array.isArray(v) ? `${k} ${range(v)}` : `${k}：${v}`))
+    .join("、");
+
 /** schema を人が読める1行にする（schema.mjs と書式チェックの説明に使う） */
 export function describe(schema) {
   const one = (n) => (n.keys ? `{ ${describe(n.keys)} }` : n.list ? `[${one(n.list)}]` : "");

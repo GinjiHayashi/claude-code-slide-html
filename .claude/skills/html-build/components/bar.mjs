@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, num, callout, unitLabel } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, within } from "./_util.mjs";
 
 // bar：分類ごとの量を比べる縦棒。2〜12本、原点は0。
 // data: { data: [{ label, value, highlight? }], unit, callout?: { value, label } }
@@ -11,10 +11,13 @@ import { esc, check, R, O, optional, num, callout, unitLabel } from "./_util.mjs
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { data: [{ label: R, value: R, highlight: O }], unit: R, callout: optional({ value: R, label: R }) };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { data: [2, 12] };
+
 export default function bar(data) {
   check("bar", data, schema);
   const rows = data.data;
-  if (rows.length < 2 || rows.length > 12) throw new Error("bar: data は2〜12本");
+  within("bar", limits, "data", rows.length);
   const max = Math.max(...rows.map((r) => r.value), 0) || 1;
   const anyHi = rows.some((r) => r.highlight);
   const cols = rows

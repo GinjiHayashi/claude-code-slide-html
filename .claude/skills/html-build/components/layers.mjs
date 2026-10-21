@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, LINE, within } from "./_util.mjs";
 
 // layers：横長の帯を上から下へ重ねた層。3〜6層。左に上下両向きの矢印を引き、上端と下端にラベルを置く。
 // data: { items: [{ label, text?, tone? }], top?, bottom?, note? }
@@ -20,10 +20,13 @@ const TONE = {
 };
 const LABEL_W = 200; // 左のラベルの列の幅
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [3, 6] };
+
 export default function layers(data, opt = {}) {
   check("layers", data, schema);
   const I = data.items;
-  if (I.length < 3 || I.length > 6) throw new Error("layers: items は3〜6");
+  within("layers", limits, "items", I.length);
   const tones = Object.keys(TONE);
   for (const [n, it] of I.entries())
     if (it.tone !== undefined && !tones.includes(it.tone)) throw new Error(`layers: items[${n + 1}] の tone は ${tones.join("・")} のどれか`);

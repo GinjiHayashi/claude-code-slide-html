@@ -1,6 +1,6 @@
 import { scaleLinear, scalePoint } from "d3-scale";
 import { area as d3area, stack, stackOffsetExpand } from "d3-shape";
-import { esc, check, R, O, optional, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, callout, unitLabel, SERIES, svgSize, within } from "./_util.mjs";
 import { yGrid, xLabels, spread } from "./_axis.mjs";
 
 // area：量と構成比の時間の変化を示す積み上げ面グラフ。系列は5まで、時点は24まで。
@@ -12,11 +12,14 @@ import { yGrid, xLabels, spread } from "./_axis.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { x: [R], series: [{ name: R, values: R }], unit: R, percent: O, callout: optional({ value: R, label: R }) };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 系列: [2, 5], 時点: [2, 24] };
+
 export default function area(data, opt = {}) {
   check("area", data, schema);
   const { x: xs, series } = data;
-  if (series.length < 2 || series.length > 5) throw new Error("area: 系列は2〜5");
-  if (xs.length < 2 || xs.length > 24) throw new Error("area: 時点は2〜24");
+  within("area", limits, "系列", series.length);
+  within("area", limits, "時点", xs.length);
   const { w, h: h0 } = svgSize(data, opt);
   const h = h0 - 26; // 単位（18）と間（8）の分
   const m = { l: 64, r: 168, t: 12, b: 32 };

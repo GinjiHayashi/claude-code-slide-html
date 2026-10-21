@@ -1,5 +1,5 @@
 import { pie, arc } from "d3-shape";
-import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, svgSize, within } from "./_util.mjs";
 import { spread } from "./_axis.mjs";
 
 // donut：全体の総量が明らかなときの構成比。5項目まで（超える分は「その他」にまとめて渡す）。
@@ -16,9 +16,12 @@ import { spread } from "./_axis.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { items: [{ label: R, value: R }], unit: R, total: O, total_label: O, legend: O, callout: optional({ value: R, label: R }) };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [2, 5] };
+
 export default function donut(data, opt = {}) {
   check("donut", data, schema);
-  if (data.items.length < 2 || data.items.length > 5) throw new Error("donut: items は2〜5");
+  within("donut", limits, "items", data.items.length);
   const others = data.items.filter((d) => d.label === "その他");
   const items = data.items
     .filter((d) => d.label !== "その他")

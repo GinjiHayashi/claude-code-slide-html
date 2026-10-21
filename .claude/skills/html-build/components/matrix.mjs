@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // matrix：2つの軸で4つに分ける（2×2）。
 // data: {
@@ -21,13 +21,16 @@ const head = (dir, cls) =>
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { x_axis: { label: R, low: R, high: R }, y_axis: { label: R, low: R, high: R }, cells: [{ title: R, text: O, items: O }], highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { cells: [4, 4], "各マスの items": [0, 3] };
+
 export default function matrix(data) {
   check("matrix", data, schema);
-  if (data.cells.length !== 4) throw new Error("matrix: cells は4つ（左上・右上・左下・右下）");
+  within("matrix", limits, "cells", data.cells.length); // 左上・右上・左下・右下
   const LN = LINE;
   const { x_axis: X, y_axis: Y } = data;
   const cells = data.cells.map((c, i) => {
-    if ((c.items ?? []).length > 3) throw new Error("matrix: 各マスの項目は3つまで");
+    within("matrix", limits, "各マスの items", (c.items ?? []).length);
     const on = data.highlight === i + 1;
     const look = on ? "bg-highlight border-primary" : `bg-canvas ${LN.border}`;
     const text = c.text ? `<p class="m-0 mt-[8px] pl-[16px] text-body text-ink">${esc(c.text)}</p>` : "";

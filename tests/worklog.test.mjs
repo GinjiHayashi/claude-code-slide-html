@@ -6,7 +6,7 @@ import path from "path";
 import { execFileSync } from "child_process";
 import { SKILLS, tempDeck, rootOf } from "./helpers.mjs";
 
-const { hook, readWork, turnSummary } = await import(path.join(SKILLS, "make-slides/scripts/worklog.mjs"));
+const { hook, readWork, turnSummary, appendWork } = await import(path.join(SKILLS, "make-slides/scripts/worklog.mjs"));
 const { report } = await import(path.join(SKILLS, "make-slides/scripts/worklog-report.mjs"));
 delete process.env.CLAUDE_PROJECT_DIR; // hook は cwd からリポジトリを決める
 
@@ -35,6 +35,12 @@ test("worklog の hook：feature/<deck-id> のブランチなら、時刻と工�
   );
   assert.ok(rows.every((r) => r.at && r.session === "s1" && r.stage));
   assert.ok(!fs.readFileSync(path.join(dir, "worklog.jsonl"), "utf8").includes("123"));
+
+  // decks/ の外（examples/ の見本など）には書かない
+  const ex = path.join(root, "examples", "sample-deck");
+  fs.mkdirSync(ex, { recursive: true });
+  appendWork(ex, { event: "build", ok: true });
+  assert.equal(fs.existsSync(path.join(ex, "worklog.jsonl")), false);
 
   const other = repo("develop-work");
   hook({ hook_event_name: "UserPromptSubmit", session_id: "s1", cwd: other.root, prompt: "x" });

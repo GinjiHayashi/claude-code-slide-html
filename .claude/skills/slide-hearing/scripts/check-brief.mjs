@@ -2,13 +2,14 @@
 // brief.md のチェック：空の項目（まだ聞いていない）と、書式の誤りを出す。ヒアリングで聞く項目はここから決める。
 // 使い方：node .claude/skills/slide-hearing/scripts/check-brief.mjs decks/<deck-id>/brief.md
 // - 書式は slide-hearing/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
-// - デッキのフォルダに inputs/ があれば、その中のファイルがすべて「入力の一覧」の表に書かれているかも確かめる（漏れた資料は構成に使われないため）
+// - 資料（reference/）の検査も行う：inputs/ の資料がすべて md になっているか、AI の読み取りが終わっているかなど（slide-intake/reference-format.md）
 // - 戻り値：{ errors（書式の誤り）, missing（空の項目）, questions（「確認したいこと」に書かれた行）, meta, sections }
 // - 終了コード：0＝すべて埋まっている、1＝空の項目か確認したいことがある、2＝書式の誤り
 import fs from "fs";
 import path from "path";
 import YAML from "yaml";
 import { DECK_ID, empty, frontMatter, isMain } from "../../../lib/common.mjs";
+import { checkReference } from "../../slide-intake/scripts/reference.mjs";
 
 export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf", "max_subagents", "factcheck"];
 // ファクトチェックの時期（make-slides の gate.mjs・status.mjs が使う）。1つ目が既定
@@ -26,7 +27,7 @@ export const SECTIONS = [
   "構成の進め方",
 ];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
-// 信頼して使う資料（fact-checker が、原本と照らさずに「確かめた」と扱う資料）。1行に1つ、inputs/ からのパスを先頭に書く
+// 信頼して使う資料（fact-checker が、原本と照らさずに「確かめた」と扱う資料）。1行に1つ、資料の ID（R-001）を先頭に書く
 export const TRUSTED = "信頼して使う資料";
 const NONE = "なし";
 
@@ -99,7 +100,7 @@ export function checkBrief(text) {
   return { errors, missing, questions, meta, sections };
 }
 
-// 信頼して使う資料のパス（各行の先頭の inputs/…）
+// 信頼して使う資料（各行の先頭の R-001。前からのデッキは inputs/…）
 export const trusted = (sections) =>
   (sections[TRUSTED] ?? "")
     .split("\n")
@@ -109,28 +110,22 @@ export const trusted = (sections) =>
           .replace(/^[-*]\s*/, "")
           .trim()
           .replace(/^`/, "")
-          .split(/[`\s：:]/)[0],
+          .split(/[`\s：:（(]/)[0],
     )
-    .filter((f) => f.startsWith("inputs/"));
+    .filter((f) => /^R-\d{3,}$/.test(f) || f.startsWith("inputs/"));
 
-// inputs/ のファイルと「入力の一覧」の表を突き合わせる。表の1列目に inputs/ からのパスを書く
-export function checkInputs(sections, deckDir) {
-  const errors = [];
-  const dir = path.join(deckDir, "inputs");
-  if (!fs.existsSync(dir)) return errors;
-  if (!("入力の一覧" in sections)) return ["見出し「## 入力の一覧」がない"];
-  const files = fs
-    .readdirSync(dir, { recursive: true })
-    .map((f) => `inputs/${String(f).split(path.sep).join("/")}`)
-    .filter((f) => !f.split("/").some((x) => x.startsWith(".")) && fs.statSync(path.join(deckDir, f)).isFile());
-  const listed = sections["入力の一覧"]
-    .split("\n")
-    .filter((l) => l.trim().startsWith("|"))
-    .map((l) => l.trim().replace(/^\|/, "").split("|")[0].trim().replace(/^`|`$/g, ""))
-    .filter((c) => c.startsWith("inputs/"));
-  for (const f of files) if (!listed.includes(f)) errors.push(`${f} が「入力の一覧」にない（読んで中身と使う工程を書く）`);
-  for (const f of listed) if (!files.includes(f)) errors.push(`「入力の一覧」の ${f} が inputs/ にない`);
-  for (const f of trusted(sections)) if (!files.includes(f)) errors.push(`「${TRUSTED}」の ${f} が inputs/ にない`);
+// 資料：reference/ の検査（slide-intake/scripts/reference.mjs）と、「信頼して使う資料」の ID が reference/ にあるか。
+// 資料の一覧は reference/index.md（前の「入力の一覧」の表は使わない。あっても見ない）
+export function checkSources(sections, deckDir) {
+  const r = checkReference(deckDir);
+  const errors = r.errors.map((e) => `資料：${e}`);
+  const ids = new Set(r.status.sources.map((s) => s.meta.id));
+  const srcs = new Set(r.status.sources.map((s) => s.meta.source));
+  for (const f of trusted(sections)) {
+    if (f.startsWith("R-") && !ids.has(f)) errors.push(`「${TRUSTED}」の ${f} が reference/ の資料にない`);
+    if (f.startsWith("inputs/") && !srcs.has(f) && !fs.existsSync(path.join(deckDir, f)))
+      errors.push(`「${TRUSTED}」の ${f} が inputs/ にない（R-001 の形で書く）`);
+  }
   return errors;
 }
 
@@ -142,7 +137,7 @@ if (isMain(import.meta.url)) {
     process.exit(2);
   }
   const r = checkBrief(fs.readFileSync(file, "utf8"));
-  r.errors.push(...checkInputs(r.sections, path.dirname(file)));
+  r.errors.push(...checkSources(r.sections, path.dirname(file)));
   for (const e of r.errors) console.log(`エラー  ${e}`);
   for (const k of r.missing) console.log(`空      ${k}`);
   for (const q of r.questions) console.log(`確認    ${q}`);

@@ -11,10 +11,13 @@ decks/<deck-id>/
     index.md         資料の一覧（ID、md、元の資料、形式、変換の方法、日付、要約）。reference.mjs が作る。手で直さない
     sources/         資料を md にしたもの（1資料＝1ファイル。例：R-002-実績.md）
     chat/            チャットの原文（inputs/chat-YYYY-MM-DD.md を md にしたもの）
+    research.md      AI の調査（主張 C-001 など。research-standards/research-template.md）
   assets/            スライドに載せる画像（inputs/ から移したもの。git で管理する）
 ```
 
 - ID は `R-001` から順に付ける。資料が変わっても同じ ID のまま作り直す。AI の調査の主張の ID（`C-001`、`research.md`）とは別。
+- outline.md の `claims` には、資料の ID（`R-002`）も書ける。ファクトチェックが、その md と記述を照らす。
+- 前からのデッキで、デッキの直下に `research.md` があれば、そのまま使う（スクリプトは両方の場所を読む。移すなら `git mv research.md reference/research.md`）。
 - 画像は `reference/` に入れない。読み取った文字と説明の md だけを入れる。スライドに載せる画像は `inputs/` から `assets/` に**移す**（コピーしない。容量を二重にしない）。移した画像の md は、`assets/` の同じ名前・同じ sha256 のファイルで確かめる。
 
 ## 2. md の形

@@ -43,3 +43,11 @@ export const DECK_ID = /^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/;
 
 // 先頭の --- で囲んだ設定。戻り値は match の結果（[0] が --- を含む全体、[1] が中の YAML）。なければ null
 export const frontMatter = (text) => text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+
+// AI の調査の結果（research.md）の場所：reference/research.md（slide-intake/reference-format.md）。
+// 前からのデッキで、デッキの直下に research.md があれば、そちらを使う（移さなくても読めるように）
+export function researchFile(deckDir) {
+  const legacy = path.join(deckDir, "research.md");
+  const file = path.join(deckDir, "reference", "research.md");
+  return !fs.existsSync(file) && fs.existsSync(legacy) ? legacy : file;
+}

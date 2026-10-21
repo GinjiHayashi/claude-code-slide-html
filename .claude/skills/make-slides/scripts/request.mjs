@@ -12,6 +12,8 @@ import fs from "fs";
 import path from "path";
 import { TARGETS, YAML, sha256, REQUEST } from "./approvals.mjs";
 import { MERGE_METHOD, mergeMethod, prInfo, isHarness, harnessPrError } from "./github.mjs";
+import { appendWork } from "./worklog.mjs";
+import { deckStatus } from "./status.mjs";
 
 const [deckDir, ...targets] = process.argv.slice(2);
 const merge = targets[0] === "--merge";
@@ -62,6 +64,7 @@ if (merge) {
       return { target: t, sha256: sha256(fs.readFileSync(f)) };
     }),
   };
+const stage = isHarness(deckDir) ? undefined : deckStatus(deckDir).stage;
 const others = fs
   .readdirSync(path.dirname(path.resolve(deckDir)))
   .map((d) => path.join(path.dirname(path.resolve(deckDir)), d))
@@ -71,6 +74,8 @@ for (const d of others) {
   console.log(`${path.basename(d)} に残っていた承認の依頼を消した（同時に依頼できるのは1つのデッキだけ）`);
 }
 fs.writeFileSync(path.join(deckDir, REQUEST), "# 承認の依頼（request.mjs が書く）。人間の次の答えで hook が判定し、消す\n" + YAML.stringify(req));
+// 作業記録：依頼の回数（承認の聞き直しを数えるため。worklog-report.mjs）。工程は依頼を出す前のもの（出したあとは「承認の確認」になる）
+if (!isHarness(deckDir)) appendWork(deckDir, { event: "request", targets: req.targets.map((t) => t.target), stage });
 if (merge) {
   const t = req.targets[0];
   const warn = [

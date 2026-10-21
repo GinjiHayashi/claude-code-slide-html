@@ -28,7 +28,9 @@ export function updateHarness({ cwd = ROOT, harnessUrl = toUrl(DEFAULT_HARNESS) 
   const git = (...args) => sh(cwd, "git", args);
   if (ok(cwd, "git", ["ls-files", "--error-unmatch", "decks/.gitignore"]))
     throw new Error("ここはハーネスのリポジトリ（decks/.gitignore がある）。スライド用リポジトリで実行する");
-  if (git("status", "--porcelain", "--untracked-files=no")) throw new Error("コミットしていない変更がある。コミットするか戻してから実行する");
+  // 作業記録（decks/*/worklog.jsonl）は hook がターンごとに足すので、変更があっても止めない
+  if (git("status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)decks/*/worklog.jsonl"))
+    throw new Error("コミットしていない変更がある。コミットするか戻してから実行する");
 
   // 1. remote harness
   if (!git("remote").split("\n").includes("harness")) {

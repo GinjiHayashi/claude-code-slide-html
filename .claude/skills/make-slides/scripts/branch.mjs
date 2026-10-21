@@ -31,7 +31,8 @@ export function deckBranch(deckDir) {
 
   const cur = ok("symbolic-ref", "-q", "HEAD") ? git("symbolic-ref", "--short", "HEAD") : "";
   const mine = (b) => b === `feature/${id}` || new RegExp(`^feature/${id}-fix\\d*$`).test(b);
-  const dirty = git("status", "--porcelain", "--", dir);
+  // 作業記録（worklog.jsonl）は hook がターンごとに足すので、コミットのあとも変わる。作業中かの判断には使わない
+  const dirty = git("status", "--porcelain", "--", dir, `:(exclude)${dir}/worklog.jsonl`);
   if (dirty) {
     if (mine(cur)) return at("続き", null, [`${cur} で、コミットしていない変更がある（このまま続ける）`]);
     return at("人間に聞く", null, [`コミットしていない変更が ${cur || "（ブランチなし）"} にある。どのブランチの作業か人間に確かめる`, ...dirty.split("\n")]);

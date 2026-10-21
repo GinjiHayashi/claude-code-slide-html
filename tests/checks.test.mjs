@@ -64,7 +64,7 @@ test("見本の outline.md は書式の誤りがない", async () => {
 
 test("outline.md：grid-4 の icon は、アイコン集の名前がないとエラー", async () => {
   const f = path.join(tempDeck(), "outline.md");
-  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("icon: phosphor:steps", "icon: phosphor:no-such-icon"));
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("icon: phosphor:warning", "icon: phosphor:no-such-icon"));
   const r = await checkOutline(f);
   assert.ok(
     r.errors.some((e) => e.includes("items の4つ目の") && e.includes("phosphor:no-such-icon")),

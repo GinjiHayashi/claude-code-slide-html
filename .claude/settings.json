@@ -10,7 +10,10 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git fetch *)",
-      "Bash(git switch *)"
+      "Bash(git switch *)",
+      "Bash(node .claude/skills/*)",
+      "Bash(npm run shots *)",
+      "Bash(uv run python -I .claude/skills/*)"
     ],
     "deny": [
       "Edit(approvals.yaml)",

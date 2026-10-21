@@ -9,7 +9,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 ## 全体の流れ
 
-ワークフローの全体像はこの節にまとめてある（工程ごとの細かい手順は各スキル）。人間の承認は4回。工程の番号は `status.mjs` の「工程」と同じ。
+ワークフローの全体像はこの節にまとめてある（工程ごとの細かい手順は各スキル）。人間の承認は4回（ファクトチェックで `outline.md` の文を直さなかったときは、承認3と承認4を1回にまとめるので3回）。工程の番号は `status.mjs` の「工程」と同じ。
 
 ファクトチェックの時期は、`brief.md` の `factcheck` でデッキごとに選ぶ（ヒアリングで聞く）。既定は「最後に1回」。
 
@@ -23,6 +23,10 @@ description: スライド作成の全体の入口。新しいデッキを始め�
      → 承認3：outline.md と factcheck.md（まとめて1回）
      → 5 最終確認
      → 承認4：build/deck.html → 完成（スライド用リポジトリなら develop への PR）
+
+ファクトチェックで outline.md の文を直さなかったとき（構成の承認のあとに文が変わったスライドがないとき）は、
+承認3と承認4を1回にまとめる（5 最終確認の 1・2 を先に行い、outline.md・factcheck.md・build/deck.html を一緒に承認してもらう）。
+文を直したときは、今までどおり2回に分ける（status.mjs の「次に」が、どちらかを示す）。
 
 「構成のあとと最後の2回」のとき：2 のあとに 2b ファクトチェック（構成のあと。数値と結論を支える事実だけ）を行い、
 承認2を outline.md と factcheck.md の2つにする。4 では、2b で確かめていない記述と、2b のあとに文が変わったスライドを確かめる。
@@ -48,16 +52,16 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 ## 工程と止まるところ
 
-| status.mjs の工程 | 使うスキル | 出力 | 止まる（人間に聞く） | 止まらずに進む |
-|---|---|---|---|---|
-| 0 開始・1a 事前情報の取り込み | `slide-intake` | `decks/<deck-id>/`、`brief.md`（草案） | 入力に足りないものを聞くとき | 入力から brief.md を書き、ヒアリングへ |
-| 1b ヒアリング | `slide-hearing` | `brief.md` | 質問（聞き方は `slide-hearing/questions.md`）。brief.md（と outline-draft.md）の承認 | — |
-| 2 構成 | `slide-outline` | `knowledge-map.md`（たたき台・相談のとき）、`outline.md`、`reference/research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
-| 2b ファクトチェック（構成のあと。「2回」のときだけ） | `slide-factcheck` | `factcheck.md`（`round: 構成のあと`） | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | fact-checker の実行 |
-| 3 HTML 作成（ライセンスを含む） | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml` | ビルドが不合格で、内容を変える直しが要るとき。見た目の直しを人間に頼まれたとき | 構成の承認のあと、ゲートが通ればそのままビルドする。見た目の直しは、承認を頼まずに直してビルドし直す |
-| 4 ファクトチェック | `slide-factcheck` | `factcheck.md` | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | 見た目の直しが済んだら、そのまま fact-checker を実行する |
-| 5 最終確認 | なし（人間） | — | build/deck.html の承認 | — |
-| 承認の確認 | なし | — | 人間の答え待ち。答えは hook が記録する | — |
+| status.mjs の工程                                    | 使うスキル                                                                   | 出力                                                                              | 止まる（人間に聞く）                                                                                         | 止まらずに進む                                                                                       |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| 0 開始・1a 事前情報の取り込み                        | `slide-intake`                                                               | `decks/<deck-id>/`、`brief.md`（草案）                                            | 入力に足りないものを聞くとき                                                                                 | 入力から brief.md を書き、ヒアリングへ                                                               |
+| 1b ヒアリング                                        | `slide-hearing`                                                              | `brief.md`                                                                        | 質問（聞き方は `slide-hearing/questions.md`）。brief.md（と outline-draft.md）の承認                         | —                                                                                                    |
+| 2 構成                                               | `slide-outline`                                                              | `knowledge-map.md`（たたき台・相談のとき）、`outline.md`、`reference/research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認                                        | 調査（`researcher`）                                                                                 |
+| 2b ファクトチェック（構成のあと。「2回」のときだけ） | `slide-factcheck`                                                            | `factcheck.md`（`round: 構成のあと`）                                             | P0 の判断。outline.md と factcheck.md をまとめて1回で承認                                                    | fact-checker の実行                                                                                  |
+| 3 HTML 作成（ライセンスを含む）                      | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`       | ビルドが不合格で、内容を変える直しが要るとき。見た目の直しを人間に頼まれたとき                               | 構成の承認のあと、ゲートが通ればそのままビルドする。見た目の直しは、承認を頼まずに直してビルドし直す |
+| 4 ファクトチェック                                   | `slide-factcheck`                                                            | `factcheck.md`                                                                    | P0 の判断。outline.md と factcheck.md をまとめて1回で承認（文を直さなかったときは build/deck.html も一緒に） | 見た目の直しが済んだら、そのまま fact-checker を実行する                                             |
+| 5 最終確認                                           | なし（人間）                                                                 | —                                                                                 | build/deck.html の承認                                                                                       | —                                                                                                    |
+| 承認の確認                                           | なし                                                                         | —                                                                                 | 人間の答え待ち。答えは hook が記録する                                                                       | —                                                                                                    |
 
 - **承認を頼むとき**は、下の「承認の頼み方」に従う。答えが「直して」なら、そのスキルの手順に戻って直す。
 - **ビルド**は `html-build` で行う（承認の確認は `html-build` の手順1）。止められたら理由を人間に伝え、`status.mjs` の「次に」に戻る。検査の不合格は、ふつうは構成の工程の試しのビルド（`slide-outline` の手順7）で片付いている。
@@ -69,7 +73,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 ## 承認の頼み方
 
-1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`）。依頼は `approval-request.yaml` に書かれる。
+1. 承認してもらうファイルを決めて、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> <ファイル…>` を実行する（例：`brief.md`、`outline.md factcheck.md`、`build/deck.html`。承認3と承認4をまとめるときは `outline.md factcheck.md build/deck.html`。まとめられないときは `request.mjs` が止める）。依頼は `approval-request.yaml` に書かれる。
 2. そのあとで、次の決まった文で聞く（`request.mjs` が対象を入れた文を出す）。言い回しを変えない。
    > 〈対象〉を承認しますか？承認なら『承認』だけを送ってください。直したいところがあれば、その内容を書いてください。
    - 承認になるのは、短い同意の語（「承認」「OK」「はい」など）だけの答え。ほかの言葉が混じると hook は判断できないとして記録しない。
@@ -83,22 +87,22 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 
 1. 人間に、`decks/<deck-id>/build/deck.html` をブラウザで開いて見てもらうよう頼む（`deck.pdf` があればそれも）。AI は `deck.html` を読まない。
 2. 合わせて、`build-log.md` の注意（図が3つ以上のスライド、`html:` を使ったスライドなど）を伝え、見た目を確かめるときの確認表として `design-reference/checklist.md` を示す（AI は見た目をレビューしない。確かめるのは人間）。
-3. 「承認の頼み方」で `build/deck.html` の承認を頼む。
+3. 「承認の頼み方」で `build/deck.html` の承認を頼む。ファクトチェックで文を直さなかったとき（`status.mjs` の状態が「最終確認と一緒に頼める」）は、この最終確認を承認3と一緒に行う：写した判断（`slide-factcheck` の手順 9 の 1）を見せ、1・2 のあとに `outline.md factcheck.md build/deck.html` の3つを1回で頼む。
 4. 直してほしいと言われたら、下の「直すとき」に進む。承認されたら `status.mjs` が「完成」になる。
 
 ## 直すとき
 
 人間の直したい内容で、戻る工程を決める。`deck.html` は直さない。
 
-| 直したい内容 | 戻る工程 | やること |
-|---|---|---|
-| 目的・聞き手・長さなど前提が変わる | 1b ヒアリング | `slide-hearing` で brief.md を直して承認し直し、そのあと構成から見直す |
-| スライドの中身（文、数値、並び、足す・削る） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、そのスライドをファクトチェックし直し、outline.md と factcheck.md を承認し直す |
-| 見た目のうち outline.md で決まるもの（型、図の型、置き方、大きさ、改行、太字） | 2 構成 | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、outline.md と factcheck.md を承認し直す（ファクトチェックはやり直さない） |
-| 人間が outline.md の文を自分で直した | 2 構成 | 下の「人間が outline.md を直したとき」。AI は人間の書いた文を書き換えない |
-| 図を変えてほしい（人間が `change` に書いた） | 2 構成 | 下の「図の変更の指示（change）」 |
-| 色・フォント・部品の形など、固定ファイルで決まるもの | 直さない | 固定ファイルは変えない（CLAUDE.md）。人間に理由を伝えて判断を仰ぐ |
-| ハーネスの更新を取り込んだあと、新しいハーネスで作り直す | 3 HTML 作成 | 人間に頼まれたときだけ作り直す（承認済みの deck.html を自動で作り直さない）。ビルドし直して、最終確認をもう一度頼む。ビルドや検査が outline.md の直しを求めたら、2 構成に戻る |
+| 直したい内容                                                                   | 戻る工程      | やること                                                                                                                                                                      |
+| ------------------------------------------------------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 目的・聞き手・長さなど前提が変わる                                             | 1b ヒアリング | `slide-hearing` で brief.md を直して承認し直し、そのあと構成から見直す                                                                                                        |
+| スライドの中身（文、数値、並び、足す・削る）                                   | 2 構成        | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、そのスライドをファクトチェックし直し、outline.md と factcheck.md を承認し直す                                     |
+| 見た目のうち outline.md で決まるもの（型、図の型、置き方、大きさ、改行、太字） | 2 構成        | `slide-outline` で該当スライドの節だけ直し、ビルドし直して、outline.md と factcheck.md を承認し直す（ファクトチェックはやり直さない）                                         |
+| 人間が outline.md の文を自分で直した                                           | 2 構成        | 下の「人間が outline.md を直したとき」。AI は人間の書いた文を書き換えない                                                                                                     |
+| 図を変えてほしい（人間が `change` に書いた）                                   | 2 構成        | 下の「図の変更の指示（change）」                                                                                                                                              |
+| 色・フォント・部品の形など、固定ファイルで決まるもの                           | 直さない      | 固定ファイルは変えない（CLAUDE.md）。人間に理由を伝えて判断を仰ぐ                                                                                                             |
+| ハーネスの更新を取り込んだあと、新しいハーネスで作り直す                       | 3 HTML 作成   | 人間に頼まれたときだけ作り直す（承認済みの deck.html を自動で作り直さない）。ビルドし直して、最終確認をもう一度頼む。ビルドや検査が outline.md の直しを求めたら、2 構成に戻る |
 
 - outline.md を直したら、文を変えたスライドはファクトチェックからやり直す。ゲートが、ファクトチェックのあとに文が変わったスライドの番号を出す（`slide-factcheck` の手順 2〜5 をそのスライドだけで行い、outline.md と factcheck.md を承認し直す）。見た目だけの変更は、承認のやり直しだけで済む（文と見た目の分け方は `slide-factcheck` の手順 9 のあと）。
 - そのあとビルドし直し、最終確認をもう一度頼む。
@@ -153,7 +157,7 @@ AI の手順：
    - squash マージのあとは、元のブランチも残っている。そこで直しを始めない（マージ済みの古い中身のため）。
 2. **コミット**：承認が記録されるたびに、そのデッキのフォルダだけをコミットする（承認の記録 `approvals.yaml` と、承認された内容が同じコミットに入るように）。
    - 最終確認より前：`git add decks/<deck-id> ':(exclude)decks/<deck-id>/build' && git commit -m "feat(<deck-id>): <承認されたもの> を承認"`（例：`brief.md と outline-draft.md を承認`、`outline.md を承認`、`outline.md と factcheck.md を承認`）。直しの途中でビルドした `build/` は入れない。
-   - 最終確認：`git add decks/<deck-id> && git commit -m "feat(<deck-id>): build/deck.html を承認（最終確認）"`。ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）を入れる（承認した成果物そのものを残すため）。
+   - 最終確認：`git add decks/<deck-id> && git commit -m "feat(<deck-id>): build/deck.html を承認（最終確認）"`（承認3と一緒なら `outline.md と factcheck.md と build/deck.html を承認（最終確認）`）。ビルドの結果（`build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml`）を入れる（承認した成果物そのものを残すため）。
    - 種類の後ろの `(<deck-id>)` は、どのデッキのコミットかを示すため（README「コミットメッセージ」）。
    - 今いるブランチが `feature/<deck-id>`（か `-fix`）であることを、コミットの前に確かめる。違えば止めて人間に伝える。
    - `approval-request.yaml` は `.gitignore` で管理外。
@@ -180,26 +184,26 @@ AI の手順：
 
 AI が実行するスクリプト：
 
-| ファイル | 中身 |
-|---|---|
-| `scripts/status.mjs` | デッキの現在地（工程・状態・次に使うスキル・理由）を、ファイルと承認の記録とゲートから判定する |
-| `scripts/gate.mjs` | 工程に進めるか（outline・factcheck・build・final）を承認の記録で判定する。final は最終確認の前 |
-| `scripts/branch.mjs` | スライド用リポジトリで、デッキの作業をどのブランチで行うか（新規・続き・直し）を決める |
-| `scripts/request.mjs` | 承認の依頼を出す（approval-request.yaml を書く）。`--merge <PR の番号>` で PR のマージの承認を頼む |
-| `scripts/merge.mjs` | 承認された PR だけをマージし、main のあとはタグを付けて push する |
-| `scripts/github.mjs` | PR を gh で読む・マージする共通の処理（ほかのスクリプトが使う） |
-| `scripts/approvals.mjs` | 承認の記録の読み書き（ほかのスクリプトが使う） |
-| `scripts/edit-check.mjs` | 図の変更の指示（`change`）の反映を確かめる。`start` で直す前の outline.md を写し、`end` で、`change` のあるスライドの図の項目のほかが変わっていないか、`change` が空になったかを確かめる |
+| ファイル                     | 中身                                                                                                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/status.mjs`         | デッキの現在地（工程・状態・次に使うスキル・理由）を、ファイルと承認の記録とゲートから判定する                                                                                                 |
+| `scripts/gate.mjs`           | 工程に進めるか（outline・factcheck・build・final）を承認の記録で判定する。final は最終確認の前                                                                                                 |
+| `scripts/branch.mjs`         | スライド用リポジトリで、デッキの作業をどのブランチで行うか（新規・続き・直し）を決める                                                                                                         |
+| `scripts/request.mjs`        | 承認の依頼を出す（approval-request.yaml を書く）。`--merge <PR の番号>` で PR のマージの承認を頼む                                                                                             |
+| `scripts/merge.mjs`          | 承認された PR だけをマージし、main のあとはタグを付けて push する                                                                                                                              |
+| `scripts/github.mjs`         | PR を gh で読む・マージする共通の処理（ほかのスクリプトが使う）                                                                                                                                |
+| `scripts/approvals.mjs`      | 承認の記録の読み書き（ほかのスクリプトが使う）                                                                                                                                                 |
+| `scripts/edit-check.mjs`     | 図の変更の指示（`change`）の反映を確かめる。`start` で直す前の outline.md を写し、`end` で、`change` のあるスライドの図の項目のほかが変わっていないか、`change` が空になったかを確かめる       |
 | `scripts/worklog-report.mjs` | 作業記録（`worklog.jsonl`）を集計し、工程ごとの開始・終了、AI の作業時間、人の待ち時間、やり取り・ビルド・サブエージェントの回数、工程の戻り、承認の聞き直しを表で出す（ファイルには書かない） |
 
 hook（`.claude/settings.json` から呼ばれる。AI は実行しない）：
 
-| ファイル | いつ | 中身 |
-|---|---|---|
-| `scripts/approve-hook.mjs` | 人間が答えたとき（UserPromptSubmit） | 人間の答えを判定して approvals.yaml に記録する |
-| `scripts/protect-bash.mjs` | Bash を実行する前（PreToolUse） | approvals.yaml への書き込みを止め、ハーネスのファイル（`.claude/`・`CLAUDE.md`）への書き込みには確認を出す |
-| `scripts/protect-edit.mjs` | Edit・Write を実行する前（PreToolUse） | ハーネスのファイルの編集に確認を出す |
-| `scripts/protect-check.mjs` | 会話の始めと、ターンの終わり（SessionStart・Stop） | ハーネスのファイルの状態を覚え、すり抜けた変更を見つけて伝える |
-| `scripts/worklog.mjs hook` | 会話の始め、人間が書いたとき、ターンの終わり、サブエージェントの終わり（SessionStart・UserPromptSubmit・Stop・SubagentStop） | デッキの `worklog.jsonl` に時刻と工程を足す（作業記録）。ターンの終わりには、使ったツールの回数・変えたファイル・トークン数も足す。どのデッキかはブランチ `feature/<deck-id>` で決め、わからなければ書かない。人間の発言の本文は書かない。ビルドの結果は `build.mjs`、承認の依頼は `request.mjs` が足す |
+| ファイル                    | いつ                                                                                                                         | 中身                                                                                                                                                                                                                                                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/approve-hook.mjs`  | 人間が答えたとき（UserPromptSubmit）                                                                                         | 人間の答えを判定して approvals.yaml に記録する                                                                                                                                                                                                                                                          |
+| `scripts/protect-bash.mjs`  | Bash を実行する前（PreToolUse）                                                                                              | approvals.yaml への書き込みを止め、ハーネスのファイル（`.claude/`・`CLAUDE.md`）への書き込みには確認を出す                                                                                                                                                                                              |
+| `scripts/protect-edit.mjs`  | Edit・Write を実行する前（PreToolUse）                                                                                       | ハーネスのファイルの編集に確認を出す                                                                                                                                                                                                                                                                    |
+| `scripts/protect-check.mjs` | 会話の始めと、ターンの終わり（SessionStart・Stop）                                                                           | ハーネスのファイルの状態を覚え、すり抜けた変更を見つけて伝える                                                                                                                                                                                                                                          |
+| `scripts/worklog.mjs hook`  | 会話の始め、人間が書いたとき、ターンの終わり、サブエージェントの終わり（SessionStart・UserPromptSubmit・Stop・SubagentStop） | デッキの `worklog.jsonl` に時刻と工程を足す（作業記録）。ターンの終わりには、使ったツールの回数・変えたファイル・トークン数も足す。どのデッキかはブランチ `feature/<deck-id>` で決め、わからなければ書かない。人間の発言の本文は書かない。ビルドの結果は `build.mjs`、承認の依頼は `request.mjs` が足す |
 
-ハーネスの確認（protect-*）は、スライド作成中だけ出す。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は出さず、approvals.yaml と `.claude/settings.json` だけを守る。判定は `.claude/lib/common.mjs` の `harnessDev`。環境変数 `SLIDE_HARNESS_MODE`（`dev`・`slides`）で上書きできる。
+ハーネスの確認（protect-\*）は、スライド作成中だけ出す。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は出さず、approvals.yaml と `.claude/settings.json` だけを守る。判定は `.claude/lib/common.mjs` の `harnessDev`。環境変数 `SLIDE_HARNESS_MODE`（`dev`・`slides`）で上書きできる。

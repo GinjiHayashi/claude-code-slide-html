@@ -19,7 +19,7 @@
 
 - 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間の答えを受けた hook だけが書く。AI は書かない（`.claude/settings.json` で禁止）。
 - 承認済みかどうかは自分で判断せず、`make-slides/scripts/gate.mjs` か `status.mjs` で確かめる。頼み方は `make-slides` の「承認の頼み方」に従う。
-- 承認は brief.md → outline.md → outline.md と factcheck.md → deck.html の4回。ファクトチェックの時期（`brief.md` の `factcheck`）は既定で「最後に1回」（ビルドと見た目の直しのあと）。「構成のあとと最後の2回」も選べる（`make-slides` の「全体の流れ」）。
+- 承認は brief.md → outline.md → outline.md と factcheck.md → deck.html の4回。ファクトチェックで outline.md の文を直さなかったときは、最後の2回を1回にまとめる（`make-slides` の「全体の流れ」）。ファクトチェックの時期（`brief.md` の `factcheck`）は既定で「最後に1回」（ビルドと見た目の直しのあと）。「構成のあとと最後の2回」も選べる（`make-slides` の「全体の流れ」）。
 - 最後のファクトチェックの承認のあとに内容を変えた場合は、文を変えたスライドについてファクトチェックからやり直す。見た目だけの変更は承認のやり直しだけで済む（分け方は `slide-factcheck`）。
 
 ## フォルダ
@@ -27,13 +27,13 @@
 - `deck-id` は `YYYY-MM-DD-<短い英語名>`（例：`2026-10-17-data-platform`）。
 - スライド1件の成果物はすべて `decks/<deck-id>/` に置く。中は次の3つに分ける。
 
-| 場所 | 置くもの | 誰が直すか |
-|---|---|---|
-| `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、PDF、メモなど）。git の管理外 | 人間が置く。AI は書き換えない（スライドに載せる画像だけ `assets/` に移す） |
-| `reference/` | 元の資料を md にしたもの（`sources/`・`chat/`）と一覧 `index.md`、AI の調査 `research.md`。以降の工程はここを読む（`slide-intake/reference-format.md`） | `reference.mjs` が作り、AI が要約と読み取りと調査を書く |
-| `assets/` | スライドに載せる画像（`inputs/` から移したもの） | AI が移す |
+| 場所           | 置くもの                                                                                                                                                                                                     | 誰が直すか                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `inputs/`      | 人間が渡した元の資料（記入シート `intake.md`、Excel、PDF、メモなど）。git の管理外                                                                                                                           | 人間が置く。AI は書き換えない（スライドに載せる画像だけ `assets/` に移す）           |
+| `reference/`   | 元の資料を md にしたもの（`sources/`・`chat/`）と一覧 `index.md`、AI の調査 `research.md`。以降の工程はここを読む（`slide-intake/reference-format.md`）                                                      | `reference.mjs` が作り、AI が要約と読み取りと調査を書く                              |
+| `assets/`      | スライドに載せる画像（`inputs/` から移したもの）                                                                                                                                                             | AI が移す                                                                            |
 | フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`knowledge-map.md`（知識マップ）、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml`、`worklog.jsonl`（作業記録） | 人間と AI（`approvals.yaml` は hook だけ。`worklog.jsonl` は hook とスクリプトだけ） |
-| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外） | ビルドのスクリプトだけ。手で直さない |
+| `build/`       | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外）                                                                                                | ビルドのスクリプトだけ。手で直さない                                                 |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。
 
@@ -46,12 +46,12 @@
 
 固定ファイルに限らず、ハーネスのファイル（`.claude/` の中と `CLAUDE.md`）は、スライド作成中は変えない。変更が必要なときは、人間に理由を報告して判断を仰ぐ。
 
-| 対象 | 扱い（`.claude/settings.json` と hook） |
-|---|---|
-| `approvals.yaml`、`.claude/settings.json` | 変えられない（deny。`approvals.yaml` は、Bash のその場のスクリプトの中の書き込みも hook が止める） |
-| `.claude/` の中、`CLAUDE.md` | スライド作成中は、変えるたびに人間の確認が出る。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は、確認を出さない |
-| すり抜けた変更 | ターンの終わりに hook が見つけて伝える。そのときは、変えたことと理由を人間に伝え、戻すかを聞く |
-| 危ない git・削除（force push、`main` への push、`git reset --hard`、`rm -rf` など） | いつでも人間の確認が出る（ask） |
+| 対象                                                                                | 扱い（`.claude/settings.json` と hook）                                                                                              |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `approvals.yaml`、`.claude/settings.json`                                           | 変えられない（deny。`approvals.yaml` は、Bash のその場のスクリプトの中の書き込みも hook が止める）                                   |
+| `.claude/` の中、`CLAUDE.md`                                                        | スライド作成中は、変えるたびに人間の確認が出る。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は、確認を出さない |
+| すり抜けた変更                                                                      | ターンの終わりに hook が見つけて伝える。そのときは、変えたことと理由を人間に伝え、戻すかを聞く                                       |
+| 危ない git・削除（force push、`main` への push、`git reset --hard`、`rm -rf` など） | いつでも人間の確認が出る（ask）                                                                                                      |
 
 ハーネスを直すときのコマンドの書き方（確認を増やさないため）：
 

@@ -42,6 +42,16 @@ test("worklog の hook：feature/<deck-id> のブランチなら、時刻と工�
   appendWork(ex, { event: "build", ok: true });
   assert.equal(fs.existsSync(path.join(ex, "worklog.jsonl")), false);
 
+  // 完成後の直しのブランチ（feature/<deck-id>-fix、-fix2…）も同じデッキに書く
+  for (const b of ["feature/2026-10-17-report-automation-fix", "feature/2026-10-17-report-automation-fix2"]) {
+    const fix = repo(b);
+    hook({ hook_event_name: "UserPromptSubmit", session_id: "s2", cwd: fix.root, prompt: "直して" });
+    assert.deepEqual(
+      readWork(fix.dir).map((r) => r.event),
+      ["prompt"],
+    );
+  }
+
   const other = repo("develop-work");
   hook({ hook_event_name: "UserPromptSubmit", session_id: "s1", cwd: other.root, prompt: "x" });
   assert.equal(fs.existsSync(path.join(other.dir, "worklog.jsonl")), false);

@@ -36,7 +36,7 @@ function factcheckBlock(at, fcFile, stage, next) {
 }
 
 export function deckStatus(deckDir) {
-  const at = (stage, state, next, reasons = []) => ({ deck: path.basename(deckDir), stage, state, next, reasons });
+  let at = (stage, state, next, reasons = []) => ({ deck: path.basename(deckDir), stage, state, next, reasons });
   if (!fs.existsSync(deckDir)) return at("0 開始", "デッキのフォルダがない", "slide-intake（new-deck.mjs でフォルダを作る）");
   const approvals = readApprovals(deckDir);
 
@@ -51,6 +51,13 @@ export function deckStatus(deckDir) {
   const briefFile = path.join(deckDir, "brief.md");
   if (!fs.existsSync(briefFile)) return at("1a 事前情報の取り込み", "brief.md がない", "slide-intake");
   const b = checkBrief(read(briefFile));
+  // デッキ（decks/<deck-id>/）のフォルダ名と brief.md の deck_id が違えば、どの工程でも注意を添える（rename-deck.mjs の使い忘れ）
+  const id = b.meta?.deck_id;
+  if (id && path.basename(path.dirname(path.resolve(deckDir))) === "decks" && id !== path.basename(deckDir)) {
+    const base = at;
+    const note = `注意：フォルダ名（${path.basename(deckDir)}）と brief.md の deck_id（${id}）が違う。名前を変えるときは slide-intake/scripts/rename-deck.mjs を使う`;
+    at = (...a) => ((r) => ({ ...r, reasons: [...r.reasons, note] }))(base(...a));
+  }
   b.errors.push(...checkSources(b.sections, deckDir));
   if (b.errors.length) return at("1a 事前情報の取り込み", "brief.md に書式の誤り", "slide-intake（直して check-brief.mjs を0件にする）", b.errors);
   // 承認済みで変わっていない brief.md は、あとから増えた項目（max_subagents など）が空でもヒアリングに戻さない（空の項目は既定の値で進む）

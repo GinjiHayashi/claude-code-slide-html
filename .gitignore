@@ -35,3 +35,6 @@ decks/*/build/shots/
 
 # 図の変更の指示（change）を反映する前の outline.md の写し（edit-check.mjs。一時のもの）
 decks/*/build/.edit-check.json
+
+# Python が作るキャッシュ
+__pycache__/

@@ -3,7 +3,7 @@
 // - hook（.claude/settings.json の SessionStart・UserPromptSubmit・Stop・SubagentStop）：node worklog.mjs hook
 //   人間が書いた時刻（prompt）、AI が返事を終えた時刻（stop）、セッションの始まり（session。ハーネスの版を残す）、サブエージェントの終わり（subagent）
 // - スクリプトから：appendWork(deckDir, { event: "build", … })。build.mjs（ビルドの結果）と request.mjs（承認の依頼）が書く
-// - どのデッキかは、ブランチ名 feature/<deck-id> で決める（make-slides の「git」）。わからなければ何も書かない
+// - どのデッキかは、ブランチ名 feature/<deck-id>（直しの feature/<deck-id>-fix も）で決める（make-slides の「git」）。わからなければ何も書かない
 // - 人間の発言の本文は書かない（機密を増やさない。承認の答えは approvals.yaml にある）
 // - 記録に失敗しても作業は止めない（hook は必ず終了コード 0 で終わる）
 import fs from "fs";
@@ -54,10 +54,10 @@ export function readWork(deckDir) {
 
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 
-// 今のブランチ feature/<deck-id> のデッキのフォルダ
+// 今のブランチ feature/<deck-id> のデッキのフォルダ。完成後の直しのブランチ feature/<deck-id>-fix（-fix2…。branch.mjs）も同じデッキ
 export function currentDeck(root) {
   try {
-    const m = git(root, "branch", "--show-current").match(/^feature\/(.+)$/);
+    const m = git(root, "branch", "--show-current").match(/^feature\/(.+?)(?:-fix\d*)?$/);
     const dir = m && path.join(root, "decks", m[1]);
     return dir && fs.existsSync(dir) ? dir : null;
   } catch {

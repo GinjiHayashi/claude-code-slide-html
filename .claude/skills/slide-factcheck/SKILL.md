@@ -1,11 +1,25 @@
 ---
 name: slide-factcheck
-description: slide-outline が書いた outline.md を、fact-checker をスライドのまとまりごとに並列で呼んでファクトチェックし、結果を factcheck.md にまとめ、人間の判断を受けて outline.md を直し、outline.md と factcheck.md を一緒に承認してもらうまでを受け持つスキル。構成ができたあとと、承認後にスライドを変えたときに使う。
+description: slide-outline が書いた outline.md を、fact-checker をスライドのまとまりごとに並列で呼んでファクトチェックし、結果を factcheck.md にまとめ、人間の判断を受けて outline.md を直し、outline.md と factcheck.md を一緒に承認してもらうまでを受け持つスキル。ビルドと見た目の直しが済んだあと（「2回」なら構成のあとにも）と、承認後にスライドを変えたときに使う。
 ---
 
 # ファクトチェック（slide-factcheck）
 
 `decks/<deck-id>/outline.md` の記述が事実と一致するかを確かめ、`decks/<deck-id>/factcheck.md` にまとめる。確かめるのは `fact-checker`（`.claude/agents/fact-checker.md`）。書式は `factcheck-template.md`。
+
+## いつ・どこまで確かめるか
+
+`brief.md` の `factcheck`（ファクトチェックの時期。空なら「最後に1回」）で決まる。どの回かは `status.mjs` の「工程」で確かめる。
+
+| 時期 | 回 | 確かめるスライド・記述 | factcheck.md の `round` |
+|---|---|---|---|
+| 最後に1回 | 4 ファクトチェック（ビルドと見た目の直しのあと） | すべてのスライドのすべての記述 | 書かない |
+| 構成のあとと最後の2回 | 2b ファクトチェック（構成のあと） | 数値と、結論を支える事実だけ | `構成のあと` |
+| 〃 | 4 ファクトチェック（最後） | 2b で確かめなかった記述と、2b のあとに文が変わったスライド（`status.mjs` の理由に番号が出る） | `最後` に書き換える |
+
+- どの回も、承認のあとに直したときに確かめ直すのは、文が変わったスライドだけ（この下の手順 9 のあと）。
+- 「最後」の回では、2b の指摘は消さずに残し、新しい番号で足す。
+- `brief.md` に「信頼して使う資料」があれば、`factcheck.md` の「## 信頼して使う資料」に扱いを1行で書き、fact-checker にも伝える（資料と一致した記述は確かめたものとし、原本を開けないことだけで要確認にしない。`research-standards` の「信頼して使う資料」）。
 
 ## 手順
 
@@ -14,7 +28,7 @@ description: slide-outline が書いた outline.md を、fact-checker をスラ�
    - 確かめる記述のないスライド（`toc`、ビルドが足す credits、見出しだけの `section` など）は対象にしない。`title`・`section`・`closing` も、言い切った文や数値があれば対象にする。
    - 対象が少ないときは、まとまりを減らしてよい（目安：1つのまとまりに3枚以上）。
    - まとまりごとに ID の番号を割り当てる。1つ目は `FC-101` から、2つ目は `FC-201` から、のように百の位で分ける。`factcheck.md` にすでにある番号は使わない。
-3. **並列で呼ぶ**：まとまりごとに `fact-checker` を呼ぶ。渡すもの：スライドの番号（範囲か一覧）、`decks/<deck-id>/` のパス、始めの番号、今日の日付。
+3. **並列で呼ぶ**：まとまりごとに `fact-checker` を呼ぶ。渡すもの：スライドの番号（範囲か一覧）、`decks/<deck-id>/` のパス、始めの番号、今日の日付。構成のあとの回なら、確かめる範囲（「数値と結論を支える事実だけ」）も渡す。
 4. **まとめる**：返ってきた指摘を、ID と中身を変えずに `factcheck.md` に足す。「問題がなかった記述」と「検索の記録」は、それぞれの表にまとめる。`factcheck.md` がなければ、先頭に `deck_id` の設定を書いて作る。
 5. **チェック**：`node .claude/skills/slide-factcheck/scripts/check-factcheck.mjs decks/<deck-id>/factcheck.md`。
    - エラー（終了コード 2）があれば直して、もう一度チェックする。直すのは書き方だけ。根拠のない P0・P1 は「要確認」に下げる（区分を上げたり、指摘を消したりしない）。
@@ -36,12 +50,18 @@ description: slide-outline が書いた outline.md を、fact-checker をスラ�
      - やり直さなくてよいのは、P0・P1 の `suggestion` のとおりに直したとき（根拠を確かめた直し方なので）と、記述を削除しただけのとき。
      - 要確認の `suggestion` のとおりに直したとき、人間が言った内容で直したときは、やり直す（新しい記述の根拠を確かめていないため）。
    - 「出典を足す」は、人間から出典が届いたら `research-standards` の書式で `research.md` に足し、そのスライドを 2〜5 でやり直す。
-9. **構成とファクトチェックをまとめて承認してもらう**：
+9. **構成とファクトチェックをまとめて承認してもらう**（どの回も同じ）：
    1. 写した判断と、`outline.md` を直したところ（スライドの番号と、直す前と後）を人間に見せる。草案があれば `check-structure.mjs` の「変えた」も見せる（`slide-outline` の手順 7 のあとに変わったところがわかるように）。
-   2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。「outline.md と factcheck.md を承認しますか？」）。
-   3. HTML 作成に進めるかは `gate.mjs decks/<deck-id> build` で確かめる。
+   2. `make-slides` の「承認の頼み方」で、`outline.md` と `factcheck.md` を一緒に承認してもらう（`request.mjs decks/<deck-id> outline.md factcheck.md`。聞く文は「承認の頼み方」の決まった文）。
+   3. 次の工程は `status.mjs` で確かめる（構成のあとの回なら 3 HTML 作成、最後の回なら 5 最終確認）。
 
-承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったスライドの番号を出す。そのスライドについて 2 からやり直す。
+承認のあとに `outline.md` のスライドを変えたときは、ゲートが「承認後に変更あり」と変わったところを「文」と「見た目だけ」に分けて出す。
+
+- **文が変わったスライド**（title・lead・本文・図の中の字・データの数値・notes・source・claims など）は、ゲートが「ファクトチェックのあとに outline.md のスライドの文が変わった」と番号を出す。そのスライドについて 2 からやり直す。
+- **見た目だけ変わったスライド**（型、図の型、置き方、大きさ、色の役割、形、アイコン、強調、番号の付け方など）は、ファクトチェックをやり直さない。手順 9 の承認だけを頼み直す。
+- 改行の位置や太字・文中のコードの印だけの直しは、文の変更にしない。スライドを消しただけのときも、やり直さない。
+- 文と見た目の分け方は `html-build/scripts/spec.mjs` の `LOOK`。迷う項目は文に入れてある。
+- スライドは見出しの番号ではなく、`id`（`outline-template.md` 2章）か文で対応づける。途中に1枚足しても、後ろのスライドは「変わった」にならない。
 
 ## しないこと
 

@@ -25,3 +25,6 @@ Thumbs.db
 
 # ビルドで作るファイル（outline.md から作り直せる。フォントを埋め込むので、ライセンス表記の仕組みを通したものだけを配る）
 examples/*/build/
+
+# スライドを撮った画像（npm run shots。確かめるための一時のもの）
+decks/*/build/shots/

@@ -9,7 +9,7 @@
 3. スライドの型は `layout-catalog.md`、図の型は `diagram-catalog.md` から選ぶ。新しい型を作らない。図は、先に `outline.md` の `idea` で見せたい絵を決め、一覧の部品でそのまま描けるとき（`match: そのまま`）だけその部品を使い、ほかは自由図（`canvas`）で描く。`canvas` でも描けないときだけ独自の表現で描く。図表は HTML/CSS/SVG で作る。外部の作図ツール（Mermaid など）は使わない。
 4. 固定ファイル（下記）はスライド作成中に変更しない。合うスライドの型がなければ近い型で代替し、どのスライドをなぜ代替したかを人間に報告する（図は原則3のとおり）。
 5. 人間の承認が必要な工程では、承認されるまで次へ進まない。
-6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。
+6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。はみ出し・重なり・端のそろい・余白の偏りは、機械的な確認として AI が画像で見てよい（`npm run shots`）。良し悪し（好み）は判断しない。
 7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
 8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・フォント・アイコン集は `registry.yaml` に登録済みのものだけを使う。アイコンは AI がアイコン集（Phosphor）から探して選ぶ。デッキごとの写真などの画像は、人間が `inputs/` に置き、`outline.md` の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。ライセンス表記は書かない（スクリプトが生成する）。
@@ -19,7 +19,8 @@
 
 - 承認の記録は `decks/<deck-id>/approvals.yaml` にあり、人間の答えを受けた hook だけが書く。AI は書かない（`.claude/settings.json` で禁止）。
 - 承認済みかどうかは自分で判断せず、`make-slides/scripts/gate.mjs` か `status.mjs` で確かめる。頼み方は `make-slides` の「承認の頼み方」に従う。
-- 承認後に内容を変えた場合は、変えたスライドについてファクトチェックからやり直す。
+- 承認は brief.md → outline.md → outline.md と factcheck.md → deck.html の4回。ファクトチェックの時期（`brief.md` の `factcheck`）は既定で「最後に1回」（ビルドと見た目の直しのあと）。「構成のあとと最後の2回」も選べる（`make-slides` の「全体の流れ」）。
+- 最後のファクトチェックの承認のあとに内容を変えた場合は、文を変えたスライドについてファクトチェックからやり直す。見た目だけの変更は承認のやり直しだけで済む（分け方は `slide-factcheck`）。
 
 ## フォルダ
 
@@ -30,7 +31,7 @@
 |---|---|---|
 | `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、メモなど） | 人間が置く。AI は書き換えない |
 | フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml` | 人間と AI（`approvals.yaml` は hook だけ） |
-| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml` | ビルドのスクリプトだけ。手で直さない |
+| `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外） | ビルドのスクリプトだけ。手で直さない |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。
 
@@ -53,6 +54,7 @@
 ハーネスを直すときのコマンドの書き方（確認を増やさないため）：
 
 - ファイルの編集は Edit を使う。1つの Bash に、ファイルの書き込みとほかの処理をつなげない。
+- スライド作成中にハーネスを直すときは、Edit を1回ずつ出す。出す前に、何をなぜ変えるかを1行で人間に伝える（確認が続けて出ると、人間は何の確認かわからずに止める）。
 - 別のフォルダの git は `cd <パス> && git …` ではなく `git -C <パス> …` で行う（`cd` と `git` の組み合わせは Claude Code が確認を出す）。
 - worktree を作るときは `.claude/worktrees/` に作る（Claude Code の保護の例外）。`node_modules` をシンボリックリンクで外から借りない（作業フォルダの外として確認が出る）。
 
@@ -64,4 +66,4 @@
 
 ## git
 
-簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides` の「git」。
+簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間が GitHub で行うか、チャットの承認のあとに `make-slides/scripts/merge.mjs` だけが行う）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides` の「git」。

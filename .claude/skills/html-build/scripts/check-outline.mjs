@@ -2,10 +2,10 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { readOutline, width, plain, LEAD_LIMIT } from "./outline.mjs";
+import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -13,7 +13,7 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた。
 // match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
@@ -62,7 +62,8 @@ export async function checkOutline(file) {
   if (nch > LAYOUTS.toc.chapters && o.slides.some((s) => s.fields.layout === "toc"))
     errors.push(`章が${nch}ある。目次（toc）に載せられるのは${LAYOUTS.toc.chapters}章まで`);
 
-  const seen = new Set();
+  const seen = new Set(),
+    names = new Set();
   const comps = {};
   for (const [i, s] of o.slides.entries()) {
     const f = s.fields;
@@ -71,6 +72,11 @@ export async function checkOutline(file) {
     seen.add(s.id);
     if (s.id !== `S${String(i + 1).padStart(2, "0")}`) warn(s, `${i + 1}枚目だが番号が ${s.id}（番号は並び順と合わせると直しやすい）`);
     for (const k of s.dup) err(s, `項目「${k}」が2回書かれている`);
+    if (f.id !== undefined) {
+      if (typeof f.id !== "string" || !SLIDE_ID.test(f.id)) err(s, "id は英小文字・数字とハイフンで書く（例：tdd-intro）");
+      else if (names.has(f.id)) err(s, `id「${f.id}」がほかのスライドと重複している`);
+      names.add(f.id);
+    }
     const L = LAYOUTS[f.layout];
     if (!f.layout) {
       err(s, "layout がない");
@@ -118,7 +124,11 @@ export async function checkOutline(file) {
       else if (typeof f.lead === "string") {
         bullets.push(f.lead);
         if (f.lead.trim().includes("\n")) err(s, "lead は改行せずに1つの文章で書く（行の折り返しはビルドが決める）");
-        if (width(plain(f.lead)) > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${width(plain(f.lead))}字。${LEAD_LIMIT}字まで）`);
+        const n = width(plain(f.lead));
+        if (n > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${n}字。${LEAD_LIMIT}字まで）`);
+        else if (n < LEAD.short && !f.lead_short)
+          warn(s, `lead が短い（全角${n}字。目安は${LEAD.target[0]}〜${LEAD.target[1]}字）。表や大きな図のために短くするなら lead_short: <理由> と書く`);
+        else if (n >= LEAD.short && f.lead_short) warn(s, "lead が短くないので lead_short は要らない");
       }
     }
     const list = (k, [min, max, each, nest = false], arr = f[k]) => {
@@ -141,6 +151,11 @@ export async function checkOutline(file) {
         if (typeof t !== "string") return err(s, `${k} の${n + 1}項目目が文字ではない`);
         bullets.push(t);
         if (width(plain(t)) > each) warn(s, `${k} の${n + 1}項目目が全角${each}字の目安を超えている（${width(plain(t))}字）`);
+        else if (BULLETS.layouts.includes(f.layout) && width(plain(t)) < BULLETS.minItem)
+          warn(
+            s,
+            `${k} の${n + 1}項目目が短すぎる（全角${width(plain(t))}字）。1項目で意味が通る長さにする（目安は全角${BULLETS.goodItem}字以上。principles.md 5章）`,
+          );
       });
     };
     if (f.numbered != null && typeof f.numbered !== "boolean") err(s, "numbered は true か false にする");
@@ -245,6 +260,9 @@ export async function checkOutline(file) {
     if (matchKind === MATCHES[0] && kinds.includes("canvas")) warn(s, "match が「そのまま」なのに自由図（canvas）で描いている。一覧の型を使う");
     if (matchKind && matchKind !== MATCHES[0] && !f.html && !kinds.includes("canvas") && listed.length)
       warn(s, `match が「${matchKind}」なのに一覧の型（${listed.join("・")}）で描いている。自由図（canvas）か独自の表現で描く`);
+    // steps は順序があるときだけ（diagram-catalog.md 4章）。idea に「順序なし」と書いたのに steps で描いたら注意
+    if (/順序(が|は)?(なし|ない|無)/.test(String(f.idea ?? "")) && kinds.includes("steps"))
+      warn(s, "idea に順序がないと書いたのに steps で描いている。同じ重さの項目を並べるだけなら cards にする（diagram-catalog.md 4章）");
     if (f.html)
       warn(
         s,
@@ -278,7 +296,48 @@ export async function checkOutline(file) {
     }
   }
   for (const a of deck.assets) if (a?.src && !usedAssets.has(a.src)) warnings.push(`assets の ${a.src} はどのスライドでも使っていない`);
+  warnings.push(...layoutBalance(o.slides));
   return { errors, warnings, slides: o.slides.length };
+}
+
+// 型の偏り（principles.md 5章）：箇条書きの型が、本文のあるスライドの BULLETS.ratio を超えたら注意を返す
+export function layoutBalance(slides) {
+  const body = slides.filter((s) => LAYOUTS[s.fields.layout]?.lead);
+  const list = body.filter((s) => BULLETS.layouts.includes(s.fields.layout));
+  const out = [];
+  if (body.length && list.length / body.length > BULLETS.ratio)
+    out.push(
+      `箇条書きの型（${BULLETS.layouts.join("・")}）が、本文のあるスライド${body.length}枚のうち${list.length}枚（${Math.round((100 * list.length) / body.length)}%）。${Math.round(BULLETS.ratio * 100)}%以下を目安に、図で表せるものは図にする（principles.md 5章）`,
+    );
+  return [...out, ...variety(body)];
+}
+
+// 型と部品の偏り：同じスライドの型・同じ図の型の連続と、1つの図の型の割合（本文のあるスライドで数える）
+function variety(body) {
+  const out = [];
+  const runs = (key, what) => {
+    for (let i = 0; i < body.length; ) {
+      let j = i;
+      while (j + 1 < body.length && key(body[j + 1]) && key(body[j + 1]) === key(body[i])) j++;
+      if (key(body[i]) && j - i + 1 >= VARIETY.run)
+        out.push(`${body[i].id}〜${body[j].id} の${j - i + 1}枚が、同じ${what}（${key(body[i])}）。続けて同じ形にしない`);
+      i = j + 1;
+    }
+  };
+  const kinds = (s) => (s.fields.diagrams ?? (s.fields.diagram ? [s.fields.diagram] : [])).map((d) => d?.kind).filter(Boolean);
+  runs((s) => s.fields.layout, "スライドの型");
+  runs((s) => kinds(s).join("・"), "図の型");
+  const withFig = body.filter((s) => kinds(s).length);
+  if (withFig.length >= VARIETY.min) {
+    const n = {};
+    for (const s of withFig) for (const k of new Set(kinds(s))) n[k] = (n[k] ?? 0) + 1;
+    for (const [k, c] of Object.entries(n))
+      if (c / withFig.length > VARIETY.ratio)
+        out.push(
+          `図の型 ${k} が、図のあるスライド${withFig.length}枚のうち${c}枚（${Math.round((100 * c) / withFig.length)}%）。${Math.round(VARIETY.ratio * 100)}%以下を目安に、ほかの型も使う（diagram-catalog.md 4章）`,
+        );
+  }
+  return out;
 }
 
 // コマンドとして呼ばれたとき

@@ -31,6 +31,23 @@ test("brief.md：max_subagents は 1〜10 の整数", () => {
   assert.equal(brief("おまかせ"), true);
 });
 
+test("brief.md：factcheck は「最後に1回」か「構成のあとと最後の2回」", () => {
+  const brief = (v) => checkBrief(`---\ndeck_id: 2026-10-17-x\nfactcheck: ${v}\n---\n`).errors.some((e) => e.includes("factcheck"));
+  assert.equal(brief("最後に1回"), false);
+  assert.equal(brief("構成のあとと最後の2回"), false);
+  assert.equal(brief("毎回"), true);
+});
+
+test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた資料が inputs/ になければエラー", () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "brief.md");
+  const base = fs.readFileSync(f, "utf8");
+  assert.ok(!checkBrief(base).missing.includes("信頼して使う資料")); // 見出しのない前からのデッキは聞かない
+  assert.ok(checkBrief(base + "\n## 信頼して使う資料\n").missing.includes("信頼して使う資料"));
+  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- inputs/references/summary.md は書籍の要約として採用。原本との照合は不要\n");
+  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("「信頼して使う資料」の inputs/references/summary.md")));
+});
+
 test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
   const dir = tempDeck();
   fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
@@ -103,6 +120,20 @@ test("outline.md：一覧にない型・必須の項目の抜け・知らない�
   assert.ok(r.errors.some((e) => e.startsWith("S01") && e.includes("nosuch")));
   assert.ok(r.errors.some((e) => e.startsWith("S02") && e.includes("title")));
   assert.ok(r.errors.some((e) => e.startsWith("S03") && e.includes("typo")));
+});
+
+test("outline.md：スライドの id は英小文字・数字・ハイフンで、重複はエラー", async () => {
+  const dir = tempDeck();
+  const toc = (id) => ["- layout: toc", `- id: ${id}`];
+  fs.writeFileSync(
+    path.join(dir, "outline.md"),
+    outline(["## S01", ...toc("intro")], ["## S02", ...toc("intro")], ["## S03", ...toc("TDD_Intro")], ["## S04", ...toc("ok-2")]),
+  );
+  const r = await checkOutline(path.join(dir, "outline.md"));
+  const ids = r.errors.filter((e) => e.includes("id"));
+  assert.ok(ids.some((e) => e.startsWith("S02") && e.includes("重複")));
+  assert.ok(ids.some((e) => e.startsWith("S03") && e.includes("英小文字")));
+  assert.ok(!ids.some((e) => e.startsWith("S01") || e.startsWith("S04")));
 });
 
 test("outline.md：どの本文の型にも source を書ける。表紙の date は必須。checklist の知らない項目はエラー", async () => {
@@ -246,7 +277,7 @@ test("factcheck.md：「引用しない」のドメインを根拠にすると�
 
 test("brief のチェック：空の項目を questions.md の表の順に出す（deck_id は最後）", () => {
   const text =
-    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\nmax_subagents:\n---\n\n" +
+    "---\ndeck_id:\ntitle:\nsubtitle:\ndate:\nauthor:\ncontact:\npdf:\nmax_subagents:\nfactcheck:\n---\n\n" +
     [
       "目的・この資料で決めたいこと",
       "聞き手と前提知識",
@@ -255,6 +286,7 @@ test("brief のチェック：空の項目を questions.md の表の順に出す
       "調査が必要な項目",
       "必ず入れる要素・入れない要素",
       "構成の進め方",
+      "信頼して使う資料",
     ]
       .map((h) => `## ${h}\n`)
       .join("\n");
@@ -263,4 +295,84 @@ test("brief のチェック：空の項目を questions.md の表の順に出す
     .match(/^\| \d+ \| [^|]+/gm)
     .map((r) => r.split("|")[2].trim());
   assert.deepEqual(checkBrief(text).missing, rows);
+});
+
+test("outline.md：lead は目安より短いと注意（lead_short に理由を書けば出ない）、3行を超えるとエラー。目安の長さは決まった幅で3行に収まる", async () => {
+  const { leadWidth, LEAD } = await import(path.join(SKILLS, "html-build/scripts/outline.mjs"));
+  const zen = (n) => "あ".repeat(n - 1) + "。";
+  const slide = (lead, more = []) => ["## S01", "- layout: title-body", "- title: t", `- lead: ${lead}`, "- body: [a]", ...more];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(s));
+    return checkOutline(path.join(dir, "outline.md"));
+  };
+  const short = (r) => r.warnings.some((w) => w.includes("lead が短い"));
+  assert.equal(short(await check(...slide(zen(70)))), true);
+  assert.equal(short(await check(...slide(zen(70), ["- lead_short: 表が大きいため"]))), false);
+  assert.equal(short(await check(...slide(zen(145)))), false);
+  assert.ok((await check(...slide(zen(145), ["- lead_short: 表が大きいため"]))).warnings.some((w) => w.includes("lead_short は要らない")));
+  assert.ok((await check(...slide(zen(230)))).errors.some((e) => e.includes("3行に収まらない")));
+  // 目安の上限（160字）までは決まった幅のまま。超えたときだけ広がる
+  assert.equal(leadWidth(zen(150)), LEAD.base);
+  assert.equal(leadWidth(zen(LEAD.target[1])), LEAD.base);
+  assert.ok(leadWidth(zen(190)) > LEAD.base);
+});
+
+test("outline.md：箇条書きの型が本文のあるスライドの3割を超える・箇条書きの項目が短すぎると注意", async () => {
+  const lead = "- lead: " + "あ".repeat(144) + "。";
+  const body = (id, items) => [`## ${id}`, "- layout: title-body", "- title: t", lead, `- body: [${items}]`];
+  const chart = (id) => [
+    `## ${id}`,
+    "- layout: title-diagram",
+    "- title: t",
+    lead,
+    "- idea: i",
+    "- match: そのまま",
+    "- diagram: {kind: kpi, items: [{label: a, value: '1'}]}",
+  ];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(...s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings;
+  };
+  const long = "部署ごとに表の形が違うため、本部が手で貼り合わせている";
+  const ratio = (w) => w.some((x) => x.includes("箇条書きの型（"));
+  assert.equal(ratio(await check(body("S01", long), body("S02", long), chart("S03"))), true); // 2/3
+  assert.equal(ratio(await check(body("S01", long), chart("S02"), chart("S03"), chart("S04"))), false); // 1/4
+  const short = (w) => w.some((x) => x.includes("短すぎる"));
+  assert.equal(short(await check(body("S01", "時間がかかる"))), true);
+  assert.equal(short(await check(body("S01", long))), false);
+});
+
+test("outline.md：同じ型・同じ図の型が3枚続く、1つの図の型が図のあるスライドの4割を超えると注意", async () => {
+  const lead = "- lead: " + "あ".repeat(144) + "。";
+  const fig = (id, layout, kind) => [
+    `## ${id}`,
+    `- layout: ${layout}`,
+    "- title: t",
+    lead,
+    "- idea: i",
+    "- match: そのまま",
+    ...(layout === "text-diagram" ? ["- body: [部署ごとに表の形が違うため、本部が手で貼り合わせている]"] : []),
+    kind === "kpi" ? "- diagram: {kind: kpi, items: [{label: a, value: '1'}]}" : "- diagram: {kind: steps, items: [{title: a}, {title: b}, {title: c}]}",
+  ];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(...s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings;
+  };
+  const has = (w, t) => w.some((x) => x.includes(t));
+  const w1 = await check(fig("S01", "title-diagram", "kpi"), fig("S02", "title-diagram", "kpi"), fig("S03", "title-diagram", "kpi"));
+  assert.ok(has(w1, "S01〜S03 の3枚が、同じスライドの型（title-diagram）"));
+  assert.ok(has(w1, "S01〜S03 の3枚が、同じ図の型（kpi）"));
+  const mixed = [
+    fig("S01", "title-diagram", "kpi"),
+    fig("S02", "text-diagram", "steps"),
+    fig("S03", "title-diagram", "kpi"),
+    fig("S04", "text-diagram", "steps"),
+    fig("S05", "title-diagram", "kpi"),
+  ];
+  const w2 = await check(...mixed);
+  assert.ok(!has(w2, "枚が、同じ"));
+  assert.ok(has(w2, "図の型 kpi が、図のあるスライド5枚のうち3枚（60%）"));
 });

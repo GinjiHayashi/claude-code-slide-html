@@ -10,6 +10,7 @@ import { esc, check, R, O, optional, LINE, rounded } from "./_util.mjs";
 //    - wrap: 1行の箱の数。超えたら、行の右端の箱から矢印を折り曲げて次の行の左端の箱へつなぎ、次の行も左から右へ進む
 // 2) 枝分かれ・合流・戻りのある図：箱に id・col（列）・row（行）を付け、edges でつなぎ方を書く。
 //    data: { nodes: [{ id, label, col, row, caption?, type? }], edges: [{ from, to, label? }] }
+//    col・row は 0 から数える（1 から書いても、いちばん左の列・上の行を 0 として扱い、図を枠の中央に置く）
 //
 // 共通：type: process（白地。既定）／store（置き場所。淡い青の地）／decision（判断。丸い箱）
 //       highlight?: [id または label]、radius?（矢印の曲がり角の半径。既定 8）
@@ -37,9 +38,12 @@ export default function flowchart(data, opt = {}) {
   check("flowchart", data, schema);
   const auto = data.nodes.every((n) => n.col === undefined && n.row === undefined);
   const down = auto && data.direction === "down";
+  // col・row は 0 から数える。1 から書いても、使っていない列・行の分だけ図が右下に寄らないよう、最小の値を 0 にそろえる
+  const c0 = auto ? 0 : Math.min(...data.nodes.map((n) => n.col ?? 0)),
+    r0 = auto ? 0 : Math.min(...data.nodes.map((n) => n.row ?? 0));
   const N = data.nodes.map((n, i) => {
     const id = n.id ?? n.label;
-    if (!auto) return { ...n, id };
+    if (!auto) return { ...n, id, col: n.col - c0, row: n.row - r0 };
     if (down) return { ...n, id, col: 0, row: i };
     const per = data.wrap ?? data.nodes.length;
     const row = Math.floor(i / per),

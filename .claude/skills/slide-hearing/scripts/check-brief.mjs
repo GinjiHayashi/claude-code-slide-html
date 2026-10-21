@@ -10,7 +10,9 @@ import path from "path";
 import YAML from "yaml";
 import { DECK_ID, empty, frontMatter, isMain } from "../../../lib/common.mjs";
 
-export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf", "max_subagents"];
+export const META = ["deck_id", "title", "subtitle", "date", "author", "contact", "pdf", "max_subagents", "factcheck"];
+// ファクトチェックの時期（make-slides の gate.mjs・status.mjs が使う）。1つ目が既定
+export const FACTCHECK_TIMING = ["最後に1回", "構成のあとと最後の2回"];
 // 調査とファクトチェックで1回に呼ぶサブエージェントの数の上限（research-standards・slide-factcheck が使う）
 export const MAX_SUBAGENTS = { min: 1, max: 10, default: 3 };
 // 並びは questions.md の表の順・brief-template.md の見出しの順
@@ -24,6 +26,8 @@ export const SECTIONS = [
   "構成の進め方",
 ];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
+// 信頼して使う資料（fact-checker が、原本と照らさずに「確かめた」と扱う資料）。1行に1つ、inputs/ からのパスを先頭に書く
+export const TRUSTED = "信頼して使う資料";
 const NONE = "なし";
 
 export function checkBrief(text) {
@@ -63,6 +67,9 @@ export function checkBrief(text) {
   if (!empty(n) && !(Number.isInteger(n) && n >= MAX_SUBAGENTS.min && n <= MAX_SUBAGENTS.max))
     errors.push(`max_subagents は ${MAX_SUBAGENTS.min}〜${MAX_SUBAGENTS.max} の整数（既定は ${MAX_SUBAGENTS.default}）`);
 
+  if (!empty(meta.factcheck) && !FACTCHECK_TIMING.includes(meta.factcheck))
+    errors.push(`factcheck は ${FACTCHECK_TIMING.join("・")} のどちらか（既定は ${FACTCHECK_TIMING[0]}）`);
+
   // 本文：見出しごとの文章。（ ）だけの説明書きは空とみなす
   const body = m ? text.slice(m[0].length) : text;
   const sections = {};
@@ -79,6 +86,8 @@ export function checkBrief(text) {
     if (!(s in sections)) errors.push(`見出し「## ${s}」がない`);
     else if (!sections[s]) missing.push(s);
   }
+  // 信頼して使う資料：見出しは任意（前からのデッキにはない）。見出しがあって空なら、まだ聞いていない
+  if (TRUSTED in sections && !sections[TRUSTED]) missing.push(TRUSTED);
   // deck_id は聞かずに AI が付けるので最後（questions.md の表の順）
   missing.push(...[...META.slice(1), META[0]].filter((k) => missingMeta.includes(k)));
   const plan = sections["構成の進め方"];
@@ -89,6 +98,20 @@ export function checkBrief(text) {
     .filter(Boolean);
   return { errors, missing, questions, meta, sections };
 }
+
+// 信頼して使う資料のパス（各行の先頭の inputs/…）
+export const trusted = (sections) =>
+  (sections[TRUSTED] ?? "")
+    .split("\n")
+    .map(
+      (l) =>
+        l
+          .replace(/^[-*]\s*/, "")
+          .trim()
+          .replace(/^`/, "")
+          .split(/[`\s：:]/)[0],
+    )
+    .filter((f) => f.startsWith("inputs/"));
 
 // inputs/ のファイルと「入力の一覧」の表を突き合わせる。表の1列目に inputs/ からのパスを書く
 export function checkInputs(sections, deckDir) {
@@ -107,6 +130,7 @@ export function checkInputs(sections, deckDir) {
     .filter((c) => c.startsWith("inputs/"));
   for (const f of files) if (!listed.includes(f)) errors.push(`${f} が「入力の一覧」にない（読んで中身と使う工程を書く）`);
   for (const f of listed) if (!files.includes(f)) errors.push(`「入力の一覧」の ${f} が inputs/ にない`);
+  for (const f of trusted(sections)) if (!files.includes(f)) errors.push(`「${TRUSTED}」の ${f} が inputs/ にない`);
   return errors;
 }
 

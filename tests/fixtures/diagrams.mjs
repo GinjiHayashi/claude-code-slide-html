@@ -112,4 +112,16 @@ export const DIAGRAMS = {
     ],
   },
   dirtree: { tree: "project/\n  src/\n    * main.py  # 入口\n  README.md\n" },
+  cards: { items: [{ heading: "a", text: "説明" }, { heading: "b" }, { heading: "c", tone: "primary" }], summary: { text: "まとめ" } },
+  cycle: { items: [{ label: "a" }, { label: "b" }, { label: "c" }, { label: "d" }], exit: { from: 2, label: "抜ける" } },
+  layers: { items: [{ label: "a", text: "説明", tone: "primary" }, { label: "b" }, { label: "c", tone: "muted" }], top: "上", bottom: "下", note: "注記" },
+  hub: { top: { label: "上" }, hub: { label: "口", text: "説明" }, items: [{ label: "a", text: "説明" }, { label: "b" }] },
+  nested: { items: [{ label: "外", text: "説明" }, { label: "中", tone: "soft" }, { label: "内" }] },
+  "flow-notes": {
+    items: [
+      { label: "a", note: "説明" },
+      { label: "b", note: "説明" },
+    ],
+    base: { label: "帯" },
+  },
 };

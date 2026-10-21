@@ -41,7 +41,7 @@ export async function build(deckDir) {
   // 承認ゲート：単独で呼んだときは止めずに注意として記録する（承認前の試しのビルド。build-log.md の gate: false で区別する）
   const gate = checkGate(deckDir, "build");
   chk.gate = gate.ok;
-  chk.warnings.unshift(...gate.errors.map((e) => `承認ゲート：${e}`));
+  chk.warnings.unshift(...[...gate.errors, ...gate.notices].map((e) => `承認ゲート：${e}`));
   const outline = readOutline(outlineFile);
   // 書き出し先：スクリプトが作るものは build/ にまとめる（人間と AI が直す資料と分ける）
   const outDir = path.join(deckDir, "build");
@@ -167,13 +167,19 @@ function assemble(work, outline, slides, licenses) {
 const CATEGORIES = [
   ["overflow", "はみ出し（スライドの外・本文の枠の外）"],
   ["margin", "余白不足（左右 54・上下 27）"],
-  ["overlap", "文字の重なり"],
+  ["overlap", "文字の重なり（線のラベルと箱を含む）"],
+  ["boxover", "箱からのはみ出し（図の箱の文字）"],
   ["text", "文字が小さすぎる（11px 未満）"],
   ["color", "トークン外の色"],
   ["lead", "説明文が3行を超えた"],
   ["network", "外部への通信"],
   ["script", "スクリプトのエラー"],
   ["count", "枚数が outline.md と合わない"],
+];
+// 注意（不合格にしない。人が shots で確かめる）
+const NOTICES = [
+  ["align", "端のそろい（カードの上端・左右の図の上端）"],
+  ["offset", "図の片寄り"],
 ];
 
 // 独自の表現（html:）を使ったスライド。人の確認が要る（components.md 4.1）
@@ -222,6 +228,10 @@ function buildLog(outline, r) {
           ...CATEGORIES.map(([k, label]) => `| ${label} | ${r.inspect[k].length} |`),
           "",
           ...CATEGORIES.filter(([k]) => r.inspect[k].length).flatMap(([k, label]) => [`### ${label}`, "", list(r.inspect[k]), ""]),
+          "### 注意（不合格にしない。`npm run shots` で撮って確かめる）",
+          "",
+          ...NOTICES.map(([k, label]) => `- ${label}：${r.inspect[k].length ? "" : "なし"}${r.inspect[k].map((x) => `\n  - ${x}`).join("")}`),
+          "",
         ]
       : ["前の段階で止めたので、行っていない", ""]),
     "## ライセンス（license-notice）",
@@ -272,6 +282,7 @@ if (isMain(import.meta.url)) {
   }
   console.log(`${r.out}：${r.slides}枚、${Math.round(r.bytes / 1024)} KB（フォント：${r.fontLog}${r.math ? "。KaTeX を埋め込んだ" : ""}）`);
   for (const [k, label] of CATEGORIES) for (const x of r.inspect[k]) console.log(`検査    ${label}：${x}`);
+  for (const [k, label] of NOTICES) for (const x of r.inspect[k]) console.log(`注意    ${label}：${x}`);
   console.log(r.ok ? "検査：合格（build-log.md に記録した）" : "検査：不合格（build-log.md を確認）");
   if (r.pdf) console.log(`PDF：${r.pdf}`);
   if (!r.ok) process.exit(1);

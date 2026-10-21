@@ -55,6 +55,12 @@ export const KINDS = [
   "image",
   "canvas",
   "dirtree",
+  "cards",
+  "cycle",
+  "layers",
+  "hub",
+  "nested",
+  "flow-notes",
 ];
 
 // ---- スライドの型 ----
@@ -66,11 +72,18 @@ export const KINDS = [
 // author：{ org, name } の文字数の目安。chapters：目次に載せられる章の数
 // 文字数は目安で、超えると注意。最後はビルド後の検査で、実際の行数をブラウザで測る
 const BODY = ["breadcrumb", "source"];
-// 説明文（lead）：幅 base を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
-export const LEAD = { base: 640, max: 1172, lines: 3, px: 16 };
+// 説明文（lead）：字数の目安は target（全角）。short 未満は注意（lead_short に理由を書けば出さない）。
+// 幅は base（target の上限が lines 行に収まる幅。1行に2字の余裕）を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
+export const LEAD = { target: [140, 160], short: 100, max: 1172, lines: 3, px: 16 };
+LEAD.base = (Math.ceil(LEAD.target[1] / LEAD.lines) + 2) * LEAD.px; // 896
 // 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
 export const BOLD = { perItem: 1, perSlide: 3 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
+// 図を主役にする（design-reference/principles.md 5章）：箇条書きの型が、本文のあるスライド（lead のある型）の ratio を超えたら注意。
+// 箇条書きの1つ目の階層の項目が全角 minItem 字未満なら注意（書くときの目安は全角 goodItem 字以上）
+export const BULLETS = { layouts: ["title-body", "text-diagram", "two-column", "do-dont"], ratio: 0.3, minItem: 12, goodItem: 25 };
+// 型と部品の偏り：同じスライドの型・同じ図の型が run 枚続いたら注意。1つの図の型が、図のあるスライドの ratio を超えたら注意（図のあるスライドが min 枚以上のとき）
+export const VARIETY = { run: 3, ratio: 0.4, min: 5 };
 const COLUMN = { items: [1, 4], heading: 20 };
 export const LAYOUTS = {
   title: {
@@ -81,7 +94,13 @@ export const LAYOUTS = {
     author: { org: 40, name: 20 },
   },
   toc: { required: [], optional: ["title"], text: { title: 30 }, chapters: 12 },
-  section: { required: ["title"], optional: ["description", "topics"], text: { title: 16, description: 120 }, list: { topics: [3, 6, 20] } },
+  section: {
+    required: ["title"],
+    optional: ["description", "topics"],
+    text: { title: 16, description: 120 },
+    lines: { title: 2 },
+    list: { topics: [3, 6, 20] },
+  },
   "title-body": { required: ["title", "body"], optional: [...BODY, "numbered"], lead: true, text: { title: 30 }, list: { body: [1, 5, 110, true] } },
   "text-diagram": {
     required: ["title", "body"],
@@ -105,14 +124,30 @@ export const LAYOUTS = {
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
 // どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
-export const COMMON = ["layout", "notes", "claims", "html", "idea", "match"];
+// id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
+export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match"];
+export const SLIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // match：idea の絵を部品で描けるか。そのまま＝部品を使う。意味が欠ける・描けない＝独自に描く（「：」のあとに理由）
 export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
 // 図を書く項目（visual の型だけ）
 export const VISUAL = ["diagram", "diagrams"];
 
+// 文と見た目（承認のあとの変更で、ファクトチェックをやり直すかを決める分け方。make-slides/scripts/approvals.mjs）
+// - 見た目：LOOK の項目（とその中身）と、真偽値（true・false）。並び・大きさ・色・形・アイコン・強調・図の型など
+// - 文：ほかの文字列と数値のすべて（title・lead・本文・図の中の字・データの数値・notes・source・claims など）
+// - 文の比べ方：太字とコードの印（** と `）、空白と改行は除いて比べる（改行の位置や太字だけの直しは文の変更にしない）
+// - 迷う項目は文に入れる（やり直しが1回増えるだけで済む。見た目に入れると、確かめていない文が通るため）
+export const LOOK = [
+  // スライド
+  ..."layout id idea match lead_short numbered".split(" "),
+  // 図の型・置き方・大きさ
+  ..."kind type at size grid col row via curve corner inside on wrap radius direction".split(" "),
+  // 見た目の選び方
+  ..."tone shape icon style align text_size frame highlight dash fit sort legend lang".split(" "),
+];
+
 // 型に書ける項目のすべて
-export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(L.lead ? ["lead"] : [])]);
+export const allowedFields = (L) => new Set([...COMMON, ...L.required, ...L.optional, ...(L.visual ? VISUAL : []), ...(L.lead ? ["lead", "lead_short"] : [])]);
 
 // 型の決まりを1行で書く（schema.mjs が表示に使う）
 export function describeLayout(name) {
@@ -131,7 +166,11 @@ export function describeLayout(name) {
     if (k === "author") return `author（{ org?: ${L.author.org}字, name?: ${L.author.name}字 }）`;
     return k;
   };
-  const req = [...L.required.map(limit), ...(L.visual ? ["diagram・diagrams・html のどれか"] : []), ...(L.lead ? ["lead（要らないなら false）"] : [])];
+  const req = [
+    ...L.required.map(limit),
+    ...(L.visual ? ["diagram・diagrams・html のどれか"] : []),
+    ...(L.lead ? ["lead（要らないなら false。短くするなら lead_short に理由）"] : []),
+  ];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
   return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match"].join(", ")}${extra}`;
 }

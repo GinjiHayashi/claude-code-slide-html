@@ -21,10 +21,10 @@ export default function steps(data) {
   const card = (i) => (data.highlight === i + 1 ? "bg-highlight border-primary" : `bg-canvas ${LN.border}`);
 
   if (down) {
+    // 段は上端と下端に寄せて間を均等にあける（図の上端を枠の上端にそろえるため。左右に並べた図と上端がそろう）。
+    // つなぐ線は1本で、最初と最後の番号の丸の中心（段の高さの半分。1行の段で 29px）のあいだに引く
     const rows = I.map((it, i) => {
-      const line = i < I.length - 1 ? `<div class="absolute left-[23px] top-[calc(50%+24px)] h-[calc(100%-36px)] w-[2px] ${LN.bg}"></div>` : "";
-      return `<div class="relative flex min-h-0 flex-1 items-center gap-[24px]">
-  ${line}
+      return `<div class="flex items-center gap-[24px]">
   ${circle(i)}
   <div class="flex min-w-0 flex-1 items-baseline gap-[24px] rounded-panel border-2 px-[20px] py-[12px] ${card(i)}">
     <div class="w-[240px] shrink-0 text-heading font-bold text-ink">${esc(it.title)}</div>
@@ -32,7 +32,7 @@ export default function steps(data) {
   </div>
 </div>`;
     });
-    return `<div class="flex h-full w-full flex-col justify-center gap-[12px]" data-kind="steps">${rows.join("\n")}</div>`;
+    return `<div class="relative flex h-full w-full flex-col justify-between gap-[12px]" data-kind="steps"><div class="absolute bottom-[29px] left-[23px] top-[29px] w-[2px] ${LN.bg}"></div>${rows.join("\n")}</div>`;
   }
 
   const cards = I.map((it, i) => {

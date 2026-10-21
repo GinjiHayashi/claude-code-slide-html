@@ -2,9 +2,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { execFileSync } from "child_process";
-import { SKILLS, tempDeck, rootOf } from "./helpers.mjs";
+import { ROOT, SKILLS, tempDeck, rootOf, fakeGh } from "./helpers.mjs";
 
 const SCRIPTS = path.join(SKILLS, "make-slides/scripts");
 const run = (script, input, env = {}) => {
@@ -62,7 +63,7 @@ test("protect-bash：ハーネスの開発中は .claude/ と CLAUDE.md に確�
 
 test("protect-edit：スライド作成中はハーネスのファイルの編集に確認を出し、開発中は出さない", () => {
   assert.equal(edit(".claude/skills/html-build/theme.css"), "ask");
-  assert.equal(edit(path.join(process.cwd(), "CLAUDE.md")), "ask");
+  assert.equal(edit(path.join(ROOT, "CLAUDE.md")), "ask");
   assert.equal(edit("decks/a/outline.md"), "allow");
   assert.equal(edit(".claude/skills/html-build/theme.css", "dev"), "allow");
 });
@@ -76,14 +77,24 @@ test("harnessDev：ハーネスのリポジトリ（decks/.gitignore を git で
       [
         "--input-type=module",
         "-e",
-        `import { harnessDev } from ${JSON.stringify(path.resolve(".claude/lib/common.mjs"))}; console.log(harnessDev(${JSON.stringify(root)}))`,
+        `import { harnessDev } from ${JSON.stringify(path.join(ROOT, ".claude/lib/common.mjs"))}; console.log(harnessDev(${JSON.stringify(root)}))`,
       ],
       {
         encoding: "utf8",
         env,
       },
     ).trim();
-  assert.equal(check(process.cwd()), "true");
+  // テストを動かすリポジトリの種類（ハーネスかスライド用か）に左右されないよう、一時のリポジトリを2つ作って比べる
+  const repo = (tracked) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-dev-"));
+    execFileSync("git", ["init", "--quiet", root]);
+    fs.mkdirSync(path.join(root, "decks"));
+    fs.writeFileSync(path.join(root, "decks", ".gitignore"), "*\n");
+    if (tracked) execFileSync("git", ["-C", root, "add", "-f", "decks/.gitignore"]);
+    return root;
+  };
+  assert.equal(check(repo(true)), "true");
+  assert.equal(check(repo(false)), "false"); // ファイルを置いただけ（git で管理していない）では開発中にならない
   const { root } = requested();
   assert.equal(check(root), "false");
 });
@@ -117,4 +128,88 @@ test("approve-hook：「<」で始まるプロンプト（Claude Code が自分�
   const { dir, root } = requested();
   assert.equal(run("approve-hook.mjs", { prompt: "<task-notification>OK</task-notification>" }, { CLAUDE_PROJECT_DIR: root }), null);
   assert.equal(fs.existsSync(path.join(dir, "approval-request.yaml")), true);
+});
+
+test("approve-hook：「承認だけ」でない答えには、決まった聞き直しの文を伝える", () => {
+  const { root } = requested();
+  const r = run("approve-hook.mjs", { prompt: "html と pdf は問題ない" }, { CLAUDE_PROJECT_DIR: root });
+  assert.ok(
+    r.hookSpecificOutput.additionalContext.includes("ほかの言葉が混じっていたので、承認として記録されませんでした。承認なら『承認』だけを送ってください"),
+  );
+});
+
+test("request --merge と approve-hook：PR の番号・マージ先・head のコミットを記録し、失敗しているチェックを依頼に出す", () => {
+  const { dir, root } = requested();
+  const g = fakeGh({ statusCheckRollup: [{ name: "test", status: "COMPLETED", conclusion: "FAILURE" }] });
+  const out = execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), dir, "--merge", "7"], { encoding: "utf8", env: { ...process.env, ...g.env } });
+  assert.match(out, /CI が失敗しているチェック：test/);
+  assert.match(out, /承認なら『承認』だけを送ってください/);
+  const r = run("approve-hook.mjs", { prompt: "承認" }, { CLAUDE_PROJECT_DIR: root });
+  assert.match(r.hookSpecificOutput.additionalContext, /PR #7 の develop へのマージの承認を記録した/);
+  const rec = fs.readFileSync(path.join(dir, "approvals.yaml"), "utf8");
+  assert.match(rec, /target: merge/);
+  assert.match(rec, new RegExp(`head_sha: ${"a".repeat(40)}`));
+  // main・develop 以外へのマージは頼めない
+  const h = fakeGh({ baseRefName: "release" });
+  assert.throws(() =>
+    execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), dir, "--merge", "7"], { stdio: "pipe", env: { ...process.env, ...h.env } }),
+  );
+});
+
+// protect-check：一時のリポジトリ（.claude/ と CLAUDE.md）で、会話の始め（start）とターンの終わり（stop）を流す
+function checkRepo() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "protect-check-"));
+  fs.mkdirSync(path.join(root, ".claude", "skills"), { recursive: true });
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "a\n");
+  fs.writeFileSync(path.join(root, "CLAUDE.md"), "x\n");
+  const transcript = path.join(root, "transcript.jsonl");
+  fs.writeFileSync(transcript, "");
+  const session_id = `t-${Math.random()}`;
+  const hook = (mode, extra = {}) => {
+    const out = execFileSync(process.execPath, [path.join(SCRIPTS, "protect-check.mjs"), mode], {
+      input: JSON.stringify({ session_id, transcript_path: transcript, permission_mode: "default", ...extra }),
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: root, SLIDE_HARNESS_MODE: "slides" },
+    });
+    return out.trim() ? JSON.parse(out) : null;
+  };
+  // 会話の記録に、Edit の呼び出しとその結果を足す
+  const toolEdit = (file, is_error = false) => {
+    const id = `toolu_${Math.random().toString(36).slice(2)}`;
+    const lines = [
+      { type: "assistant", message: { content: [{ type: "tool_use", id, name: "Edit", input: { file_path: path.join(root, file) } }] } },
+      { type: "user", message: { content: [{ type: "tool_result", tool_use_id: id, is_error }] } },
+    ];
+    fs.appendFileSync(transcript, lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
+  };
+  hook("start");
+  return { root, hook, toolEdit };
+}
+
+test("protect-check：許可された Edit によるハーネスの変更は伝えず、Bash などでの変更は伝える", () => {
+  const { root, hook, toolEdit } = checkRepo();
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "b\n");
+  toolEdit(".claude/skills/a.md");
+  assert.equal(hook("stop"), null);
+  // 次のターンにも同じファイルを Edit で直した：伝えない
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "c\n");
+  toolEdit(".claude/skills/a.md");
+  assert.equal(hook("stop"), null);
+  // Edit の記録がない変更（Bash の中の書き込みなど）：伝える。前のターンの Edit の記録は使わない
+  fs.writeFileSync(path.join(root, ".claude", "skills", "a.md"), "d\n");
+  fs.writeFileSync(path.join(root, "CLAUDE.md"), "y\n");
+  const r = hook("stop");
+  assert.equal(r?.decision, "block");
+  assert.match(r.reason, /\.claude\/skills\/a\.md（変わった）、CLAUDE\.md（変わった）/);
+});
+
+test("protect-check：失敗した Edit や、確認を飛ばすモードでの Edit は、許可された変更として扱わない", () => {
+  const a = checkRepo();
+  fs.writeFileSync(path.join(a.root, "CLAUDE.md"), "y\n");
+  a.toolEdit("CLAUDE.md", true);
+  assert.equal(a.hook("stop")?.decision, "block");
+  const b = checkRepo();
+  fs.writeFileSync(path.join(b.root, "CLAUDE.md"), "y\n");
+  b.toolEdit("CLAUDE.md");
+  assert.equal(b.hook("stop", { permission_mode: "bypassPermissions" })?.decision, "block");
 });

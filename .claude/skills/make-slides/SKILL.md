@@ -122,6 +122,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
    - チャットで頼まれたら、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> --merge <PR の番号>` で依頼を出し、出力の決まった文で聞く。CI が失敗しているチェックが出たら、その名前も伝えて、それでもよいかを聞く。
    - 承認されたら `node .claude/skills/make-slides/scripts/merge.mjs decks/<deck-id> <PR の番号>` でマージする。承認の記録がない、承認のあとに PR へ push された、マージ先が develop・main 以外なら、スクリプトが止める。止まったら理由を伝え、必要なら承認を頼み直す。
    - マージの方式はスクリプトが決める：develop へは squash、main へはマージコミット（ハーネスの更新の取り込み `feature/harness-update` は develop へもマージコミット）。
+   - ハーネスの更新の PR（`npm run update-harness` が作る `feature/harness-update` → develop と、そのあとの develop → main）は、デッキがないので `decks/<deck-id>` の代わりに `decks/_harness` を使う（`request.mjs decks/_harness --merge <PR の番号>` → `merge.mjs decks/_harness <PR の番号>`）。ほかの PR は頼めず、main へのマージでもタグは付けない。承認の記録は `.gitignore` で管理外。
 5. **発表した版（main とタグ）**：人間に頼まれたときだけ行う。
    - develop から main への PR を作る（`gh pr create --base main --head develop`）。マージは 4 と同じ（人間が GitHub でマージするか、チャットの承認で `merge.mjs`）。
    - `merge.mjs` でマージしたら、スクリプトが main の最新のコミットにタグを付けて push する（`<deck-id>`、すでにあれば `<deck-id>-2`、`-3`…）。人間が GitHub でマージしたときは、`git tag <deck-id>`（2回目からは `<deck-id>-2`）→ `git push origin <タグ>` を行う。

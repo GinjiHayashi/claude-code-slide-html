@@ -128,7 +128,11 @@ export const LAYOUTS = {
 };
 // どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
 // id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
-export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match"];
+// change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides の「直すとき」、edit-check.mjs）。
+//   スライドには出さず、承認の sha256（approvals.mjs の slideDigests）にも入れない。残っている間は outline.md の承認を頼めない（request.mjs）
+export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match", "change"];
+// idea の長さの目安：change を統合するときは、足さずに新しい絵の説明に書き換える。超えたら注意
+export const IDEA = { lines: 3, chars: 120 };
 export const SLIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // match：idea の絵を部品で描けるか。そのまま＝部品を使う。意味が欠ける・描けない＝独自に描く（「：」のあとに理由）
 export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
@@ -175,5 +179,5 @@ export function describeLayout(name) {
     ...(L.lead ? ["lead（要らないなら false。短くするなら lead_short に理由）"] : []),
   ];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
-  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match"].join(", ")}${extra}`;
+  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match", "change"].join(", ")}${extra}`;
 }

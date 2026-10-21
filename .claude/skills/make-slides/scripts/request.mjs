@@ -7,6 +7,7 @@
 // - PR のマージ：request.mjs decks/<deck-id> --merge <PR の番号>。PR の番号・マージ先・今の head のコミットと、失敗しているチェックを書く。
 //   承認されたら、merge.mjs がマージする（AI は gh pr merge を直接使わない）
 // - ハーネスの更新の PR（デッキがない）：request.mjs decks/_harness --merge <PR の番号>。feature/harness-update → develop と develop → main だけ（github.mjs）
+// - outline.md：図の変更の指示（change）が残っているスライドがあれば、依頼を出さない（図を直して空にしてから。make-slides の「直すとき」）
 // - 依頼は同時に1つのデッキだけ。ほかのデッキに残っている依頼は消す（人間の答えがどのデッキへのものか、取り違えないように）
 import fs from "fs";
 import path from "path";
@@ -14,6 +15,7 @@ import { TARGETS, YAML, sha256, REQUEST } from "./approvals.mjs";
 import { MERGE_METHOD, mergeMethod, prInfo, isHarness, harnessPrError } from "./github.mjs";
 import { appendWork } from "./worklog.mjs";
 import { deckStatus } from "./status.mjs";
+import { pendingChanges } from "./edit-check.mjs";
 
 const [deckDir, ...targets] = process.argv.slice(2);
 const merge = targets[0] === "--merge";
@@ -60,6 +62,15 @@ if (merge) {
       if (!fs.existsSync(f)) {
         console.error(`${f} がない`);
         process.exit(2);
+      }
+      if (t === "outline.md") {
+        const left = pendingChanges(fs.readFileSync(f, "utf8"));
+        if (left.length) {
+          console.error(
+            `図の変更の指示（change）が残っている：${left.map((c) => c.slide).join("、")}。図を直して idea に統合し、change を空にしてから依頼する`,
+          );
+          process.exit(2);
+        }
       }
       return { target: t, sha256: sha256(fs.readFileSync(f)) };
     }),

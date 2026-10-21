@@ -13,7 +13,7 @@
 7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
 8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・フォント・アイコン集は `registry.yaml` に登録済みのものだけを使う。アイコンは AI がアイコン集（Phosphor）から探して選ぶ。デッキごとの写真などの画像は、人間が `inputs/` に置き、`outline.md` の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。ライセンス表記は書かない（スクリプトが生成する）。
-10. ソースは `outline.md` だけ。`deck.html` は読まない・手で直さない。直すときは `outline.md` の対象のスライドの節だけを直してビルドし直す（`html-build`）。
+10. ソースは `outline.md` だけ。`deck.html` は読まない・手で直さない。直すときは `outline.md` の対象のスライドの節だけを直してビルドし直す（`html-build`）。人間は文を `outline.md` で直接直し、図の変更はスライドごとの `change` に書く。AI は人間の書いた文を書き換えず、`change` のスライドの図だけを直す（`make-slides` の「直すとき」）。
 
 ## 承認
 

@@ -8,6 +8,8 @@
 //   承認されたら、merge.mjs がマージする（AI は gh pr merge を直接使わない）
 // - ハーネスの更新の PR（デッキがない）：request.mjs decks/_harness --merge <PR の番号>。feature/harness-update → develop と develop → main だけ（github.mjs）
 // - outline.md：図の変更の指示（change）が残っているスライドがあれば、依頼を出さない（図を直して空にしてから。make-slides の「直すとき」）
+// - build/deck.html をほかと一緒に頼めるのは、outline.md factcheck.md build/deck.html の3つを1回で頼むときだけ。
+//   ファクトチェックで outline.md の文を直していないときに限る（gate.mjs の checkCombined）。直したときは、最終確認を分けて頼む
 // - 依頼は同時に1つのデッキだけ。ほかのデッキに残っている依頼は消す（人間の答えがどのデッキへのものか、取り違えないように）
 import fs from "fs";
 import path from "path";
@@ -16,6 +18,7 @@ import { MERGE_METHOD, mergeMethod, prInfo, isHarness, harnessPrError } from "./
 import { appendWork } from "./worklog.mjs";
 import { deckStatus } from "./status.mjs";
 import { pendingChanges } from "./edit-check.mjs";
+import { checkCombined } from "./gate.mjs";
 
 const [deckDir, ...targets] = process.argv.slice(2);
 const merge = targets[0] === "--merge";
@@ -32,6 +35,20 @@ if (isHarness(deckDir)) {
     process.exit(2);
   }
   fs.mkdirSync(deckDir, { recursive: true });
+}
+// 最後のファクトチェックの承認と最終確認を1回で頼むとき
+const COMBINED = ["outline.md", "factcheck.md", "build/deck.html"];
+if (!merge && targets.length > 1 && targets.includes("build/deck.html")) {
+  if (targets.length !== COMBINED.length || !COMBINED.every((t) => targets.includes(t))) {
+    console.error(`build/deck.html をほかと一緒に頼めるのは、${COMBINED.join(" ")} の3つを1回で頼むときだけ`);
+    process.exit(2);
+  }
+  const c = checkCombined(deckDir);
+  if (!c.ok) {
+    console.error("承認と最終確認を1回で頼めない。outline.md と factcheck.md を先に承認してもらい、最終確認は分けて頼む：");
+    for (const e of c.errors) console.error(`  - ${e}`);
+    process.exit(2);
+  }
 }
 let req;
 if (merge) {

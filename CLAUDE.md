@@ -13,7 +13,7 @@
 7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。人が渡した資料は `reference/` の md にし、資料の ID（`R-001` など）で参照する。
 8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・フォント・アイコン集は `registry.yaml` に登録済みのものだけを使う。アイコンは AI がアイコン集（Phosphor）から探して選ぶ。デッキごとの写真などの画像は、人間が `inputs/` に置いたものを `assets/` に移し、`outline.md` の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。ライセンス表記は書かない（スクリプトが生成する）。
-10. ソースは `outline.md` だけ。`deck.html` は読まない・手で直さない。直すときは `outline.md` の対象のスライドの節だけを直してビルドし直す（`html-build`）。人間は文を `outline.md` で直接直し、図の変更はスライドごとの `change` に書く。人間が自分で直した文と、「決まっている」の構成の草案（`outline-draft.md`）の文は、AI が書き換えない（字数などの問題は報告して人間に聞く）。例外は、ファクトチェックで人間が「修正する」「削除する」と決めた記述だけ。`change` を書いたスライドは図だけを直す（`make-slides` の「直すとき」）。
+10. ソースは `outline.md` だけ。`deck.html` は読まない・手で直さない。直すときは `outline.md` の対象のスライドの節だけを直してビルドし直す（`html-build`）。人間は文を `outline.md` で直接直し、図の変更はスライドごとの `change` に書く。人間が自分で直した文と、「決まっている」の構成の草案（`outline-draft.md`）の文は、AI が書き換えない（字数などの問題は報告して人間に聞く）。例外は、ファクトチェックで人間が「修正する」「削除する」と決めた記述だけ。`change` を書いたスライドは図だけを直す（`make-slides/fixing.md`）。
 
 ## 承認
 
@@ -68,4 +68,4 @@
 
 ## git
 
-簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間が GitHub で行うか、チャットの承認のあとに `make-slides/scripts/merge.mjs` だけが行う）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides` の「git」。
+簡易 GitFlow（`develop` から `feature/*` を切り、PR で `develop` へ。マージは人間が GitHub で行うか、チャットの承認のあとに `make-slides/scripts/merge.mjs` だけが行う）。コミットメッセージは `feat:`・`fix:`・`docs:`・`chore:` などの種類＋日本語。ルールは `README.md`「git の運用ルール」、デッキでの手順は `make-slides/git.md`。

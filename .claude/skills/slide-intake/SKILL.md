@@ -9,7 +9,7 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 
 ## 手順
 
-1. **デッキのフォルダ**：スライド用リポジトリでは、先に `make-slides` の「git」の 1（ブランチ）を行う。そのあと `node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>` で `decks/<deck-id>/` と空の `brief.md`、`inputs/`、`reference/`、`assets/`、`build/` を作る（フォルダの中の分け方は CLAUDE.md の「フォルダ」）。`deck-id` は `YYYY-MM-DD-<短い英語名>`。日付は発表日（わからなければ今日にして、最初の返事で発表日を聞く。`slide-hearing/questions.md`）、名前は内容から AI が付け、brief の確認のときに人間に見せる。あとで発表日がわかった、名前を変えたいと言われたなどで deck-id を変えるときは、`node .claude/skills/slide-intake/scripts/rename-deck.mjs decks/<今の deck-id> <新しい deck-id>` を使う（フォルダ・ブランチ `feature/<deck-id>`・各ファイルの `deck_id` をまとめて変える。承認の記録があれば止まるので、人間に聞く）。フォルダがもうあれば、スクリプトは何も作らずに終了コード 1 で終わる。そのときはそのフォルダを使う（エラーではない）。
+1. **デッキのフォルダ**：スライド用リポジトリでは、先に `make-slides/git.md` の 1（ブランチ）を行う。そのあと `node .claude/skills/slide-intake/scripts/new-deck.mjs <deck-id>` で `decks/<deck-id>/` と空の `brief.md`、`inputs/`、`reference/`、`assets/`、`build/` を作る（フォルダの中の分け方は CLAUDE.md の「フォルダ」）。`deck-id` は `YYYY-MM-DD-<短い英語名>`。日付は発表日（わからなければ今日にして、最初の返事で発表日を聞く。`slide-hearing/questions.md`）、名前は内容から AI が付け、brief の確認のときに人間に見せる。あとで発表日がわかった、名前を変えたいと言われたなどで deck-id を変えるときは、`node .claude/skills/slide-intake/scripts/rename-deck.mjs decks/<今の deck-id> <新しい deck-id>` を使う（フォルダ・ブランチ `feature/<deck-id>`・各ファイルの `deck_id` をまとめて変える。承認の記録があれば止まるので、人間に聞く）。フォルダがもうあれば、スクリプトは何も作らずに終了コード 1 で終わる。そのときはそのフォルダを使う（エラーではない）。
 2. **入力を集める**（人間が渡した資料は `decks/<deck-id>/inputs/` に置く。外に置かれた資料は `inputs/` にコピーしてから読む。元のファイルは消さない。`inputs/` の中身は書き換えない。`inputs/` は git に入らない）：
    - これまでのチャットのやり取り（依頼文、箇条書きのメモ、貼り付けられた文章）。スライドに関わる人間の発言は、言葉を変えずに `inputs/chat-YYYY-MM-DD.md` に書き写す（日付はやり取りの日。同じ日のものは同じファイルに足す）。チャットの原文を残し、ほかの資料と同じように読み返せるようにするため
    - `decks/<deck-id>/inputs/intake.md`（事前記入シート。ひな形は `intake-form.md`）
@@ -50,12 +50,12 @@ description: 人間が用意した入力（チャットのやり取り、記入�
 
 ## ファイル
 
-| ファイル | 中身 |
-|---|---|
-| `intake-form.md` | 人間用の事前記入シート |
-| `scripts/new-deck.mjs` | デッキのフォルダと空の brief.md を作る |
-| `scripts/rename-deck.mjs` | デッキの名前（deck-id）を変える（フォルダ・ブランチ・`deck_id`） |
-| `scripts/xlsx.py` | Excel（.xlsx）を標準ライブラリだけで読む |
-| `scripts/reference.mjs` | `inputs/` の資料を md にして `reference/` に入れ、一覧（`index.md`）を作り、検査する（`reference-format.md`） |
-| `scripts/to-md.py` | 資料1つを md にする（Excel・Word・PowerPoint・PDF・テキスト）。`reference.mjs` が呼ぶ |
-| `reference-format.md` | `reference/` のフォルダと md の形、変換の方法 |
+| ファイル                  | 中身                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `intake-form.md`          | 人間用の事前記入シート                                                                                        |
+| `scripts/new-deck.mjs`    | デッキのフォルダと空の brief.md を作る                                                                        |
+| `scripts/rename-deck.mjs` | デッキの名前（deck-id）を変える（フォルダ・ブランチ・`deck_id`）                                              |
+| `scripts/xlsx.py`         | Excel（.xlsx）を標準ライブラリだけで読む                                                                      |
+| `scripts/reference.mjs`   | `inputs/` の資料を md にして `reference/` に入れ、一覧（`index.md`）を作り、検査する（`reference-format.md`） |
+| `scripts/to-md.py`        | 資料1つを md にする（Excel・Word・PowerPoint・PDF・テキスト）。`reference.mjs` が呼ぶ                         |
+| `reference-format.md`     | `reference/` のフォルダと md の形、変換の方法                                                                 |

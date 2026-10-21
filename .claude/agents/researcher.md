@@ -4,7 +4,7 @@ description: スライドの内容を検討するための材料を、論点ご�
 tools: Read, WebSearch, WebFetch
 # トークンを抑えるため：メインより安いモデルで動かす。検索が止まらなくなるのを防ぐ。CLAUDE.md は読まない（要る決まりは research-standards にある）
 model: sonnet
-maxTurns: 80
+maxTurns: 40
 omitClaudeMd: true
 skills:
   - research-standards
@@ -37,6 +37,7 @@ skills:
 ## 返すもの
 
 次の3つを、この順で返します。ファイルは書きません（呼び出し元がまとめます）。
+ターンの上限（40）で止められると、何も返せません。調べる回数が30回を超えたら、新しく調べるのをやめ、それまでにわかったことを返します。調べ残した論点は「調べきれなかったこと」に書きます。
 
 1. 主張：`research-template.md` の「## C-101」の形。受け取った番号から順に。
 2. 「## 調べきれなかったこと」：見つからなかった情報、確かめられなかった主張。

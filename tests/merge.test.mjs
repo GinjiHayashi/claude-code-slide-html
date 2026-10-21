@@ -97,6 +97,42 @@ test("merge.mjs：main へはマージコミットでマージし、main の最�
   assert.equal(git(origin, "rev-parse", `refs/tags/${id}`), git(origin, "rev-parse", "main"));
 });
 
+// ハーネスの更新の PR：デッキの代わりに decks/_harness に承認を記録する
+const harness = (root) => path.join(root, "decks", "_harness");
+
+test("merge.mjs（decks/_harness）：取り込み（feature/harness-update → develop）はマージコミットでマージする", () => {
+  const { root, state } = setup({ headRefName: "feature/harness-update" });
+  request(harness(root));
+  answer(root, "承認");
+  const r = mergePr(harness(root), 7, quiet);
+  assert.equal(r.ok, true);
+  assert.equal(merged(state)[1], "--merge");
+});
+
+test("merge.mjs（decks/_harness）：develop → main はマージし、タグは付けない", () => {
+  const { root, state, origin } = setup({ baseRefName: "main", headRefName: "develop" });
+  request(harness(root));
+  answer(root, "承認");
+  const r = mergePr(harness(root), 7, quiet);
+  assert.equal(r.ok, true);
+  assert.equal(merged(state)[1], "--merge");
+  assert.equal(r.tag, null);
+  assert.equal(git(origin, "tag", "--list"), "");
+});
+
+test("request.mjs（decks/_harness）：ハーネスの更新でない PR とファイルの承認は頼めない", () => {
+  const { root } = setup();
+  assert.throws(
+    () => execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), harness(root), "--merge", "7"], { stdio: "pipe" }),
+    /feature\/x → develop/,
+  );
+  assert.throws(
+    () => execFileSync(process.execPath, [path.join(SCRIPTS, "request.mjs"), harness(root), "outline.md"], { stdio: "pipe" }),
+    /マージ（--merge）だけ/,
+  );
+  assert.equal(fs.existsSync(path.join(harness(root), "approval-request.yaml")), false);
+});
+
 test("nextTag：<deck-id> があれば -2、-3 …", () => {
   assert.equal(nextTag("2026-10-17-x", []), "2026-10-17-x");
   assert.equal(nextTag("2026-10-17-x", ["2026-10-17-x"]), "2026-10-17-x-2");

@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, LINE, rounded } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE, rounded, within } from "./_util.mjs";
 
 // flowchart：流れ図。一列の流れから、枝分かれ・合流・戻りのある図まで、Mermaid を使わずに描く。
 // （以前の flow を統合した。箱を格子に置き、矢印は縦横の線を角の丸い折れ線でつなぐ）
@@ -34,6 +34,9 @@ export const schema = {
   radius: O,
 };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { nodes: [2, 12] };
+
 export default function flowchart(data, opt = {}) {
   check("flowchart", data, schema);
   const auto = data.nodes.every((n) => n.col === undefined && n.row === undefined);
@@ -52,7 +55,7 @@ export default function flowchart(data, opt = {}) {
   });
   const E = data.edges ?? (auto ? N.slice(1).map((n, i) => ({ from: N[i].id, to: n.id })) : null);
   if (!E) throw new Error("flowchart: col・row を書いたときは edges も書く");
-  if (N.length < 2 || N.length > 12) throw new Error("flowchart: nodes は2〜12");
+  within("flowchart", limits, "nodes", N.length);
   const LN = LINE;
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;

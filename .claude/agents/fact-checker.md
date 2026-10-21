@@ -4,7 +4,7 @@ description: outline.md の記述が事実と一致するかを、スライド�
 tools: Read, Grep, WebSearch, WebFetch
 # トークンを抑えるため：メインより安いモデルで動かす。検索が止まらなくなるのを防ぐ。CLAUDE.md は読まない（要る決まりは research-standards にある）
 model: sonnet
-maxTurns: 80
+maxTurns: 30
 omitClaudeMd: true
 skills:
   - research-standards
@@ -41,6 +41,7 @@ skills:
 ## 返すもの
 
 次の3つを、この順で返します。ファイルは書きません（呼び出し元がまとめます）。
+ターンの上限（30）で止められると、何も返せません。調べる回数が20回を超えたら、新しく調べるのをやめ、それまでの結果を返します。確かめ終えていない記述は、根拠が見つからないものと同じく「要確認」にし、理由に「調べきれなかった」と書きます。
 
 1. 指摘：`factcheck-template.md` の「## FC-101」の形。受け取った番号から順に。`decision` と `decision_note` は空のまま（人間が決める）。
 2. 「## 問題がなかった記述」の表。

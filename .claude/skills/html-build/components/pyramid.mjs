@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // pyramid：土台から上へ積み上がる関係。3〜5段。levels は上（頂点）から順に書く。
 // data: { levels: [{ label, text? }], highlight?: 段の番号（1から。上から数える） }
@@ -9,10 +9,13 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { levels: [{ label: R, text: O }], highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { levels: [3, 5] };
+
 export default function pyramid(data, opt = {}) {
   check("pyramid", data, schema);
   const Lv = data.levels;
-  if (Lv.length < 3 || Lv.length > 5) throw new Error("pyramid: levels は3〜5");
+  within("pyramid", limits, "levels", Lv.length);
   const LN = LINE;
   const H = opt.height ?? 440,
     PW = Math.min(560, (opt.width ?? 1172) * 0.5);

@@ -35,6 +35,9 @@ const f1 = (v) => v.toFixed(1);
 // 文字の幅の見積もり（px）。英数字は Roboto Mono の 0.6em、ほかは 1em（16px の字）
 const textWidth = (s, size = 16) => [...s].reduce((w, c) => w + (c.charCodeAt(0) < 0x2e80 ? 0.6 : 1) * size, 0);
 
+// 数の決まり（schema.mjs が出す。確かめるのは下の MAX_ROWS）
+export const limits = { 行: [1, MAX_ROWS] };
+
 export default function dirtree(data, opt = {}) {
   check("dirtree", data, schema);
   if (typeof data.tree !== "string") throw new Error("dirtree: tree は字下げで書いた複数行の文字にする（tree: | のあとに書く）");

@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // steps：順番に行う手順。3〜6段。番号を付け、線でつないで順番を示す。
 // data: { items: [{ title, text? }], highlight?: 段の番号（1から。今いる段など）, direction? }
@@ -12,11 +12,14 @@ const circle = (i) =>
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { items: [{ title: R, text: O }], highlight: O, direction: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { "items（横）": [3, 5], "items（direction: down）": [3, 6] };
+
 export default function steps(data) {
   check("steps", data, schema);
   const I = data.items;
   const down = data.direction === "down";
-  if (I.length < 3 || I.length > (down ? 6 : 5)) throw new Error(`steps: items は3〜${down ? 6 : 5}`);
+  within("steps", limits, down ? "items（direction: down）" : "items（横）", I.length);
   const LN = LINE;
   const card = (i) => (data.highlight === i + 1 ? "bg-highlight border-primary" : `bg-canvas ${LN.border}`);
 

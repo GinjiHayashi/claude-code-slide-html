@@ -228,7 +228,7 @@ test("cards：見出しの帯と説明を同じ段でそろえ、まとめの帯
   assert.match(html, /grid-template-columns:repeat\(3,/);
   assert.match(html, /grid-row:7;grid-column:1 \/ -1">まとめ/); // 2段（3行ずつ）のあと
   assert.match(cards({ items: items(4) }, { deck }), /grid-template-columns:repeat\(2,/);
-  assert.throws(() => cards({ items: items(1) }, { deck }), /2〜6枚/);
+  assert.throws(() => cards({ items: items(1) }, { deck }), /itemsは2〜6（今は1）/);
   assert.throws(() => cards({ items: [{ heading: "a", tone: "red" }, { heading: "b" }] }, { deck }), /tone は/);
 });
 
@@ -307,4 +307,19 @@ test("flow-notes：流れの箱、説明の箱、帯を同じ列にそろえる"
   assert.equal([...html.matchAll(/grid-row:3;grid-column:(\d)/g)].map((m) => m[1]).join(), "1,3,5"); // 説明は箱の真下
   assert.match(html, /grid-row:5;grid-column:1 \/ -1">帯/);
   assert.throws(() => flowNotes({ items: items.slice(0, 1) }, {}), /2〜5/);
+});
+
+test("数の決まり（limits）：部品が宣言した数を超えると止まり、schema.mjs の書き方で出せる", async () => {
+  const { describeLimits } = await import(path.join(COMP, "_util.mjs"));
+  for (const kind of Object.keys(DIAGRAMS)) {
+    const { limits } = await import(path.join(COMP, `${kind}.mjs`));
+    if (!limits) continue;
+    for (const [k, v] of Object.entries(limits)) assert.ok(Array.isArray(v) && v.length === 2 && v[0] <= v[1], `${kind}.${k}`);
+  }
+  const cards = (await import(path.join(COMP, "cards.mjs"))).default;
+  const items = Array.from({ length: 7 }, (_, i) => ({ heading: `h${i}` }));
+  assert.throws(() => cards({ items }, { width: 1172, height: 440, deck }), /cards: itemsは2〜6（今は7）/);
+  const table = (await import(path.join(COMP, "table.mjs"))).default;
+  assert.throws(() => table({ ...DIAGRAMS.table, rows: Array.from({ length: 9 }, () => DIAGRAMS.table.rows[0]) }), /table: 行は8まで（今は9）/);
+  assert.equal(describeLimits({ items: [2, 6], 行: [0, 8], cells: [4, 4] }), "items 2〜6、行 8まで、cells 4");
 });

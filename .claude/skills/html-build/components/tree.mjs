@@ -14,6 +14,9 @@ import { esc, check, R, O, optional, LINE, rounded } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { root: R, children: [{ label: R, children: optional([{ label: R, children: O }]) }], direction: O, highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 階層: [0, 3], "1つの箱の子": [0, 5] };
+
 export default function tree(data, opt = {}) {
   check("tree", data, schema);
   const LN = LINE;
@@ -22,8 +25,8 @@ export default function tree(data, opt = {}) {
   const root = { label: typeof data.root === "string" ? data.root : data.root.label, children: data.children };
   const depthCheck = (n, depth) => {
     const c = n.children ?? [];
-    if (depth >= 2 && c.length) throw new Error("tree: 3階層まで");
-    if (c.length > 5) throw new Error(`tree: ${n.label} の子は5まで`);
+    if (depth >= limits.階層[1] - 1 && c.length) throw new Error(`tree: 階層は${limits.階層[1]}まで`);
+    if (c.length > limits["1つの箱の子"][1]) throw new Error(`tree: ${n.label} の子は${limits["1つの箱の子"][1]}まで`);
     c.forEach((k) => depthCheck(k, depth + 1));
   };
   depthCheck(root, 0);

@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, LINE } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE, within } from "./_util.mjs";
 
 let seq = 0; // 1つのデッキに venn が複数あっても clipPath の id が重ならないようにする
 
@@ -15,11 +15,14 @@ let seq = 0; // 1つのデッキに venn が複数あっても clipPath の id �
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { sets: [{ label: R, items: O }], overlaps: optional([{ sets: R, items: O }]), highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { sets: [2, 3] };
+
 export default function venn(data, opt = {}) {
   check("venn", data, schema);
   const S = data.sets,
     n = S.length;
-  if (n < 2 || n > 3) throw new Error("venn: sets は2〜3");
+  within("venn", limits, "sets", n);
   const LN = LINE;
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;

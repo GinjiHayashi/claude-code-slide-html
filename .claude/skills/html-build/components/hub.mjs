@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, optional, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, optional, LINE, within } from "./_util.mjs";
 
 // hub：1つの共通の口（横長の帯）に、複数のものがつながる。上に1つの箱、真ん中に帯、下に2〜6個の箱。
 // data: { top: { label }, hub: { label, text? }, items: [{ label, text? }] }
@@ -17,10 +17,13 @@ const BH = 72, // 箱と帯の高さ
   CAP = 56, // 下の箱の説明（2行）
   f1 = (v) => v.toFixed(1);
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [2, 6] };
+
 export default function hub(data, opt = {}) {
   check("hub", data, schema);
   const I = data.items;
-  if (I.length < 2 || I.length > 6) throw new Error("hub: items は2〜6");
+  within("hub", limits, "items", I.length);
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;
   const capH = I.some((it) => it.text) ? CAP + 8 : 0;

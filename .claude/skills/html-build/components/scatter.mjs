@@ -1,5 +1,5 @@
 import { scaleLinear } from "d3-scale";
-import { esc, check, R, O, optional, callout, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, callout, svgSize, within } from "./_util.mjs";
 import { yGrid } from "./_axis.mjs";
 
 // scatter：2つの量の関係を示す散布図。点は50まで。
@@ -19,10 +19,13 @@ export const schema = {
   callout: optional({ value: R, label: R }),
 };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 点: [3, 50] };
+
 export default function scatter(data, opt = {}) {
   check("scatter", data, schema);
   const P = data.points;
-  if (P.length < 3 || P.length > 50) throw new Error("scatter: 点は3〜50");
+  within("scatter", limits, "点", P.length);
   const { w, h } = svgSize(data, opt);
   const m = { l: 72, r: 24, t: 32, b: 56 };
   const x = scaleLinear()

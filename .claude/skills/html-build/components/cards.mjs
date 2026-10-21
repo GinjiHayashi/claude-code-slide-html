@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, optional, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, optional, LINE, within } from "./_util.mjs";
 import { loadAsset, inlineSvg } from "./_asset.mjs";
 
 // cards：同じ重さの項目を、2〜6枚のカードにして2〜3列で並べる。
@@ -29,10 +29,13 @@ const TONE = {
 };
 const BAND = "flex items-center justify-center gap-[8px] px-[16px] py-[12px] text-center text-heading font-bold";
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [2, 6] };
+
 export default function cards(data, opt = {}) {
   check("cards", data, schema);
   const I = data.items;
-  if (I.length < 2 || I.length > 6) throw new Error("cards: items は2〜6枚");
+  within("cards", limits, "items", I.length);
   const tones = Object.keys(TONE);
   for (const [n, it] of I.entries())
     if (it.tone !== undefined && !tones.includes(it.tone)) throw new Error(`cards: items[${n + 1}] の tone は ${tones.join("・")} のどれか`);

@@ -20,7 +20,7 @@ description: スライドの構成・レイアウト・グラフ・色・アク�
 
 | 段階 | 読むファイル |
 |---|---|
-| 骨子を作る（どのスライドを何枚、どの順で） | `principles.md`、`layout.md`、見本の `slide-style.md` の「スライドの種類」 |
+| 骨子を作る（どのスライドを何枚、どの順で） | `slide-outline` の手順 2 で決めたもの（`principles.md`、`layout.md`、`charts.md`）。見本の `slide-style.md` の「スライドの種類」は、迷ったときに読む |
 | 図表を作る | `charts.md`、`colors.md`、見本の `palette.md` |
 | 最終確認（人間が見る） | `checklist.md`（人間に渡す確認表。AI はこれでレビューしない）、`accessibility.md` |
 

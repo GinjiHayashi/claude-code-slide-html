@@ -76,8 +76,11 @@ const BODY = ["breadcrumb", "source"];
 // 幅は base（target の上限が lines 行に収まる幅。1行に2字の余裕）を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
 export const LEAD = { target: [140, 160], short: 100, max: 1172, lines: 3, px: 16 };
 LEAD.base = (Math.ceil(LEAD.target[1] / LEAD.lines) + 2) * LEAD.px; // 896
-// 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
+// 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）。説明文（lead）の強調は数えない（下の LEAD_BOLD）
 export const BOLD = { perItem: 1, perSlide: 3 };
+// 説明文（lead）の強調（components.md 4.2）：primary の青の太字。max か所まで（書くときの目安は good か所。0 でもよい）。
+// 1か所は全角 chars 字まで、強調の字数の合計は lead の ratio まで（超えると注意。語句ではなく文を囲むと強調にならないため）
+export const LEAD_BOLD = { max: 3, good: 2, chars: 20, ratio: 0.25 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
 // 図を主役にする（design-reference/principles.md 5章）：箇条書きの型が、本文のあるスライド（lead のある型）の ratio を超えたら注意。
 // 箇条書きの1つ目の階層の項目が全角 minItem 字未満なら注意（書くときの目安は全角 goodItem 字以上）

@@ -318,6 +318,21 @@ test("outline.md：lead は目安より短いと注意（lead_short に理由を
   assert.ok(leadWidth(zen(190)) > LEAD.base);
 });
 
+test("outline.md：lead の強調は本文の太字と別に数え、数・1か所の長さ・全体の割合が目安を超えると注意", async () => {
+  const fill = (n) => "あ".repeat(n);
+  const slide = (lead, body = "a") => ["## S01", "- layout: title-body", "- title: t", `- lead: ${lead}`, `- body: [${body}]`];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings.filter((w) => w.includes("強調") || w.includes("太字"));
+  };
+  // 3か所・短い語句は注意なし。本文の太字（1枚に3か所）とも合わせて数えない
+  assert.deepEqual(await check(...slide(`作成時間は**月40時間**${fill(50)}**12時間**${fill(50)}**6時間**${fill(40)}。`, "**a** と b")), []);
+  assert.ok((await check(...slide(`あ**a**${fill(40)}**b**${fill(40)}**c**${fill(40)}**d**${fill(20)}。`))).some((w) => w.includes("強調が4か所")));
+  assert.ok((await check(...slide(`あ**${fill(21)}**${fill(130)}。`))).some((w) => w.includes("全角21字")));
+  assert.ok((await check(...slide(`あ**${fill(20)}**${fill(40)}**${fill(20)}**${fill(60)}。`))).some((w) => w.includes("全体の")));
+});
+
 test("outline.md：箇条書きの型が本文のあるスライドの3割を超える・箇条書きの項目が短すぎると注意", async () => {
   const lead = "- lead: " + "あ".repeat(144) + "。";
   const body = (id, items) => [`## ${id}`, "- layout: title-body", "- title: t", lead, `- body: [${items}]`];

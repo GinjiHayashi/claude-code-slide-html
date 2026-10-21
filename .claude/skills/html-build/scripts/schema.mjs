@@ -6,7 +6,7 @@
 // スライドの型：（ ）の字数は全角の目安。超えると注意になり、最後はビルド後の検査で実際の行数を測る
 import path from "path";
 import { fileURLToPath } from "url";
-import { KINDS, LAYOUTS, LEAD, BOLD, SUB_ITEMS, describeLayout } from "./spec.mjs";
+import { KINDS, LAYOUTS, LEAD, BOLD, LEAD_BOLD, SUB_ITEMS, describeLayout } from "./spec.mjs";
 import { LEAD_LIMIT } from "./outline.mjs";
 import { describe, describeLimits } from "../components/_util.mjs";
 import { isMain } from "../../../lib/common.mjs";
@@ -32,7 +32,7 @@ if (isMain(import.meta.url)) {
   if (!name) {
     console.log("# どの型にも共通");
     console.log(
-      `字数：全角を1、半角を0.5と数える｜lead：全角${LEAD.target[0]}〜${LEAD.target[1]}字が目安で、${LEAD.short}字未満は注意（表や大きな図で短くするなら lead_short: <理由>）。${LEAD.lines}行まで（全角${LEAD_LIMIT}字を超えるとエラー）｜太字：1項目に${BOLD.perItem}か所、1枚に${BOLD.perSlide}か所まで｜下の階層：1項目に${SUB_ITEMS}つまで`,
+      `字数：全角を1、半角を0.5と数える｜lead：全角${LEAD.target[0]}〜${LEAD.target[1]}字が目安で、${LEAD.short}字未満は注意（表や大きな図で短くするなら lead_short: <理由>）。${LEAD.lines}行まで（全角${LEAD_LIMIT}字を超えるとエラー）｜太字：1項目に${BOLD.perItem}か所、1枚に${BOLD.perSlide}か所まで（lead は数えない）｜lead の強調（青の太字）：${LEAD_BOLD.max}か所まで（目安${LEAD_BOLD.good}か所、0でもよい）、1か所は全角${LEAD_BOLD.chars}字まで、合計は lead の${Math.round(LEAD_BOLD.ratio * 100)}%まで｜下の階層：1項目に${SUB_ITEMS}つまで`,
     );
     console.log("");
     console.log("# スライドの型（layout）");

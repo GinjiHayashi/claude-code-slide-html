@@ -307,6 +307,33 @@ test("現在地：ビルドの合否は build-log.md の先頭の設定（ok）�
   assert.equal(deckStatus(dir).state, "承認の前の試しのビルドのまま");
 });
 
+test("regate：承認の前の試しのビルドは、outline.md が変わっていなければビルドし直さずに記録だけ直す", async () => {
+  const { regate } = await import(path.join(SKILLS, "html-build/scripts/build.mjs"));
+  const dir = tempDeck();
+  fs.writeFileSync(path.join(dir, "factcheck.md"), FC);
+  approve(dir, "brief.md");
+  built(dir);
+  const log = path.join(dir, "build", "build-log.md");
+  const trial =
+    "---\nok: true\ngate: false\n---\n\n- 日時：x\n\n### 注意（人が確認する）\n\n- 承認ゲート：outline.md が承認されていない\n\n## 機械的な検査（inspect.mjs）\n";
+  fs.writeFileSync(log, trial);
+  // 承認の前は記録し直せない
+  assert.equal(regate(dir).ok, false);
+  approve(dir, "outline.md");
+  assert.match(deckStatus(dir).next, /--regate/);
+  assert.equal(regate(dir).ok, true);
+  const out = fs.readFileSync(log, "utf8");
+  assert.match(out, /^gate: true$/m);
+  assert.ok(!out.includes("- 承認ゲート："));
+  assert.match(out, /### 注意（人が確認する）\n\nなし\n/);
+  assert.notEqual(deckStatus(dir).state, "承認の前の試しのビルドのまま");
+  // 試しのビルドのあとに outline.md が変わったら、ビルドし直す
+  fs.writeFileSync(log, trial);
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("3割", "4割"));
+  assert.equal(regate(dir).ok, false);
+});
+
 test("status：decks/ のフォルダ名と brief.md の deck_id が違えば、注意を添える（同じなら出さない）", () => {
   const note = (r) => r.reasons.some((x) => x.includes("rename-deck.mjs"));
   assert.equal(note(deckStatus(tempDeck())), false);

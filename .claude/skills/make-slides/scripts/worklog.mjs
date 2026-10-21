@@ -30,7 +30,7 @@ export function appendWork(deckDir, entry) {
 // 今の工程（status.mjs の「工程」）
 function currentStage(deckDir) {
   try {
-    return deckStatus(deckDir).stage;
+    return deckStatus(deckDir, { sources: false }).stage; // 資料の検査は工程の判定に要らない（毎ターン重くしない）
   } catch {
     return undefined;
   }

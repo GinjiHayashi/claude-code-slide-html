@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE, rounded } from "./_util.mjs";
+import { esc, check, R, O, LINE, rounded, within } from "./_util.mjs";
 
 // er：データの項目と関係（ER 図）。表は6まで。
 // data: {
@@ -17,10 +17,13 @@ export const schema = {
   highlight: O,
 };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { entities: [2, 6] };
+
 export default function er(data, opt = {}) {
   check("er", data, schema);
   const E = data.entities;
-  if (E.length < 2 || E.length > 6) throw new Error("er: entities は2〜6");
+  within("er", limits, "entities", E.length);
   const LN = LINE;
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;

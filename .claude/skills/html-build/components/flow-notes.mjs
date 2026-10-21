@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, optional, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, optional, LINE, within } from "./_util.mjs";
 
 // flow-notes：横に並べた流れの箱と、それぞれの下に置く説明の箱。2〜5個。
 // data: { items: [{ label, note }], base?: { label } }
@@ -19,10 +19,13 @@ const GAP_H = 56, // 上の箱どうしのあいだ（矢印の長さ）
 const right = `<svg data-origin="generated" class="block" width="${GAP_H}" height="16" viewBox="0 0 ${GAP_H} 16" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M4,8H${GAP_H - 16}"/><polygon class="${LINE.fill}" points="${GAP_H - 4},8 ${GAP_H - 17},1 ${GAP_H - 17},15"/></svg>`;
 const up = `<svg data-origin="generated" class="block" width="16" height="${GAP_V}" viewBox="0 0 16 ${GAP_V}" aria-hidden="true"><path class="fill-none ${LINE.stroke}" stroke-width="2.5" d="M8,${GAP_V - 4}V16"/><polygon class="${LINE.fill}" points="8,4 1,17 15,17"/></svg>`;
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [2, 5] };
+
 export default function flowNotes(data, opt = {}) {
   check("flow-notes", data, schema);
   const I = data.items;
-  if (I.length < 2 || I.length > 5) throw new Error("flow-notes: items は2〜5");
+  within("flow-notes", limits, "items", I.length);
   // 列は「箱・矢印・箱・矢印・…」。矢印の列は GAP_H の幅
   const cols = I.map(() => "minmax(0,1fr)").join(` ${GAP_H}px `);
   const at = (k) => 2 * k + 1;

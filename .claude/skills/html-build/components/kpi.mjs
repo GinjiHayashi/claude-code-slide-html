@@ -1,4 +1,4 @@
-import { esc, check, R, O } from "./_util.mjs";
+import { esc, check, R, O, within } from "./_util.mjs";
 
 // kpi：結論の数字を大きく見せる。1〜4個を横に並べる。
 // data: { items: [{ label, value, unit?, compare?, trend?: number[], highlight? }] }
@@ -26,10 +26,13 @@ export const schema = { items: [{ label: R, value: R, unit: O, compare: O, trend
 // 横に並べるときの1枚の幅の下限。これより狭くなる枠では、縦に積む（1枚を1行にした横長のカード）
 const MIN_W = 160;
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [1, 4] };
+
 export default function kpi(data, opt = {}) {
   check("kpi", data, schema);
   const items = data.items;
-  if (items.length < 1 || items.length > 4) throw new Error("kpi: items は1〜4個");
+  within("kpi", limits, "items", items.length);
   const W = opt.width ?? 1172,
     GAP = 24;
   const stack = items.length > 1 && (W - GAP * (items.length - 1)) / items.length < MIN_W;

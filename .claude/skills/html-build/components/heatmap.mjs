@@ -1,4 +1,4 @@
-import { esc, check, R, O, num, unitLabel, seqStep } from "./_util.mjs";
+import { esc, check, R, O, num, unitLabel, seqStep, within } from "./_util.mjs";
 
 // heatmap：2つの分類の組み合わせごとの値を、青の濃淡で示す。
 // data: { rows: [行の名前], columns: [列の名前], values: [[行ごとの値]], unit, steps?: 段階の数（3〜5。既定 5） }
@@ -8,12 +8,16 @@ import { esc, check, R, O, num, unitLabel, seqStep } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { rows: [R], columns: [R], values: [O], unit: R, steps: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 行: [0, 12], 列: [0, 12] };
+
 export default function heatmap(data) {
   check("heatmap", data, schema);
   const R = data.rows,
     C = data.columns,
     V = data.values;
-  if (R.length > 12 || C.length > 12) throw new Error("heatmap: 12行×12列まで");
+  within("heatmap", limits, "行", R.length);
+  within("heatmap", limits, "列", C.length);
   if (V.length !== R.length || V.some((r) => r.length !== C.length)) throw new Error("heatmap: values は 行の数 × 列の数");
   const { shades: S, step, legend } = seqStep(V.flat(), data.steps ?? 5);
   const head = C.map((c) => `<div class="flex items-end justify-center pb-[4px] text-center text-caption font-bold text-label">${esc(c)}</div>`).join("");

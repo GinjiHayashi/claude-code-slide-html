@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // timeline：出来事を時間順に、横一本の線の上に並べる。3〜6個。
 // data: { items: [{ date, label, text? }], highlight?: 番号（1から） }
@@ -9,10 +9,13 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { items: [{ date: R, label: R, text: O }], highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [3, 6] };
+
 export default function timeline(data) {
   check("timeline", data, schema);
   const I = data.items;
-  if (I.length < 3 || I.length > 6) throw new Error("timeline: items は3〜6");
+  within("timeline", limits, "items", I.length);
   const LN = LINE;
   const cols = I.map((it, i) => {
     const on = data.highlight === i + 1;

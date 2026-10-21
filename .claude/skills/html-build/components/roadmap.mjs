@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // roadmap：期間のある計画を、横に期間・縦に分野（レーン）を並べた表の上に棒で示す。
 // data: { periods: [string], lanes: [{ name, items: [{ start, end, label, highlight? }] }] }
@@ -10,12 +10,15 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { periods: [R], lanes: [{ name: R, items: [{ start: R, end: R, label: R, highlight: O }] }] };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { periods: [2, 8], lanes: [1, 4] };
+
 export default function roadmap(data) {
   check("roadmap", data, schema);
   const P = data.periods,
     L = data.lanes;
-  if (P.length < 2 || P.length > 8) throw new Error("roadmap: periods は2〜8");
-  if (L.length < 1 || L.length > 4) throw new Error("roadmap: lanes は1〜4");
+  within("roadmap", limits, "periods", P.length);
+  within("roadmap", limits, "lanes", L.length);
   const LN = LINE;
   const idx = (p) => {
     const i = P.indexOf(p);

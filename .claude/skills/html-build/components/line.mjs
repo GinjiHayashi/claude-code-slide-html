@@ -1,6 +1,6 @@
 import { scaleLinear, scalePoint } from "d3-scale";
 import { line as d3line } from "d3-shape";
-import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, marker, svgSize } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, marker, svgSize, within } from "./_util.mjs";
 import { yGrid, xLabels, spread } from "./_axis.mjs";
 
 // line：時間の変化と傾向を示す折れ線。系列は4まで、時点は24まで。
@@ -22,11 +22,14 @@ export const schema = {
   callout: optional({ value: R, label: R }),
 };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 系列: [1, 4], 時点: [2, 24] };
+
 export default function line(data, opt = {}) {
   check("line", data, schema);
   const { x: xs, series } = data;
-  if (series.length < 1 || series.length > 4) throw new Error("line: 系列は1〜4");
-  if (xs.length < 2 || xs.length > 24) throw new Error("line: 時点は2〜24");
+  within("line", limits, "系列", series.length);
+  within("line", limits, "時点", xs.length);
   const { w, h: h0 } = svgSize(data, opt);
   const h = h0 - 26; // 上に単位を書く分（単位 18 ＋ 間 8）
   const m = { l: 64, r: 184, t: 12, b: 32 };

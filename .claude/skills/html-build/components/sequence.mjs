@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE } from "./_util.mjs";
+import { esc, check, R, O, LINE, within } from "./_util.mjs";
 
 // sequence：やりとりの順番（シーケンス図）。登場するものは5まで、やりとりは10まで。
 // data: {
@@ -13,12 +13,15 @@ import { esc, check, R, O, LINE } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { actors: [R], messages: [{ from: R, to: R, label: R, reply: O }], highlight: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { actors: [2, 5], messages: [1, 10] };
+
 export default function sequence(data, opt = {}) {
   check("sequence", data, schema);
   const A = data.actors,
     M = data.messages;
-  if (A.length < 2 || A.length > 5) throw new Error("sequence: actors は2〜5");
-  if (M.length < 1 || M.length > 10) throw new Error("sequence: messages は1〜10");
+  within("sequence", limits, "actors", A.length);
+  within("sequence", limits, "messages", M.length);
   const LN = LINE;
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;

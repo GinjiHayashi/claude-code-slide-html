@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, LINE, within } from "./_util.mjs";
 
 // nested：入れ子の包含関係。3〜6段を、外から内へ囲みを重ねて描く（AI ⊃ 機械学習 ⊃ 深層学習 など）。
 // data: { items: [{ label, text?, tone? }] }（外から順に）
@@ -13,10 +13,13 @@ export const schema = { items: [{ label: R, text: O, tone: O }] };
 
 const TONE = { plain: "bg-canvas", soft: "bg-highlight", muted: "bg-panel" };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [3, 6] };
+
 export default function nested(data, opt = {}) {
   check("nested", data, schema);
   const I = data.items;
-  if (I.length < 3 || I.length > 6) throw new Error("nested: items は3〜6");
+  within("nested", limits, "items", I.length);
   const tones = Object.keys(TONE);
   for (const [n, it] of I.entries())
     if (it.tone !== undefined && !tones.includes(it.tone)) throw new Error(`nested: items[${n + 1}] の tone は ${tones.join("・")} のどれか`);

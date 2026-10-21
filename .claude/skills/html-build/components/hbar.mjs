@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, num, callout, unitLabel } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, within } from "./_util.mjs";
 
 // hbar：項目名が長い比較や順位を示す横棒。2〜10本。既定で大きい順に並べる（sort: false で書いた順）。
 // data: { data: [{ label, value, highlight? }], unit, sort?, callout?: { value, label } }
@@ -7,10 +7,13 @@ import { esc, check, R, O, optional, num, callout, unitLabel } from "./_util.mjs
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { data: [{ label: R, value: R, highlight: O }], unit: R, sort: O, callout: optional({ value: R, label: R }) };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { data: [2, 10] };
+
 export default function hbar(data) {
   check("hbar", data, schema);
   let rows = [...data.data];
-  if (rows.length < 2 || rows.length > 10) throw new Error("hbar: data は2〜10本");
+  within("hbar", limits, "data", rows.length);
   if (data.sort !== false) rows.sort((a, b) => b.value - a.value);
   const max = Math.max(...rows.map((r) => r.value), 0) || 1;
   const anyHi = rows.some((r) => r.highlight);

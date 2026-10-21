@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, LINE } from "./_util.mjs";
+import { esc, check, R, O, optional, LINE, within } from "./_util.mjs";
 
 // cycle：3〜6個の箱が一周する循環。始まりがわかるよう、箱の文字の頭に番号の小さい丸を付ける。
 // data: { items: [{ label, caption?, arrow? }], shape?, title?, tone?, highlight?, numbered?, exit?, back? }
@@ -71,10 +71,13 @@ const arrow = (pts, c, gap = 4) => {
 const label = (x, y, text, anchor = "middle") =>
   `<text class="fill-ink stroke-canvas text-body font-bold" stroke-width="6" paint-order="stroke" x="${f1(x)}" y="${f1(y)}" text-anchor="${anchor}" dominant-baseline="central">${esc(text)}</text>`;
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { items: [3, 6] };
+
 export default function cycle(data, opt = {}) {
   check("cycle", data, schema);
   const I = data.items;
-  if (I.length < 3 || I.length > 6) throw new Error("cycle: items は3〜6");
+  within("cycle", limits, "items", I.length);
   const shape = data.shape ?? "ring";
   if (!["ring", "row"].includes(shape)) throw new Error("cycle: shape は ring か row");
   const c = TONES[data.tone ?? "ink"];

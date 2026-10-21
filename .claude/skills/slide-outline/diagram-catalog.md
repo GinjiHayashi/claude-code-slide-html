@@ -2,7 +2,7 @@
 
 `outline.md` の `diagram:` には、この一覧の型の名前（`kind:`）と、その型が求める項目だけを書く。運用時は固定で、スライドごとに型を足したり変えたりしない。
 
-**書ける項目**は、この一覧には書き写さない。`node .claude/skills/html-build/scripts/schema.mjs <kind>` で出す（`?` の付いた項目は任意。正は各部品の `schema`）。値の意味と既定は、部品（`html-build/components/<kind>.mjs`）の冒頭のコメントにある。知らない項目を書くと、ビルドがエラーで止まる。
+**書ける項目**は、この一覧には書き写さない。`node .claude/skills/html-build/scripts/schema.mjs <kind>` で出す（`?` の付いた項目は任意。正は各部品の `schema`）。値の意味と既定は、部品（`html-build/components/<kind>.mjs`）の冒頭のコメントにある。知らない項目を書くと、ビルドがエラーで止まる。並びの**数の決まり**（`items` は2〜6、表の行は8まで など）も同じ出力の「数：」に出る（正は各部品の `limits`）。下の表の数は目安の写しで、食い違ったら `schema.mjs` に従う。
 
 **部品の使い方**：型（部品）は道具であり、どのスライドも必ずどれかの型で描かなければならないわけではない。
 - 先に `outline.md` の `idea` で見せたい絵を決め、それを部品で描けるかを `match` に書く（`outline-template.md` 4章）。

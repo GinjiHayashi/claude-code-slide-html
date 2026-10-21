@@ -1,4 +1,4 @@
-import { esc, check, R, O, optional, num, callout, unitLabel, SERIES } from "./_util.mjs";
+import { esc, check, R, O, optional, num, callout, unitLabel, SERIES, within } from "./_util.mjs";
 
 // stacked-bar：量と内訳を同時に見せる積み上げ縦棒。系列は5まで、分類は8まで。
 // data: { categories: [string], series: [{ name, values: [number] }], unit, percent?, callout? }
@@ -9,11 +9,14 @@ import { esc, check, R, O, optional, num, callout, unitLabel, SERIES } from "./_
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { categories: [R], series: [{ name: R, values: R }], unit: R, percent: O, callout: optional({ value: R, label: R }) };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 系列: [2, 5], 分類: [1, 8] };
+
 export default function stackedBar(data) {
   check("stacked-bar", data, schema);
   const { categories: cats, series } = data;
-  if (series.length < 2 || series.length > 5) throw new Error("stacked-bar: 系列は2〜5");
-  if (cats.length < 1 || cats.length > 8) throw new Error("stacked-bar: 分類は1〜8");
+  within("stacked-bar", limits, "系列", series.length);
+  within("stacked-bar", limits, "分類", cats.length);
   const totals = cats.map((_, i) => series.reduce((a, s) => a + s.values[i], 0));
   const max = data.percent ? 100 : Math.max(...totals) || 1;
   const fit = cats.length * 160 + (cats.length - 1) * 24 + 32;

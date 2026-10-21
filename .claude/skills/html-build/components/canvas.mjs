@@ -1,4 +1,4 @@
-import { esc, check, R, O, LINE, rounded } from "./_util.mjs";
+import { esc, check, R, O, LINE, rounded, within } from "./_util.mjs";
 import { loadAsset, inlineSvg } from "./_asset.mjs";
 
 // canvas：自由図。一覧の型では idea の絵が描けないとき（match が「意味が欠ける」「描けない」）に、形を格子の上に並べて描く。
@@ -194,12 +194,15 @@ function arrange(n, w, h, ratio, max) {
 /** shapes の chart に書いた図の型（先に読み込んでおき、opt.comps で渡す） */
 export const chartKinds = (data) => [...new Set((data?.shapes ?? []).filter((s) => s?.type === "chart" && s.chart?.kind).map((s) => s.chart.kind))];
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { shapes: [1, 40] };
+
 export default function canvas(data, opt = {}) {
   check("canvas", data, schema);
   const [cols, rows] = data.grid ?? [12, 6];
   if (![cols, rows].every((n) => Number.isInteger(n) && n >= 2 && n <= 24)) throw new Error("canvas: grid は [列, 行] の形で、どちらも2〜24の整数");
   const S = data.shapes;
-  if (S.length < 1 || S.length > 40) throw new Error("canvas: shapes は1〜40");
+  within("canvas", limits, "shapes", S.length);
   const W = opt.width ?? 1172,
     H = opt.height ?? 440;
   const cw = W / cols,

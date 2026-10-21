@@ -1,4 +1,4 @@
-import { esc, inline, check, R, O, LINE } from "./_util.mjs";
+import { esc, inline, check, R, O, LINE, within } from "./_util.mjs";
 
 // table：正確な値を一覧で読ませる。8行×6列まで。
 // data: { columns: [string], rows: [[...]], highlight?: [行の番号（1から）], align?: ["left"|"right"|"center"], style? }
@@ -16,11 +16,14 @@ import { esc, inline, check, R, O, LINE } from "./_util.mjs";
 // data の決まり（書けるのはここにある項目だけ。R：必須、O：任意）
 export const schema = { columns: [R], rows: [O], highlight: O, align: O, style: O };
 
+// 数の決まり（within で確かめ、schema.mjs が出す）
+export const limits = { 列: [0, 6], 行: [0, 8] };
+
 export default function table(data) {
   check("table", data, schema);
   const { columns, rows } = data;
-  if (columns.length > 6) throw new Error("table: 列は6まで");
-  if (rows.length > 8) throw new Error("table: 行は8まで");
+  within("table", limits, "列", columns.length);
+  within("table", limits, "行", rows.length);
   const hi = new Set(data.highlight ?? []);
   const style = data.style ?? "grid";
   const ST = {

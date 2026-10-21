@@ -11,8 +11,8 @@
 deck_id: 2026-10-17-report-automation   # YYYY-MM-DD-<短い英語名>。decks/ のフォルダ名と同じ
 title: 月次レポート作成の自動化           # デッキの題名（ブラウザのタブに出る）
 pdf: false                              # PDF も書き出すか（brief.md から写す）
-assets:                                 # 写真などを使うときだけ。人間が inputs/ に置いたもの（license-notice/policy.md 5章）。アイコン集のアイコンは書かない
-  - {src: inputs/screen.png, credit: 自組織で撮影, license: 自組織の素材}
+assets:                                 # 写真などを使うときだけ。inputs/ から assets/ に移したもの（license-notice/policy.md 5章）。アイコン集のアイコンは書かない
+  - {src: assets/screen.png, credit: 自組織で撮影, license: 自組織の素材}
 ---
 
 ## S01
@@ -138,7 +138,7 @@ assets:                                 # 写真などを使うときだけ。�
 
 - アイコンは、アイコン集から `node .claude/skills/html-build/scripts/icons.mjs <英語の語>` で探し、`phosphor:<名前>` と書く（`assets` には書かない）。
 - 写真・画面の写しなど、人間が用意する素材は、先頭の `assets` に書いたものだけ使える。`src`・`credit`・`license` は必須、`url` は任意。出どころとライセンスは人間に聞いて書き、推測で書かない。
-- 画像は `diagram: {kind: image, src: inputs/screen.png, alt: 何が写っているか}`。`grid-4` のカードの印は items に `icon: phosphor:check-circle`。大きなアイコンは `diagram: {kind: image, src: phosphor:users, alt: …}`。
+- 画像は `diagram: {kind: image, src: assets/screen.png, alt: 何が写っているか}`。`grid-4` のカードの印は items に `icon: phosphor:check-circle`。大きなアイコンは `diagram: {kind: image, src: phosphor:users, alt: …}`。
 - 書式チェックが、ファイルがあるか、`assets` にあるか、使っていない素材がないかを確かめる。
 - 自由図（`canvas`）の中のアイコンの大きさは2つだけ：単体で置くときは 64px（`canvas` の `icon`）、文字の横に添えるときは 24px（`canvas` の `box`・`area` の `icon`）。色は黒・紺・灰色・白だけ。
 

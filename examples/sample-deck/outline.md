@@ -3,7 +3,7 @@ deck_id: 2026-10-17-report-automation
 title: 月次レポート作成の自動化
 pdf: true
 assets:
-  - {src: inputs/screen-entry.png, credit: 見本のために作成した画面の例, license: 自作（見本用）}
+  - {src: assets/screen-entry.png, credit: 見本のために作成した画面の例, license: 自作（見本用）}
 ---
 
 ## S01
@@ -113,7 +113,7 @@ assets:
 - lead: 試行では、すべての部門が同じ入力の画面を使いました。指標の名前と並びがそろったので、保存した数字は本部の集計にそのまま入ります。画面には前月の値を横に出し、**差が大きい数字**に印を付けて、入力したその場で知らせます。下は実際の画面で、印の付いた行が、前月から大きく変わったため知らせた数字です。
 - diagram:
     kind: image
-    src: inputs/screen-entry.png
+    src: assets/screen-entry.png
     alt: 月次実績の入力の画面。問い合わせ件数の行に「前月の2倍」と印が付いている
     fit: contain
 

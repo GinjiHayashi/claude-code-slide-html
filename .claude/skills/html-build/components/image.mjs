@@ -1,10 +1,10 @@
 import { esc, check, R, O } from "./_util.mjs";
 import { loadAsset, isIconRef, dataUrl, inlineSvg } from "./_asset.mjs";
 
-// image：画像（写真、画面の写し、アイコン）を1つ置く。素材は人間が decks/<deck-id>/inputs/ に置き、
+// image：画像（写真、画面の写し、アイコン）を1つ置く。素材は人間が decks/<deck-id>/assets/ に置き、
 // outline.md の先頭の assets に出どころとライセンスを書いたものだけを使う（license-notice/policy.md 5章）。
 // data: { src, alt, fit?: "cover" | "contain" }
-// - src：デッキのフォルダからのパス（inputs/… 。assets の src と同じ）。形式は PNG・JPEG・SVG
+// - src：デッキのフォルダからのパス（assets/… 。outline.md の先頭の assets の src と同じ）。形式は PNG・JPEG・SVG
 // - alt：何が写っているか（読み上げに使う。必須）
 // - fit：cover（既定。枠いっぱいに広げ、はみ出す分を切り抜く）／contain（切らずに縦横の比を保って枠に収める）
 // - どちらも角を rounded-panel（8）で切り抜き、罫線と同じ色（line）の 1px の枠を付ける。画像をそのまま置かない

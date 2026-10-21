@@ -21,7 +21,7 @@ test("rename-deck：フォルダと、各ファイルの先頭の設定の deck_
   assert.equal(fs.existsSync(dir), false);
   for (const f of ["brief.md", "outline.md", "research.md"]) assert.equal(deckId(path.join(dest, f)), TO, f);
   assert.equal(fs.existsSync(path.join(dest, "approval-request.yaml")), false);
-  assert.ok(fs.existsSync(path.join(dest, "inputs")));
+  assert.ok(fs.existsSync(path.join(dest, "assets")));
 });
 
 test("rename-deck：先頭の設定の外にある deck_id の文字は変えない", () => {

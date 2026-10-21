@@ -16,6 +16,7 @@ import { scanDeck } from "../../license-notice/scripts/scan.mjs";
 import { verify } from "../../license-notice/scripts/verify.mjs";
 import { credits, licensesHtml } from "../../license-notice/scripts/credits.mjs";
 import { checkGate } from "../../make-slides/scripts/gate.mjs";
+import { appendWork } from "../../make-slides/scripts/worklog.mjs";
 import { isMain, python } from "../../../lib/common.mjs";
 
 // ビルド：decks/<deck-id>/outline.md から、1ファイルの deck.html を作る。書き出すものはすべて decks/<deck-id>/build/ に置く。
@@ -50,7 +51,7 @@ export async function build(deckDir) {
   for (const f of OUTPUTS) fs.rmSync(path.join(outDir, f), { force: true });
   if (chk.errors.length) {
     const r = { ok: false, check: chk, custom: customs(outline) };
-    fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
+    writeLog(deckDir, outDir, outline, r);
     return r;
   }
 
@@ -70,7 +71,7 @@ export async function build(deckDir) {
     lic.errors.push(...cr.errors);
     if (lic.errors.length) {
       const r = { ok: false, check: chk, custom: customs(outline), license: { ...lic, assets: scan1.assets, rows: [] } };
-      fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
+      writeLog(deckDir, outDir, outline, r);
       return r;
     }
     // 2回目：最後に credits スライドを足し、ライセンスの全文を入れて組み立て直す（スライドの文字と Tailwind のクラスが増えるため）
@@ -115,11 +116,23 @@ export async function build(deckDir) {
       r.pdf = path.join(outDir, "deck.pdf");
       await toPdf(out, r.pdf);
     }
-    fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
+    writeLog(deckDir, outDir, outline, r);
     return r;
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
+}
+
+// build-log.md を書き直し、作業記録（worklog.jsonl）に1行の要約を足す（中身は build-log.md にだけ書く）
+function writeLog(deckDir, outDir, outline, r) {
+  fs.writeFileSync(path.join(outDir, "build-log.md"), buildLog(outline, r));
+  appendWork(deckDir, {
+    event: "build",
+    ok: !!r.ok,
+    gate: !!r.check.gate,
+    errors: r.check.errors.length + (r.license?.errors?.length ?? 0) + (r.inspect ? CATEGORIES.reduce((a, [k]) => a + r.inspect[k].length, 0) : 0),
+    warnings: r.check.warnings.length + (r.license?.warnings?.length ?? 0) + (r.inspect ? NOTICES.reduce((a, [k]) => a + r.inspect[k].length, 0) : 0),
+  });
 }
 
 // スライドの HTML から deck.html の中身を組み立てる（Tailwind・KaTeX・フォント・base.html）

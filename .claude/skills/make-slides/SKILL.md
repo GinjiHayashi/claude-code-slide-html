@@ -44,7 +44,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 3. **次の工程を進める**：「次に」に書かれたスキルを読み、その手順のとおりに進める（下の「工程と止まるところ」）。
 4. **区切りごとに 2 に戻る**：スキルの手順が終わったら、また `status.mjs` を実行して次を決める。「完成」になったら、手順 6 の報告をして終わる。
 5. **止まるところで止まる**：人間の答えが要るところ（下の表の「止まる」）では、聞いて答えを待つ。答えを待たずに次の工程に進まない。承認が記録されたら、下の「git」の 2（コミット）を行う。
-6. **完成の報告**：`build/deck.html` と（あれば）`build/deck.pdf` のパス、枚数、ビルドの注意（`build-log.md` の「注意」）を伝える。下の「git」の 3（PR）を行い、その URL も伝える。
+6. **完成の報告**：`build/deck.html` と（あれば）`build/deck.pdf` のパス、枚数、ビルドの注意（`build-log.md` の「注意」）を伝える。作業記録の集計（`node .claude/skills/make-slides/scripts/worklog-report.mjs decks/<deck-id>` の表）も見せる。下の「git」の 3（PR）を行い、その URL も伝える。
 
 ## 工程と止まるところ
 
@@ -117,6 +117,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
    - 種類の後ろの `(<deck-id>)` は、どのデッキのコミットかを示すため（README「コミットメッセージ」）。
    - 今いるブランチが `feature/<deck-id>`（か `-fix`）であることを、コミットの前に確かめる。違えば止めて人間に伝える。
    - `approval-request.yaml` は `.gitignore` で管理外。
+   - 作業記録 `worklog.jsonl` は hook がターンごとに足すので、コミットのあとも変わる。次のコミットでまとめて入る（`branch.mjs` の判断には使わない）。
 3. **PR**：「完成」になったら、`git push -u origin <ブランチ>` のあと、develop への PR を作る（`gh pr create --base develop`）。PR の本文には、デッキの題名、枚数、ファクトチェックの要確認の数、ビルドの注意を書く。
 4. **マージ**：人間が GitHub でマージするか、チャットの承認でマージする。AI は `gh pr merge` を直接使わない（`.claude/settings.json` で止める）。
    - チャットで頼まれたら、`node .claude/skills/make-slides/scripts/request.mjs decks/<deck-id> --merge <PR の番号>` で依頼を出し、出力の決まった文で聞く。CI が失敗しているチェックが出たら、その名前も伝えて、それでもよいかを聞く。
@@ -148,6 +149,7 @@ AI が実行するスクリプト：
 | `scripts/merge.mjs` | 承認された PR だけをマージし、main のあとはタグを付けて push する |
 | `scripts/github.mjs` | PR を gh で読む・マージする共通の処理（ほかのスクリプトが使う） |
 | `scripts/approvals.mjs` | 承認の記録の読み書き（ほかのスクリプトが使う） |
+| `scripts/worklog-report.mjs` | 作業記録（`worklog.jsonl`）を集計し、工程ごとの開始・終了、AI の作業時間、人の待ち時間、やり取り・ビルド・サブエージェントの回数、工程の戻り、承認の聞き直しを表で出す（ファイルには書かない） |
 
 hook（`.claude/settings.json` から呼ばれる。AI は実行しない）：
 
@@ -157,5 +159,6 @@ hook（`.claude/settings.json` から呼ばれる。AI は実行しない）：
 | `scripts/protect-bash.mjs` | Bash を実行する前（PreToolUse） | approvals.yaml への書き込みを止め、ハーネスのファイル（`.claude/`・`CLAUDE.md`）への書き込みには確認を出す |
 | `scripts/protect-edit.mjs` | Edit・Write を実行する前（PreToolUse） | ハーネスのファイルの編集に確認を出す |
 | `scripts/protect-check.mjs` | 会話の始めと、ターンの終わり（SessionStart・Stop） | ハーネスのファイルの状態を覚え、すり抜けた変更を見つけて伝える |
+| `scripts/worklog.mjs hook` | 会話の始め、人間が書いたとき、ターンの終わり、サブエージェントの終わり（SessionStart・UserPromptSubmit・Stop・SubagentStop） | デッキの `worklog.jsonl` に時刻と工程を足す（作業記録）。ターンの終わりには、使ったツールの回数・変えたファイル・トークン数も足す。どのデッキかはブランチ `feature/<deck-id>` で決め、わからなければ書かない。人間の発言の本文は書かない。ビルドの結果は `build.mjs`、承認の依頼は `request.mjs` が足す |
 
 ハーネスの確認（protect-*）は、スライド作成中だけ出す。ハーネスのリポジトリ（`decks/.gitignore` を git で管理）での開発中は出さず、approvals.yaml と `.claude/settings.json` だけを守る。判定は `.claude/lib/common.mjs` の `harnessDev`。環境変数 `SLIDE_HARNESS_MODE`（`dev`・`slides`）で上書きできる。

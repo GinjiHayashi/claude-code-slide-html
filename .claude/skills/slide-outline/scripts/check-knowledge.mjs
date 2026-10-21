@@ -8,6 +8,7 @@
 // - 「構成の進め方」が「相談して決めたい」「たたき台がある」なのに知識マップがなければエラー。「決まっている」ならなくてよい
 // - 出力：Must の概念の層（層0＝Must の前提がない概念）と、同じ層の中の並べ方の候補
 //   （1. 次の層でより多くの概念の前提になるもの → 2. 具体 → 抽象。ストーリー上の都合（直前の問いに答えるもの）は AI と人が決める）
+// - outline.md との突き合わせ（question・new・uses・adept）は checkConcepts。check-outline.mjs が呼ぶ
 // - 終了コード：0＝エラーなし、2＝エラーあり
 import fs from "fs";
 import path from "path";
@@ -121,6 +122,64 @@ export function layers(nodes) {
       .map((n) => ({ ...n, layer: d, uses: uses(n) }))
       .sort((a, b) => b.uses - a.uses || ABSTRACTION.indexOf(a.abstraction) - ABSTRACTION.indexOf(b.abstraction));
   });
+}
+
+// outline.md のスライドの項目（structure-framework.md 4章・5章）
+// question：答える問い。new：そのスライドで初めて説明する概念。uses：説明に使う概念（K-001 の並び）。adept：新出の抽象概念の説明の要素（A・D・E・P・T）
+export const ADEPT = ["A", "D", "E", "P", "T"];
+// 問いを求めない型（表紙・目次・章の扉・締め）
+export const NO_QUESTION = ["title", "toc", "section", "closing"];
+
+// 項目の形（知識マップがなくても確かめる）。戻り値はエラーの文の並び
+export function conceptFieldErrors(f) {
+  const out = [];
+  if (f.question != null && typeof f.question !== "string") out.push("question は1文の文字列にする");
+  for (const k of ["new", "uses"])
+    if (f[k] != null && (!Array.isArray(f[k]) || f[k].some((x) => !KID.test(x)))) out.push(`${k} は [K-001, K-002] の形にする（知識マップの ID）`);
+  if (f.adept != null && (!Array.isArray(f.adept) || f.adept.some((x) => !ADEPT.includes(x)))) out.push(`adept は [A, D, E, P, T] のうち扱う要素の並びにする`);
+  return out;
+}
+
+// 知識マップと outline.md の突き合わせ。slides は readOutline の slides。nodes は parseKnowledge の nodes
+// - エラー：表にない ID、前方参照（uses の概念が、前のスライドかそのスライドの new にない）、new にならない Must
+// - 注意：同じ概念を2回 new にした、答える問いがない、抽象の Must を new にしたのに adept に具体（A・D・E）と T がそろわない
+export function checkConcepts(slides, nodes) {
+  const errors = [],
+    warnings = [];
+  const by = new Map(nodes.map((n) => [n.id, n]));
+  const shown = new Map(); // 概念 → new にしたスライド
+  const ids = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string" && KID.test(x)) : []);
+  for (const s of slides) {
+    const f = s.fields;
+    const news = ids(f.new),
+      uses = ids(f.uses);
+    for (const id of [...news, ...uses]) if (!by.has(id)) errors.push([s, `${id} が知識マップにない`]);
+    for (const id of news) {
+      if (shown.has(id)) warnings.push([s, `${id}（${by.get(id)?.name ?? "?"}）は ${shown.get(id).id} でも new にしている。初めて説明するスライドだけに書く`]);
+      else shown.set(id, s);
+    }
+    for (const id of uses)
+      if (by.has(id) && !shown.has(id))
+        errors.push([
+          s,
+          `前方参照：uses の ${id}（${by.get(id).name}）を、まだ説明していない。前のスライドかこのスライドの new に入れる（structure-framework.md 3-4）`,
+        ]);
+    if (!NO_QUESTION.includes(f.layout) && !String(f.question ?? "").trim())
+      warnings.push([s, "question（このスライドが答える問い）がない。書けないなら、要らないスライドか順序の誤り（structure-framework.md 4-2）"]);
+    for (const id of news) {
+      const n = by.get(id);
+      if (n?.priority !== "Must" || n.abstraction !== "抽象") continue;
+      const a = Array.isArray(f.adept) ? f.adept : [];
+      if (!a.includes("T") || !a.some((x) => ["A", "D", "E"].includes(x)))
+        warnings.push([
+          s,
+          `抽象の Must の ${id}（${n.name}）を new にした。adept に具体（A・D・E のどれか）と技術的な定義（T）を入れる（structure-framework.md 5-2）`,
+        ]);
+    }
+  }
+  for (const n of nodes)
+    if (n.priority === "Must" && !shown.has(n.id)) errors.push([null, `Must の ${n.id}（${n.name}）を、どのスライドの new にもしていない`]);
+  return { errors, warnings };
 }
 
 export function checkKnowledge(deckDir) {

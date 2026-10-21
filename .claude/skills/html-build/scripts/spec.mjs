@@ -130,7 +130,8 @@ export const LAYOUTS = {
 // id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
 // change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides の「直すとき」、edit-check.mjs）。
 //   スライドには出さず、承認の sha256（approvals.mjs の slideDigests）にも入れない。残っている間は outline.md の承認を頼めない（request.mjs）
-export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match", "change"];
+// question・new・uses・adept は構成のフレームワークの項目（slide-outline/structure-framework.md 4章・5章）。スライドには出ない
+export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match", "change", "question", "new", "uses", "adept"];
 // idea の長さの目安：change を統合するときは、足さずに新しい絵の説明に書き換える。超えたら注意
 export const IDEA = { lines: 3, chars: 120 };
 export const SLIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -147,6 +148,8 @@ export const VISUAL = ["diagram", "diagrams"];
 export const LOOK = [
   // スライド
   ..."layout id idea match lead_short numbered".split(" "),
+  // 構成のフレームワークの項目（スライドに出ない。並びと問いの確かめのため）
+  ..."question new uses adept".split(" "),
   // 図の型・置き方・大きさ
   ..."kind type at size grid col row via curve corner inside on wrap radius direction".split(" "),
   // 見た目の選び方
@@ -179,5 +182,5 @@ export function describeLayout(name) {
     ...(L.lead ? ["lead（要らないなら false。短くするなら lead_short に理由）"] : []),
   ];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
-  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match", "change"].join(", ")}${extra}`;
+  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match", "change", "question", "new", "uses", "adept"].join(", ")}${extra}`;
 }

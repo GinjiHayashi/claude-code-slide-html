@@ -4,19 +4,25 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
-import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
+import { DECK_ID, isMain, researchFile } from "../../../lib/common.mjs";
+import { readSources } from "../../slide-intake/scripts/reference.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, IDEA, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
+import { KNOWLEDGE, parseKnowledge, conceptFieldErrors, checkConcepts } from "../../slide-outline/scripts/check-knowledge.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた、
+//   idea が長い（spec.mjs の IDEA）、図の変更の指示（change）が残っている。
 // match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
-// claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
+// claims：C-001 は research.md（reference/research.md か、前からのデッキは直下）にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
+//   R-001 は reference/ の資料の md にある ID か（ないとエラー）。
+// question・new・uses・adept（構成のフレームワーク）：knowledge-map.md があれば突き合わせる（前方参照、new にならない Must はエラー。問いがないなどは注意）。
+//   知識マップの検査そのもの（循環など）は check-knowledge.mjs。知識マップが読めないときは突き合わせない。
 // 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
 // 終了コード：0＝エラーなし（注意はあってもよい）、2＝エラーあり（ほかのチェックと同じ）
 
@@ -40,7 +46,7 @@ export async function checkOutline(file) {
   else if (!DECK_ID.test(o.meta.deck_id)) errors.push(`deck_id「${o.meta.deck_id}」は YYYY-MM-DD-<短い英語名> の形にする`);
   if (!o.meta.title) errors.push("先頭の設定に title（デッキの題名）がない");
   for (const k of Object.keys(o.meta)) if (!["deck_id", "title", "pdf", "assets"].includes(k)) errors.push(`先頭の設定に知らない項目「${k}」がある`);
-  // デッキの素材（画像・アイコン）：license-notice/policy.md 5章
+  // デッキの素材（画像・アイコン）：license-notice/policy.md 5章。スライドに載せる画像は assets/ に置く（inputs/ は git の管理外）
   const assets = o.meta.assets ?? [];
   const deck = { dir: o.dir, assets: Array.isArray(assets) ? assets : [] };
   const usedAssets = new Set();
@@ -53,7 +59,9 @@ export async function checkOutline(file) {
         if (!["src", "credit", "license", "url"].includes(k)) errors.push(`${where} に知らない項目「${k}」がある（src・credit・license・url）`);
       for (const k of ["src", "credit", "license"]) if (!a[k]) errors.push(`${where} に ${k} がない（出どころとライセンスを書く）`);
       if (!a.src) return;
-      if (!/^inputs\/[^/].*/.test(a.src) || a.src.includes("..")) errors.push(`${where} の src「${a.src}」は inputs/ の中のファイルにする`);
+      if (!/^(assets|inputs)\/[^/].*/.test(a.src) || a.src.includes("..")) errors.push(`${where} の src「${a.src}」は assets/ の中のファイルにする`);
+      else if (a.src.startsWith("inputs/"))
+        warnings.push(`${where} の src「${a.src}」は inputs/ にある。inputs/ は git に入らず、ほかの端末でビルドできないので、assets/ に移して src を直す`);
       else if (!fs.existsSync(path.join(o.dir, a.src))) errors.push(`${where} の src「${a.src}」のファイルがない`);
       if (assets.findIndex((x) => x?.src === a.src) !== n) errors.push(`${where} の src「${a.src}」が重複している`);
     });
@@ -116,13 +124,12 @@ export async function checkOutline(file) {
         }
     }
 
-    // 箇条書き（太字を数えるため、説明文もここに入れる）
+    // 箇条書き（太字を数えるため）
     const bullets = [];
     if (lead) {
       if (f.lead === undefined || f.lead === null || f.lead === "") err(s, "説明文（lead）がない。要らないスライドは lead: false と書く");
       else if (f.lead !== false && typeof f.lead !== "string") err(s, "lead は文章か false にする");
       else if (typeof f.lead === "string") {
-        bullets.push(f.lead);
         if (f.lead.trim().includes("\n")) err(s, "lead は改行せずに1つの文章で書く（行の折り返しはビルドが決める）");
         const n = width(plain(f.lead));
         if (n > LEAD_LIMIT) err(s, `lead が3行に収まらない（全角${n}字。${LEAD_LIMIT}字まで）`);
@@ -213,6 +220,16 @@ export async function checkOutline(file) {
     bullets.forEach((t) => bolds(t) > BOLD.perItem && warn(s, `太字が1項目に${bolds(t)}か所ある（目安は${BOLD.perItem}か所）：${plain(t).slice(0, 20)}…`));
     const total = bullets.reduce((a, t) => a + bolds(t), 0);
     if (total > BOLD.perSlide) warn(s, `太字が1枚に${total}か所ある（目安は${BOLD.perSlide}か所まで）`);
+    // 説明文の強調（components.md 4.2、数は spec.mjs の LEAD_BOLD）。本文の太字とは別に数える
+    if (typeof f.lead === "string") {
+      const em = (f.lead.match(/\*\*(.+?)\*\*/g) ?? []).map((t) => width(plain(t)));
+      if (em.length > LEAD_BOLD.max) warn(s, `lead の強調が${em.length}か所ある（${LEAD_BOLD.max}か所まで。目安は${LEAD_BOLD.good}か所）`);
+      em.forEach((n) => n > LEAD_BOLD.chars && warn(s, `lead の強調に全角${n}字のものがある（1か所は${LEAD_BOLD.chars}字まで。文ではなく語句を囲む）`));
+      const sum = em.reduce((a, n) => a + n, 0);
+      const all = width(plain(f.lead));
+      if (all && sum / all > LEAD_BOLD.ratio)
+        warn(s, `lead の強調が全体の${Math.round((sum / all) * 100)}%ある（${Math.round(LEAD_BOLD.ratio * 100)}%まで。強調ばかりだと目立たない）`);
+    }
 
     // 図：名前が一覧にあるか、データが部品の決まりに合うか（部品を実際に呼んで確かめる）
     const ds = f.diagrams ?? (f.diagram ? [f.diagram] : []);
@@ -243,13 +260,24 @@ export async function checkOutline(file) {
       }
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
-    // 図のイメージ（slide-outline の手順 5）：先に idea で絵を書き、match で部品で描けるかを決める
+    // 図のイメージ（slide-outline の手順 6）：先に idea で絵を書き、match で部品で描けるかを決める
     const hasFigure = !!(f.diagram || f.diagrams || f.html);
     const match = f.match == null ? null : String(f.match).trim();
     const matchKind = match && MATCHES.find((x) => match.startsWith(x));
     if (hasFigure && !f.idea) warn(s, "図のイメージ（idea）がない。部品を選ぶ前に、見せたい絵を1〜3行で書く");
     if (hasFigure && match == null) warn(s, `match がない（${MATCHES.join("・")}）`);
     if (!hasFigure && (f.idea || match != null)) warn(s, "idea・match があるのに図がない");
+    // idea は足していかず、今の絵の説明に書き換える（change の統合。make-slides の「直すとき」）
+    if (typeof f.idea === "string") {
+      const lines = f.idea.replace(/\n+$/, "").split("\n").length;
+      const n = width(plain(f.idea));
+      if (lines > IDEA.lines || n > IDEA.chars)
+        warn(s, `idea が長い（${lines}行、全角${n}字。目安は${IDEA.lines}行・${IDEA.chars}字まで）。足していかず、今の絵の説明に書き換える`);
+    }
+    // change：人間が書く図の変更の指示。図を直したら idea に統合して空にする
+    if (f.change != null && typeof f.change !== "string") err(s, "change は文章で書く（図の変更の指示）");
+    else if (typeof f.change === "string" && f.change.trim())
+      warn(s, "図の変更の指示（change）が残っている。図を直して idea に統合し、change を空にする（make-slides の「直すとき」）");
     if (match != null && !matchKind) err(s, `match は ${MATCHES.join("・")} のどれかで始める`);
     else if (matchKind && matchKind !== MATCHES[0] && !/^[^：:]+[：:]\s*\S/.test(match))
       err(s, `match が「${matchKind}」のときは「：」のあとに、何が欠けるか・なぜ描けないかを書く`);
@@ -270,21 +298,28 @@ export async function checkOutline(file) {
       );
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
-    if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");
+    if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^[CR]-\d{3,}$/.test(c))))
+      err(s, "claims は [C-001, R-002] の形にする（C は research.md の主張、R は reference/ の資料）");
+    for (const m of conceptFieldErrors(f)) err(s, m);
   }
-  // claims と research.md の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
+  // claims と research.md・reference/ の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
+  // C-001：AI の調査の主張（reference/research.md。前からのデッキは直下の research.md）。R-001：人が渡した資料の md（reference/sources/・chat/）
   const withClaims = o.slides.filter((s) => s.fields.claims !== undefined);
   if (withClaims.length) {
-    const rf = path.join(path.dirname(file), "research.md");
+    const rf = researchFile(path.dirname(file));
+    const sources = new Set(readSources(path.dirname(file)).map((x) => x.meta.id));
     const claims = fs.existsSync(rf) ? Object.fromEntries(checkResearch(fs.readFileSync(rf, "utf8")).claims.map((c) => [c.id, c.fields])) : null;
     for (const s of withClaims) {
       const ids = s.fields.claims;
       if (!Array.isArray(ids) || ids.some((x) => typeof x !== "string")) continue; // 形の誤りは上で出している
-      if (!claims) {
-        err(s, `claims（${ids.join("・")}）があるのに research.md がない`);
+      for (const id of ids.filter((x) => x.startsWith("R-")))
+        if (!sources.has(id)) err(s, `claims の ${id} が reference/ の資料にない（slide-intake/reference-format.md）`);
+      const cs = ids.filter((x) => x.startsWith("C-"));
+      if (cs.length && !claims) {
+        err(s, `claims（${cs.join("・")}）があるのに research.md がない`);
         continue;
       }
-      for (const id of ids) {
+      for (const id of cs) {
         const c = claims[id];
         if (!c) err(s, `claims の ${id} が research.md にない`);
         else if (c.dropped) err(s, `claims の ${id} は research.md で使わなくなった主張（dropped：${c.dropped}）`);
@@ -295,6 +330,18 @@ export async function checkOutline(file) {
       }
     }
   }
+  // 知識マップとの突き合わせ（slide-outline/structure-framework.md 3-4・4-2・5-2）
+  const km = path.join(path.dirname(file), KNOWLEDGE);
+  const conceptual = o.slides.some((s) => ["question", "new", "uses", "adept"].some((k) => s.fields[k] != null));
+  if (fs.existsSync(km)) {
+    const k = parseKnowledge(fs.readFileSync(km, "utf8"));
+    if (k.errors.length || !k.nodes.length) warnings.push(`${KNOWLEDGE} が読めないので、new・uses を確かめていない（check-knowledge.mjs で直す）`);
+    else {
+      const r = checkConcepts(o.slides, k.nodes);
+      for (const [s, m] of r.errors) s ? err(s, m) : errors.push(m);
+      for (const [s, m] of r.warnings) s ? warn(s, m) : warnings.push(m);
+    }
+  } else if (conceptual) warnings.push(`question・new・uses・adept を書いているが ${KNOWLEDGE} がないので、前方参照を確かめていない`);
   for (const a of deck.assets) if (a?.src && !usedAssets.has(a.src)) warnings.push(`assets の ${a.src} はどのスライドでも使っていない`);
   warnings.push(...layoutBalance(o.slides));
   return { errors, warnings, slides: o.slides.length };

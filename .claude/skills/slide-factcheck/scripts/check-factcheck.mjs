@@ -74,7 +74,8 @@ export function checkFactcheck(text, banned = bannedDomains()) {
     for (const k of Object.keys(f)) if (![...REQUIRED, ...OPTIONAL].includes(k)) errors.push(`${at}：知らない項目「${k}」`);
     for (const k of REQUIRED) if (empty(f[k])) errors.push(`${at}：${k} がない`);
     if (!empty(f.slide) && !/^S\d{2,}$/.test(String(f.slide))) errors.push(`${at}：slide は S04 の形（outline.md の見出し）`);
-    if (!empty(f.claim_id) && f.claim_id !== "なし" && !/^C-\d{3,}$/.test(String(f.claim_id))) errors.push(`${at}：claim_id は C-001 の形か「なし」`);
+    if (!empty(f.claim_id) && f.claim_id !== "なし" && !/^[CR]-\d{3,}$/.test(String(f.claim_id)))
+      errors.push(`${at}：claim_id は C-001（research.md の主張）か R-001（reference/ の資料）の形か「なし」`);
     if (!empty(f.level) && !LEVEL.includes(f.level)) errors.push(`${at}：level は ${LEVEL.join("・")}`);
     if (!empty(f.decision) && !DECISION.includes(f.decision)) errors.push(`${at}：decision は ${DECISION.join("・")}`);
     const srcs = Array.isArray(f.sources) ? f.sources : [];

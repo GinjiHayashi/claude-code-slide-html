@@ -77,18 +77,28 @@ test("文中のコード：`…` を <code> にし、中の ** は太字にし�
   assert.ok(html.includes("<code>a**b**</code> で <strong"));
 });
 
+test("説明文（lead）の強調は青の太字、本文の太字は黒のまま（components.md 4.2）", async () => {
+  const dir = tempDeck();
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace("各部門が作った表を本部が", "各部門が作った表を**本部**が"));
+  const html = (await renderDeck(readOutline(f))).join("\n");
+  assert.ok(html.includes('作った表を<strong class="font-bold text-primary">本部</strong>が'));
+  const rest = html.replace(/<p [^>]*data-lead[^>]*>.*?<\/p>/g, "");
+  assert.ok(rest.includes('<strong class="font-bold">') && !rest.includes('<strong class="font-bold text-primary">'), "本文の太字は青にしない");
+});
+
 test("image：assets にない素材は止まり、アイコンは色を currentColor にして埋め込む", async () => {
   const image = (await import(path.join(COMP, "image.mjs"))).default;
-  assert.throws(() => image({ src: "inputs/nothing.png", alt: "x" }, { deck }), /assets にない/);
-  const html = image({ src: "inputs/screen-entry.png", alt: "画面", fit: "contain" }, { width: 572, height: 400, deck });
-  assert.ok(html.includes('data-deck-asset="inputs/screen-entry.png"') && html.includes("rounded-panel"));
+  assert.throws(() => image({ src: "assets/nothing.png", alt: "x" }, { deck }), /assets にない/);
+  const html = image({ src: "assets/screen-entry.png", alt: "画面", fit: "contain" }, { width: 572, height: 400, deck });
+  assert.ok(html.includes('data-deck-asset="assets/screen-entry.png"') && html.includes("rounded-panel"));
   assert.ok(html.includes("width:572px;height:321px")); // 960×540 を幅 572 に収める
   assert.ok(html.includes("border border-line"));
   const dir = tempDeck();
-  fs.writeFileSync(path.join(dir, "inputs/i.svg"), '<svg viewBox="0 0 24 24"><path fill="#000000" d="M0 0h24v24H0z"/></svg>');
-  const own = { dir, assets: [{ src: "inputs/i.svg", credit: "自作", license: "自作" }] };
-  const icon = image({ src: "inputs/i.svg", alt: "確認", icon: true }, { width: 572, height: 400, deck: own });
-  assert.ok(icon.includes('fill="currentColor"') && !icon.includes("#000000") && icon.includes('data-deck-asset="inputs/i.svg"'));
+  fs.writeFileSync(path.join(dir, "assets/i.svg"), '<svg viewBox="0 0 24 24"><path fill="#000000" d="M0 0h24v24H0z"/></svg>');
+  const own = { dir, assets: [{ src: "assets/i.svg", credit: "自作", license: "自作" }] };
+  const icon = image({ src: "assets/i.svg", alt: "確認", icon: true }, { width: 572, height: 400, deck: own });
+  assert.ok(icon.includes('fill="currentColor"') && !icon.includes("#000000") && icon.includes('data-deck-asset="assets/i.svg"'));
 });
 
 test("アイコン集：phosphor:<名前> は assets に書かずに使え、data-asset-id で registry の id として見つかる", async () => {
@@ -112,13 +122,13 @@ test("ライセンスの照合：assets にないデッキの素材はエラー�
   const { scanDeck } = await import(path.join(SKILLS, "license-notice/scripts/scan.mjs"));
   const { verify } = await import(path.join(SKILLS, "license-notice/scripts/verify.mjs"));
   const { credits } = await import(path.join(SKILLS, "license-notice/scripts/credits.mjs"));
-  const html = '<section class="slide" data-id="S01"><img src="data:image/png;base64,AA" alt="" data-deck-asset="inputs/a.png"></section>';
+  const html = '<section class="slide" data-id="S01"><img src="data:image/png;base64,AA" alt="" data-deck-asset="assets/a.png"></section>';
   const scan = scanDeck(html);
-  assert.deepEqual(scan.deckAssets, ["inputs/a.png"]);
+  assert.deepEqual(scan.deckAssets, ["assets/a.png"]);
   assert.deepEqual(scan.unknown, []);
-  assert.ok(verify(scan, []).errors.some((e) => e.includes("inputs/a.png が outline.md の先頭の assets にない")));
-  const assets = [{ src: "inputs/a.png", credit: "自組織", license: "自組織の素材" }];
-  assert.ok(!verify(scan, assets).errors.some((e) => e.includes("inputs/a.png")));
+  assert.ok(verify(scan, []).errors.some((e) => e.includes("assets/a.png が outline.md の先頭の assets にない")));
+  const assets = [{ src: "assets/a.png", credit: "自組織", license: "自組織の素材" }];
+  assert.ok(!verify(scan, assets).errors.some((e) => e.includes("assets/a.png")));
   assert.deepEqual(credits([], new Map(), { used: scan.deckAssets, assets }).rows, [
     { id: "deck", name: "画像：a.png", license: "自組織の素材", copyright: "自組織" },
   ]);

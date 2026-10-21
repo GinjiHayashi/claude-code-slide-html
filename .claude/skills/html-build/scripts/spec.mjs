@@ -76,8 +76,11 @@ const BODY = ["breadcrumb", "source"];
 // 幅は base（target の上限が lines 行に収まる幅。1行に2字の余裕）を基本に、lines 行に収まるまで max まで広げる。px は文字の大きさ（outline.mjs の leadWidth）
 export const LEAD = { target: [140, 160], short: 100, max: 1172, lines: 3, px: 16 };
 LEAD.base = (Math.ceil(LEAD.target[1] / LEAD.lines) + 2) * LEAD.px; // 896
-// 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）
+// 太字（components.md 4.2）：1項目に perItem か所、1枚に perSlide か所まで（超えると注意）。説明文（lead）の強調は数えない（下の LEAD_BOLD）
 export const BOLD = { perItem: 1, perSlide: 3 };
+// 説明文（lead）の強調（components.md 4.2）：primary の青の太字。max か所まで（書くときの目安は good か所。0 でもよい）。
+// 1か所は全角 chars 字まで、強調の字数の合計は lead の ratio まで（超えると注意。語句ではなく文を囲むと強調にならないため）
+export const LEAD_BOLD = { max: 3, good: 2, chars: 20, ratio: 0.25 };
 export const SUB_ITEMS = 4; // 下の階層の項目の数の上限（1つの項目につき）
 // 図を主役にする（design-reference/principles.md 5章）：箇条書きの型が、本文のあるスライド（lead のある型）の ratio を超えたら注意。
 // 箇条書きの1つ目の階層の項目が全角 minItem 字未満なら注意（書くときの目安は全角 goodItem 字以上）
@@ -123,9 +126,14 @@ export const LAYOUTS = {
   checklist: { required: ["title", "items"], optional: BODY, lead: true, text: { title: 30 }, checks: { min: 1, max: 8, text: 24 } },
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
-// どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
+// どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 6）
 // id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
-export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match"];
+// change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides の「直すとき」、edit-check.mjs）。
+//   スライドには出さず、承認の sha256（approvals.mjs の slideDigests）にも入れない。残っている間は outline.md の承認を頼めない（request.mjs）
+// question・new・uses・adept は構成のフレームワークの項目（slide-outline/structure-framework.md 4章・5章）。スライドには出ない
+export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match", "change", "question", "new", "uses", "adept"];
+// idea の長さの目安：change を統合するときは、足さずに新しい絵の説明に書き換える。超えたら注意
+export const IDEA = { lines: 3, chars: 120 };
 export const SLIDE_ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // match：idea の絵を部品で描けるか。そのまま＝部品を使う。意味が欠ける・描けない＝独自に描く（「：」のあとに理由）
 export const MATCHES = ["そのまま", "意味が欠ける", "描けない"];
@@ -140,6 +148,8 @@ export const VISUAL = ["diagram", "diagrams"];
 export const LOOK = [
   // スライド
   ..."layout id idea match lead_short numbered".split(" "),
+  // 構成のフレームワークの項目（スライドに出ない。並びと問いの確かめのため）
+  ..."question new uses adept".split(" "),
   // 図の型・置き方・大きさ
   ..."kind type at size grid col row via curve corner inside on wrap radius direction".split(" "),
   // 見た目の選び方
@@ -172,5 +182,5 @@ export function describeLayout(name) {
     ...(L.lead ? ["lead（要らないなら false。短くするなら lead_short に理由）"] : []),
   ];
   const extra = L.chapters ? `｜章は${L.chapters}まで` : "";
-  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match"].join(", ")}${extra}`;
+  return `必須：${req.join(", ") || "なし"}｜任意：${[...L.optional.map(limit), "notes", "claims", ...(L.visual ? [] : ["html"]), "idea", "match", "change", "question", "new", "uses", "adept"].join(", ")}${extra}`;
 }

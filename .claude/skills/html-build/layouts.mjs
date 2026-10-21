@@ -19,6 +19,8 @@ const TOC_ROWS = 6; // 目次を1列に並べる上限。超えたら2列にし�
 
 // ---- 文字 ----
 const strong = inline; // **語句** と `コード`（_util.mjs）
+// 説明文の強調は primary の青の太字（components.md 4.2）。色だけで区別しないよう太字も残す
+const leadStrong = (t) => strong(t).replaceAll('<strong class="font-bold">', '<strong class="font-bold text-primary">');
 const oneLine = (t) =>
   String(t ?? "")
     .trim()
@@ -53,7 +55,7 @@ function page(s, ctx, inner) {
   let top = SPACE.top + (crumb ? 22 + 8 : 0) + 47; // 余白の上端 slide-top ＋ パンくず ＋ タイトル（36px × 1.3）
   let lead = "";
   if (typeof f.lead === "string") {
-    lead = `<p class="m-0 mt-[32px] text-body text-ink" data-lead style="width:${leadWidth(f.lead)}px">${strong(f.lead)}</p>`;
+    lead = `<p class="m-0 mt-[32px] text-body text-ink" data-lead style="width:${leadWidth(f.lead)}px">${leadStrong(f.lead)}</p>`;
     top += 32 + leadLines(f.lead) * LINE_H + 32;
   } else top += SPACE.titleGap; // 説明文がないときは title-gap
   const h = Math.floor(SLIDE.height - 64 - top);

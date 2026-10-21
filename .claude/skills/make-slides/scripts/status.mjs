@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest, targetName } from "./approvals.mjs";
 import { checkGate, factcheckedChanges, timing, round } from "./gate.mjs";
-import { checkBrief, checkInputs } from "../../slide-hearing/scripts/check-brief.mjs";
+import { checkBrief, checkSources } from "../../slide-hearing/scripts/check-brief.mjs";
 import { checkStructure } from "../../slide-outline/scripts/check-structure.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
 import { frontMatter, isMain } from "../../../lib/common.mjs";
@@ -51,7 +51,7 @@ export function deckStatus(deckDir) {
   const briefFile = path.join(deckDir, "brief.md");
   if (!fs.existsSync(briefFile)) return at("1a 事前情報の取り込み", "brief.md がない", "slide-intake");
   const b = checkBrief(read(briefFile));
-  b.errors.push(...checkInputs(b.sections, deckDir));
+  b.errors.push(...checkSources(b.sections, deckDir));
   if (b.errors.length) return at("1a 事前情報の取り込み", "brief.md に書式の誤り", "slide-intake（直して check-brief.mjs を0件にする）", b.errors);
   // 承認済みで変わっていない brief.md は、あとから増えた項目（max_subagents など）が空でもヒアリングに戻さない（空の項目は既定の値で進む）
   if ((b.missing.length && approved(deckDir, approvals, "brief.md") !== "承認済み") || b.questions.length)
@@ -80,7 +80,7 @@ export function deckStatus(deckDir) {
   const g = checkGate(deckDir, "build");
   const structure = () => (draft ? ((st) => [...st.errors, ...st.changed.map((c) => `草案から変えた：${c}`)])(checkStructure(deckDir)) : []);
   if (!g.ok) {
-    if (mode === "once") return at("2 構成", "outline.md の承認待ち", "slide-outline（手順 8 で outline.md の承認を頼む）", [...g.errors, ...structure()]);
+    if (mode === "once") return at("2 構成", "outline.md の承認待ち", "slide-outline（手順 9 で outline.md の承認を頼む）", [...g.errors, ...structure()]);
     // 2回：構成のあとに、数値と結論を支える事実だけを確かめる
     const fcBlock = factcheckBlock(at, fcFile, "2b ファクトチェック（構成のあと）", "slide-factcheck（構成のあと。数値と結論を支える事実だけ）");
     if (fcBlock) return fcBlock;
@@ -105,7 +105,7 @@ export function deckStatus(deckDir) {
     return at("3 HTML 作成", "deck.html がビルドのあとに変わった（手で直さない）", "html-build（ビルドし直す）");
   const logMeta = frontMatter(log);
   const meta = logMeta ? YAMLlib.parse(logMeta[1]) : {};
-  // 承認の前の試しのビルド（slide-outline の手順 6）は、承認のあとにビルドし直す
+  // 承認の前の試しのビルド（slide-outline の手順 7）は、承認のあとにビルドし直す
   if (meta?.gate === false) return at("3 HTML 作成", "承認の前の試しのビルドのまま", "html-build（ビルドし直す）");
   if (meta?.ok !== true)
     return at("3 HTML 作成", "ビルドの検査で不合格", "html-build の「不合格のとき」", [(log.match(/^- 結果：.*$/m) ?? ["build-log.md がない"])[0]]);

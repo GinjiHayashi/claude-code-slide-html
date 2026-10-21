@@ -216,6 +216,24 @@
   verified_at: 2026-10-17
   verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
 
+- id: pypdf
+  name: pypdf（PDF の文字の取り出し。資料を reference/ の md にする）
+  type: library
+  scope: build-only                 # 取り込みのときだけ使う。deck.html には入らない
+  version: "6.21.1"
+  license: BSD-3-Clause
+  copyright: "Copyright (c) 2006-2008, Mathieu Fenniak"
+  source: https://github.com/py-pdf/pypdf
+  package: "pypi:pypdf==6.21.1"
+  commercial_use: true
+  notice_required: false            # 配布物（deck.html）に含めないため
+  notes:
+    - Python 3.12 では依存するパッケージがない（typing_extensions は 3.11 より前だけ）
+    - LICENSE には ほかに Ashish Kulkarni（2007）、Steve Witham（2014）の著作権表示がある
+  verified_by: GinjiHayashi
+  verified_at: 2026-10-21
+  verification: AI がパッケージ同梱の LICENSE から転記した内容を承認した（公式ページとの照合は省略）
+
 - id: d3-geo
   name: d3-geo（地図の投影）
   type: library

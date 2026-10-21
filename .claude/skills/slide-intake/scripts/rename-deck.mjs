@@ -2,7 +2,7 @@
 // デッキの名前（deck-id）を変える。日付を今日で付けたあとで発表日がわかったときなどに使う。
 // 使い方：node .claude/skills/slide-intake/scripts/rename-deck.mjs decks/<今の deck-id> <新しい deck-id>
 // - 変えるもの：フォルダ（decks/<deck-id>/）、ブランチ（feature/<deck-id>）、デッキの直下のファイルの先頭の設定の deck_id
-//   （brief.md・outline-draft.md・outline.md・research.md・factcheck.md）
+//   （brief.md・outline-draft.md・outline.md・knowledge-map.md・reference/research.md（前からのデッキは直下の research.md）・factcheck.md）
 // - 承認の記録（approvals.yaml）があれば何も変えずに止める。brief.md が変わって承認し直しになるため、人間に聞く
 // - 頼んでいる途中の承認（approval-request.yaml）は、古い中身を指すので消す。名前を変えたあとで頼み直す
 // - フォルダが git の管理下なら git mv で動かす。ブランチは、ローカルにあれば名前を変える（push 済みの古いブランチは残る）
@@ -11,7 +11,7 @@ import path from "path";
 import { execFileSync } from "child_process";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
 
-const FILES = ["brief.md", "outline-draft.md", "outline.md", "research.md", "factcheck.md"];
+const FILES = ["brief.md", "outline-draft.md", "outline.md", "knowledge-map.md", "research.md", "reference/research.md", "factcheck.md"];
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 const ok = (root, ...args) => {
   try {

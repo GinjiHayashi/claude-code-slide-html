@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { SKILLS, SAMPLE, tempDeck } from "./helpers.mjs";
 
-const { checkBrief, checkInputs } = await import(path.join(SKILLS, "slide-hearing/scripts/check-brief.mjs"));
+const { checkBrief, checkSources } = await import(path.join(SKILLS, "slide-hearing/scripts/check-brief.mjs"));
 const { checkOutline } = await import(path.join(SKILLS, "html-build/scripts/check-outline.mjs"));
 const { checkResearch } = await import(path.join(SKILLS, "research-standards/scripts/check-research.mjs"));
 const { checkFactcheck } = await import(path.join(SKILLS, "slide-factcheck/scripts/check-factcheck.mjs"));
@@ -38,22 +38,41 @@ test("brief.md：factcheck は「最後に1回」か「構成のあとと最後�
   assert.equal(brief("毎回"), true);
 });
 
-test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた資料が inputs/ になければエラー", () => {
+test("brief.md：ゴールの定義。資料の種類は解説型か提案型、前提知識は割合がなければ聞き、過半数に満たなければ注意。見出しのない前からのデッキは聞かない", () => {
+  const base = fs.readFileSync(path.join(SAMPLE, "brief.md"), "utf8");
+  const r = checkBrief(base);
+  assert.deepEqual([r.errors, r.warnings], [[], []]);
+  assert.ok(!r.missing.includes("前提知識の割合"));
+  const low = checkBrief(base.replace("- 2部門での試行：8割", "- 2部門での試行：3割"));
+  assert.ok(low.warnings.some((w) => w.includes("「2部門での試行」は聞き手の3割")));
+  assert.ok(checkBrief(base.replace("- 2部門での試行：8割", "- 2部門での試行")).missing.includes("前提知識の割合"));
+  assert.ok(checkBrief(base.replace("\n提案型\n", "\n説明\n")).errors.some((e) => e.includes("「資料の種類」の1行目")));
+  assert.ok(checkBrief(base.replace("\n提案型\n", "\n")).missing.includes("資料の種類"));
+  // 前からのデッキ：ゴールの見出しも前提知識の行もない
+  const old = base.replace(/## 終わったあとの行動[\s\S]*?(?=## 発表時間)/, "").replace(/- 月次レポートの作り方：10割\n- 2部門での試行：8割\n/, "");
+  const o = checkBrief(old);
+  assert.deepEqual(o.errors, []);
+  assert.ok(!o.missing.includes("資料の種類") && !o.missing.includes("前提知識の割合"));
+});
+
+test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた ID が reference/ になければエラー", () => {
   const dir = tempDeck();
   const f = path.join(dir, "brief.md");
   const base = fs.readFileSync(f, "utf8");
   assert.ok(!checkBrief(base).missing.includes("信頼して使う資料")); // 見出しのない前からのデッキは聞かない
   assert.ok(checkBrief(base + "\n## 信頼して使う資料\n").missing.includes("信頼して使う資料"));
-  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- inputs/references/summary.md は書籍の要約として採用。原本との照合は不要\n");
-  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("「信頼して使う資料」の inputs/references/summary.md")));
+  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- R-009 は書籍の要約として採用。原本との照合は不要\n- inputs/old.md は前からの書き方\n");
+  const e = checkSources(r.sections, dir);
+  assert.ok(e.some((x) => x.includes("「信頼して使う資料」の R-009 が reference/ の資料にない")));
+  assert.ok(e.some((x) => x.includes("「信頼して使う資料」の inputs/old.md が inputs/ にない")));
 });
 
-test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
+test("brief.md：inputs/ の資料が md になっていないとエラー（reference.mjs の検査）", () => {
   const dir = tempDeck();
   fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
   fs.writeFileSync(path.join(dir, "inputs", "memo.txt"), "メモ");
   const r = checkBrief(fs.readFileSync(path.join(dir, "brief.md"), "utf8"));
-  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("inputs/memo.txt")));
+  assert.ok(checkSources(r.sections, dir).some((e) => e.includes("資料：inputs/memo.txt の md がない")));
 });
 
 test("見本の outline.md は書式の誤りがない", async () => {
@@ -219,8 +238,23 @@ test("outline.md：claims の ID が research.md にないとエラー", async (
   assert.ok(r.errors.some((e) => e.includes("C-999")));
 });
 
+test("outline.md：claims の R-ID は reference/ の資料にあれば通り、なければエラー。前からのデッキの直下の research.md も読む", async () => {
+  const dir = tempDeck();
+  fs.mkdirSync(path.join(dir, "reference/sources"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "reference/sources/R-001-memo.md"), "---\nid: R-001\nsource: inputs/memo.txt\n---\n\nメモ\n");
+  const body = (ids) => outline(["## S01", "- layout: title-body", "- title: t", "- lead: false", "- body: [a]", `- claims: [${ids}]`]);
+  fs.writeFileSync(path.join(dir, "outline.md"), body("R-001, C-001"));
+  assert.deepEqual((await checkOutline(path.join(dir, "outline.md"))).errors, []);
+  fs.writeFileSync(path.join(dir, "outline.md"), body("R-002"));
+  assert.ok((await checkOutline(path.join(dir, "outline.md"))).errors.some((e) => e.includes("R-002 が reference/ の資料にない")));
+  // 前からのデッキ：research.md が直下にある
+  fs.renameSync(path.join(dir, "reference/research.md"), path.join(dir, "research.md"));
+  fs.writeFileSync(path.join(dir, "outline.md"), body("C-001"));
+  assert.deepEqual((await checkOutline(path.join(dir, "outline.md"))).errors, []);
+});
+
 test("見本の research.md は書式の誤りがない", () => {
-  assert.deepEqual(checkResearch(read("research.md")).errors, []);
+  assert.deepEqual(checkResearch(read("reference/research.md")).errors, []);
 });
 
 test("research.md：確認済みなのに一次情報が1つならエラー", () => {
@@ -316,6 +350,21 @@ test("outline.md：lead は目安より短いと注意（lead_short に理由を
   assert.equal(leadWidth(zen(150)), LEAD.base);
   assert.equal(leadWidth(zen(LEAD.target[1])), LEAD.base);
   assert.ok(leadWidth(zen(190)) > LEAD.base);
+});
+
+test("outline.md：lead の強調は本文の太字と別に数え、数・1か所の長さ・全体の割合が目安を超えると注意", async () => {
+  const fill = (n) => "あ".repeat(n);
+  const slide = (lead, body = "a") => ["## S01", "- layout: title-body", "- title: t", `- lead: ${lead}`, `- body: [${body}]`];
+  const check = async (...s) => {
+    const dir = tempDeck();
+    fs.writeFileSync(path.join(dir, "outline.md"), outline(s));
+    return (await checkOutline(path.join(dir, "outline.md"))).warnings.filter((w) => w.includes("強調") || w.includes("太字"));
+  };
+  // 3か所・短い語句は注意なし。本文の太字（1枚に3か所）とも合わせて数えない
+  assert.deepEqual(await check(...slide(`作成時間は**月40時間**${fill(50)}**12時間**${fill(50)}**6時間**${fill(40)}。`, "**a** と b")), []);
+  assert.ok((await check(...slide(`あ**a**${fill(40)}**b**${fill(40)}**c**${fill(40)}**d**${fill(20)}。`))).some((w) => w.includes("強調が4か所")));
+  assert.ok((await check(...slide(`あ**${fill(21)}**${fill(130)}。`))).some((w) => w.includes("全角21字")));
+  assert.ok((await check(...slide(`あ**${fill(20)}**${fill(40)}**${fill(20)}**${fill(60)}。`))).some((w) => w.includes("全体の")));
 });
 
 test("outline.md：箇条書きの型が本文のあるスライドの3割を超える・箇条書きの項目が短すぎると注意", async () => {

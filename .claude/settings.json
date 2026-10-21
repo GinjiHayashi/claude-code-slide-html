@@ -39,6 +39,10 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-check.mjs\" start"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/worklog.mjs\" hook"
           }
         ]
       }
@@ -49,6 +53,10 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/approve-hook.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/worklog.mjs\" hook"
           }
         ]
       }
@@ -79,6 +87,20 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/protect-check.mjs\" stop"
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/worklog.mjs\" hook"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/skills/make-slides/scripts/worklog.mjs\" hook"
           }
         ]
       }

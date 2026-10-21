@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
 
-// デッキの素材（画像・アイコン）を読む。素材は人間が decks/<deck-id>/inputs/ に置き、outline.md の先頭の assets に
+// デッキの素材（画像・アイコン）を読む。素材は人間が decks/<deck-id>/assets/ に置き、outline.md の先頭の assets に
 // 出どころとライセンスを書いたものだけを使う（license-notice/policy.md 5章）。部品は素材を data: URL か SVG にして埋め込み、
 // data-deck-asset="<src>" を付ける（license-notice の走査が見つけ、credits スライドに載せる）。
 

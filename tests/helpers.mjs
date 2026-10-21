@@ -9,11 +9,14 @@ export const SKILLS = path.join(ROOT, ".claude", "skills");
 export const SAMPLE = path.join(ROOT, "examples", "sample-deck");
 
 // 見本のデッキを一時フォルダの decks/<deck-id>/ に写す（テストが見本を書き換えないように）。戻り値はデッキのフォルダ
-export function tempDeck(id = "2026-10-17-report-automation", files = ["brief.md", "outline.md", "research.md"]) {
+export function tempDeck(id = "2026-10-17-report-automation", files = ["brief.md", "outline.md", "reference/research.md"]) {
   const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "harness-test-")), "decks", id);
   fs.mkdirSync(dir, { recursive: true });
-  for (const f of files) fs.copyFileSync(path.join(SAMPLE, f), path.join(dir, f));
-  fs.cpSync(path.join(SAMPLE, "inputs"), path.join(dir, "inputs"), { recursive: true }); // 画像・アイコン（outline.md の assets）
+  for (const f of files) {
+    fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+    fs.copyFileSync(path.join(SAMPLE, f), path.join(dir, f));
+  }
+  fs.cpSync(path.join(SAMPLE, "assets"), path.join(dir, "assets"), { recursive: true }); // 画像・アイコン（outline.md の assets）
   return dir;
 }
 

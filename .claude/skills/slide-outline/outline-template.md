@@ -11,8 +11,8 @@
 deck_id: 2026-10-17-report-automation   # YYYY-MM-DD-<短い英語名>。decks/ のフォルダ名と同じ
 title: 月次レポート作成の自動化           # デッキの題名（ブラウザのタブに出る）
 pdf: false                              # PDF も書き出すか（brief.md から写す）
-assets:                                 # 写真などを使うときだけ。人間が inputs/ に置いたもの（license-notice/policy.md 5章）。アイコン集のアイコンは書かない
-  - {src: inputs/screen.png, credit: 自組織で撮影, license: 自組織の素材}
+assets:                                 # 写真などを使うときだけ。inputs/ から assets/ に移したもの（license-notice/policy.md 5章）。アイコン集のアイコンは書かない
+  - {src: assets/screen.png, credit: 自組織で撮影, license: 自組織の素材}
 ---
 
 ## S01
@@ -50,10 +50,15 @@ assets:                                 # 写真などを使うときだけ。�
 | `layout` | **必須**。型の名前（`layout-catalog.md`） |
 | `id` | 任意。スライドの安定した名前（英小文字・数字・ハイフン。例：`tdd-intro`）。スライドを足したり並べ替えたりして番号（`## S41`）が変わっても、承認のときのスライドと対応づけるのに使う。書かなければ文で対応づける。デッキの中で重複させない。スライドには出ない |
 | `notes` | 発表者ノート。スライドには出ない |
-| `claims` | このスライドの主張の ID。`[C-001, C-002]` の形（`research.md`・`factcheck.md` と同じ ID）。書式チェックが、同じフォルダの `research.md` にある主張か（使わなくなった主張でないか）を確かめる |
+| `claims` | このスライドの主張の ID。`[C-001, R-002]` の形。`C-` は AI の調査の主張（`reference/research.md`・`factcheck.md` と同じ ID）、`R-` は人が渡した資料（`reference/index.md` の ID）。書式チェックが、`research.md` にある主張か（使わなくなった主張でないか）、`reference/` にある資料かを確かめる |
 | `html` | 独自の表現。`match` が「意味が欠ける」「描けない」のときに使う（`html-build/components.md` 4.1）。スクリプト（script タグ・on〜 属性・javascript:）は書けない（エラー） |
 | `idea` | 図のイメージ。図のあるスライドに書く。見せたい絵を1〜3行で（何が並び、何と何がどうつながり、どこを見てほしいか）。部品の名前は書かない。スライドには出ない（下の 4章） |
 | `match` | `idea` の絵を部品で描けるか。`そのまま`・`意味が欠ける：<何が欠けるか>`・`描けない：<なぜか>` のどれか（下の 4章） |
+| `change` | 人間が書く、図の変更の指示（スライドごと）。AI が図を直し、`idea` を新しい絵の説明に書き換えて、`change` を空にする（`make-slides` の「直すとき」）。スライドには出ず、承認の比べ方にも入らない。残っている間は書式チェックが注意を出し、outline.md の承認は頼めない |
+| `question` | このスライドが答える問い（1文）。知識マップを作ったデッキで、表紙・目次・章の扉・締め以外に書く。ないと書式チェックが注意を出す。スライドには出ない（`structure-framework.md` 4章） |
+| `new` | このスライドで初めて説明する概念。知識マップの ID で `[K-003, K-004]`。前提知識（brief.md）は書かない。スライドには出ない |
+| `uses` | このスライドの説明（文・図・話す内容）に使う概念。`new` と同じ形。前のスライドかこのスライドの `new` にない概念を書くと、書式チェックが前方参照のエラーにする。予告（目次や冒頭の答え）で名前だけ出す概念は書かない（`structure-framework.md` 3-4） |
+| `adept` | 新しく出す抽象の Must の概念を、どの要素で説明するか。`[A, D, E, P, T]` のうち扱うもの（類推・図・例・平易な定義・技術的な定義）。続くスライドで同じ概念を説明するときも、`new` にしたスライドにまとめて書く。具体（A・D・E のどれか）と T がそろわないと注意（5-2） |
 | `breadcrumb` | タイトルの上の章の名前。本文のある型だけ（`title`・`toc`・`section`・`closing` には書けない）。**書かなければ「CHAPTER 01: 章の名前」（前の `section`）が自動で入る** |
 | `lead` | 説明文。タイトルの下の決まった位置に置く平文（2〜3行）。**本文のある型（schema.mjs で lead が必須と出る型）では必須**。書き方と字数の目安は5章。要らないスライドだけ `lead: false` と書く |
 | `lead_short` | 表や大きな図のために lead を目安より短くするときの理由（例：`lead_short: 表が大きいため`）。書くと、短い lead の注意が出ない |
@@ -100,6 +105,27 @@ assets:                                 # 写真などを使うときだけ。�
 - 「意味が欠ける」は、部品に当てはめたときに何が消えるかを具体的に書く（形、並び、つながり、強調したいところ）。「見た目が単調」だけでは理由にしない。
 - 書式チェックが、`match` の書き方の誤りをエラー、`idea`・`match` がない、`match` と描き方が合わない（「そのまま」なのに `html`、「意味が欠ける」なのに部品）を注意にする。
 - 人間は構成の承認のときに `idea` と `match` を見て、描き方を判断できる。
+- `idea` は、図を直すたびに書き足さない。今の絵の説明に書き換える（目安は3行・全角120字まで。超えると書式チェックが注意を出す）。直した経緯は作業記録（`worklog.jsonl`）と git に残る。
+
+### 項目の並び
+
+図のあるスライドは、上から「`question` → 文（`title`・`lead`・本文）→ `idea`・`match`・`change` → 図のデータ（`diagram` など）→ `source`・`notes`・`claims` → `new`・`uses`・`adept`」の順に書く。問いの次に答え（タイトル）が来るので、問いの連鎖を outline.md のまま読める。人間が outline.md を読んで直すとき、文と図の説明が近くにあり、長い図のデータが後ろにまとまるため。並びはビルドの結果を変えない。
+
+```yaml
+## S05
+- layout: title-diagram
+- question: 時間はどこにかかっているか
+- title: 作成時間の内訳
+- lead: 月次レポートの作成時間の内訳を、部署ごとに調べました。…
+- idea: 6つの部署の作成時間を長さで並べ、窓口サービスだけが飛び抜けて長いことを一目で見せる
+- match: そのまま
+- change: 窓口サービスの棒の横に「全体の3割」と書き添える   # 人間が書く。AI が直したら空にする
+- diagram:
+    kind: hbar
+    …
+- source: 出典：…
+- uses: [K-001]
+```
 
 ```yaml
 - diagram:
@@ -118,7 +144,7 @@ assets:                                 # 写真などを使うときだけ。�
 
 - アイコンは、アイコン集から `node .claude/skills/html-build/scripts/icons.mjs <英語の語>` で探し、`phosphor:<名前>` と書く（`assets` には書かない）。
 - 写真・画面の写しなど、人間が用意する素材は、先頭の `assets` に書いたものだけ使える。`src`・`credit`・`license` は必須、`url` は任意。出どころとライセンスは人間に聞いて書き、推測で書かない。
-- 画像は `diagram: {kind: image, src: inputs/screen.png, alt: 何が写っているか}`。`grid-4` のカードの印は items に `icon: phosphor:check-circle`。大きなアイコンは `diagram: {kind: image, src: phosphor:users, alt: …}`。
+- 画像は `diagram: {kind: image, src: assets/screen.png, alt: 何が写っているか}`。`grid-4` のカードの印は items に `icon: phosphor:check-circle`。大きなアイコンは `diagram: {kind: image, src: phosphor:users, alt: …}`。
 - 書式チェックが、ファイルがあるか、`assets` にあるか、使っていない素材がないかを確かめる。
 - 自由図（`canvas`）の中のアイコンの大きさは2つだけ：単体で置くときは 64px（`canvas` の `icon`）、文字の横に添えるときは 24px（`canvas` の `box`・`area` の `icon`）。色は黒・紺・灰色・白だけ。
 
@@ -127,6 +153,7 @@ assets:                                 # 写真などを使うときだけ。�
 - 箇条書きは、図で表せないときだけ使う。使うときは1項目で意味が通る長さにする（`design-reference/principles.md` 5章）。
 - 箇条書きは2段まで。項目のすぐ後ろに文字の並び（`[…, …]`）を書くと下の段になる。番号を付けるときは `numbered: true`（`layout-catalog.md` 3.3）。
 - 特に伝えたい語句は `**語句**` で太字にする。数の目安は `schema.mjs` の「共通」（`components.md` 4.2）。
+- 説明文（`lead`）の `**語句**` は青の太字になる。結論の語句・数値・図のどこを見るかを、目安2か所（0〜3か所）囲む。文ごとではなく語句を囲み、強調だけを拾い読みして要点がわかるようにする（`components.md` 4.2）。
 - 関数名・コマンド・ファイル名などの短いコードは `` `…` `` で囲む。複数行のコードは `code` の図にする（`components.md` 4.3）。
 - タイトルは結論を1文で書く（`design-reference`）。
 - 専門用語・比喩・実装の紹介は、聞き手に合わせる（`design-reference/principles.md` 6章）。初学者がいるときは、初めて出る専門用語を lead か図の中で説明する。資料の比喩はそのまま写さず、正確な言葉に直す。

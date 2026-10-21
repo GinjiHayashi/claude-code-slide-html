@@ -5,7 +5,7 @@
 // - 止めるとき：承認の記録がない、PR が開いていない、マージ先が develop・main 以外か承認のときと違う、承認のあとに PR の head が変わった
 // - マージの方式：develop へは squash、main へはマージコミット（github.mjs の mergeMethod）。gh の --match-head-commit で、
 //   承認した head のときだけマージする
-// - main へのマージのあとは、main の最新のコミットにタグを付けて push する：<deck-id>。あれば <deck-id>-2、-3…（make-slides の「git」の 5）
+// - main へのマージのあとは、main の最新のコミットにタグを付けて push する：<deck-id>。あれば <deck-id>-2、-3…（make-slides/git.md の 5）
 // - ハーネスの更新の PR は merge.mjs decks/_harness <PR の番号>。feature/harness-update → develop と develop → main だけで、タグは付けない
 import path from "path";
 import { execFileSync } from "child_process";

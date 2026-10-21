@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 図の変更の指示（change）の反映を確かめる：AI が直してよいのは、change を書いたスライドの図だけ（make-slides の「直すとき」）
+// 図の変更の指示（change）の反映を確かめる：AI が直してよいのは、change を書いたスライドの図だけ（make-slides/fixing.md）
 // 使い方：
 //   node .claude/skills/make-slides/scripts/edit-check.mjs start decks/<deck-id>   … 直す前。今の outline.md を写しておく
 //   node .claude/skills/make-slides/scripts/edit-check.mjs end decks/<deck-id>     … 直したあと。写しと比べる

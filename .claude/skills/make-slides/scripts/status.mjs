@@ -168,7 +168,7 @@ export function deckStatus(deckDir, { sources = true } = {}) {
   const fin = approved(deckDir, approvals, "build/deck.html");
   if (fin !== "承認済み")
     return at("5 最終確認", "人間の最終確認待ち", "人間に build/deck.html をブラウザで見てもらい、承認を頼む", [`build/deck.html：${fin}`]);
-  return at("完成", "最終確認まで承認済み", "なし（直すときは make-slides の「直すとき」）");
+  return at("完成", "最終確認まで承認済み", "なし（直すときは make-slides/fixing.md）");
 }
 
 // コマンドとして呼ばれたとき

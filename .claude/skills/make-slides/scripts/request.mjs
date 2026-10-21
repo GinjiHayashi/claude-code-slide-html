@@ -7,7 +7,7 @@
 // - PR のマージ：request.mjs decks/<deck-id> --merge <PR の番号>。PR の番号・マージ先・今の head のコミットと、失敗しているチェックを書く。
 //   承認されたら、merge.mjs がマージする（AI は gh pr merge を直接使わない）
 // - ハーネスの更新の PR（デッキがない）：request.mjs decks/_harness --merge <PR の番号>。feature/harness-update → develop と develop → main だけ（github.mjs）
-// - outline.md：図の変更の指示（change）が残っているスライドがあれば、依頼を出さない（図を直して空にしてから。make-slides の「直すとき」）
+// - outline.md：図の変更の指示（change）が残っているスライドがあれば、依頼を出さない（図を直して空にしてから。make-slides/fixing.md）
 // - build/deck.html をほかと一緒に頼めるのは、outline.md factcheck.md build/deck.html の3つを1回で頼むときだけ。
 //   ファクトチェックで outline.md の文を直していないときに限る（gate.mjs の checkCombined）。直したときは、最終確認を分けて頼む
 // - 依頼は同時に1つのデッキだけ。ほかのデッキに残っている依頼は消す（人間の答えがどのデッキへのものか、取り違えないように）

@@ -128,7 +128,7 @@ export const LAYOUTS = {
 };
 // どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 6）
 // id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
-// change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides の「直すとき」、edit-check.mjs）。
+// change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides/fixing.md、edit-check.mjs）。
 //   スライドには出さず、承認の sha256（approvals.mjs の slideDigests）にも入れない。残っている間は outline.md の承認を頼めない（request.mjs）
 // question・new・uses・adept は構成のフレームワークの項目（slide-outline/structure-framework.md 4章・5章）。スライドには出ない
 export const COMMON = ["layout", "id", "notes", "claims", "html", "idea", "match", "change", "question", "new", "uses", "adept"];

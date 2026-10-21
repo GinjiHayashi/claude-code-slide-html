@@ -10,7 +10,7 @@
 4. 固定ファイル（下記）はスライド作成中に変更しない。合うスライドの型がなければ近い型で代替し、どのスライドをなぜ代替したかを人間に報告する（図は原則3のとおり）。
 5. 人間の承認が必要な工程では、承認されるまで次へ進まない。
 6. 見た目や文章の良し悪しはレビューしない。行うのはファクトチェックと機械的な検査だけ。はみ出し・重なり・端のそろい・余白の偏りは、機械的な確認として AI が画像で見てよい（`npm run shots`）。良し悪し（好み）は判断しない。
-7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。
+7. 調査結果には主張ごとに出典を付け、事実と推測を書き分ける。主張には ID（`C-001` など）を付け、`research.md`・`outline.md`・`factcheck.md` で同じ ID を使う。人が渡した資料は `reference/` の md にし、資料の ID（`R-001` など）で参照する。
 8. `deck.html` は1ファイルで完結させ、外部から何も読み込まない（CDN も使わない）。CSS・図・フォントはビルド時に作って埋め込む。
 9. ライブラリ・フォント・アイコン集は `registry.yaml` に登録済みのものだけを使う。アイコンは AI がアイコン集（Phosphor）から探して選ぶ。デッキごとの写真などの画像は、人間が `inputs/` に置いたものを `assets/` に移し、`outline.md` の `assets` に出どころとライセンスを書いたものだけを使う（`license-notice/policy.md` 5章）。ライセンス表記は書かない（スクリプトが生成する）。
 10. ソースは `outline.md` だけ。`deck.html` は読まない・手で直さない。直すときは `outline.md` の対象のスライドの節だけを直してビルドし直す（`html-build`）。人間は文を `outline.md` で直接直し、図の変更はスライドごとの `change` に書く。AI は人間の書いた文を書き換えず、`change` のスライドの図だけを直す（`make-slides` の「直すとき」）。
@@ -30,9 +30,9 @@
 | 場所 | 置くもの | 誰が直すか |
 |---|---|---|
 | `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、PDF、メモなど）。git の管理外 | 人間が置く。AI は書き換えない（スライドに載せる画像だけ `assets/` に移す） |
-| `reference/` | 元の資料を md にしたもの（`sources/`・`chat/`）と一覧 `index.md`。以降の工程はここを読む（`slide-intake/reference-format.md`） | `reference.mjs` が作り、AI が要約と読み取りを書く |
+| `reference/` | 元の資料を md にしたもの（`sources/`・`chat/`）と一覧 `index.md`、AI の調査 `research.md`。以降の工程はここを読む（`slide-intake/reference-format.md`） | `reference.mjs` が作り、AI が要約と読み取りと調査を書く |
 | `assets/` | スライドに載せる画像（`inputs/` から移したもの） | AI が移す |
-| フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`research.md`、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml`、`worklog.jsonl`（作業記録） | 人間と AI（`approvals.yaml` は hook だけ。`worklog.jsonl` は hook とスクリプトだけ） |
+| フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml`、`worklog.jsonl`（作業記録） | 人間と AI（`approvals.yaml` は hook だけ。`worklog.jsonl` は hook とスクリプトだけ） |
 | `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外） | ビルドのスクリプトだけ。手で直さない |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。

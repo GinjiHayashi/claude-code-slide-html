@@ -4,7 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
-import { DECK_ID, isMain } from "../../../lib/common.mjs";
+import { DECK_ID, isMain, researchFile } from "../../../lib/common.mjs";
+import { readSources } from "../../slide-intake/scripts/reference.mjs";
 import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, IDEA, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
@@ -17,7 +18,8 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 //   idea が長い（spec.mjs の IDEA）、図の変更の指示（change）が残っている。
 // match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
-// claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
+// claims：C-001 は research.md（reference/research.md か、前からのデッキは直下）にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
+//   R-001 は reference/ の資料の md にある ID か（ないとエラー）。
 // 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
 // 終了コード：0＝エラーなし（注意はあってもよい）、2＝エラーあり（ほかのチェックと同じ）
 
@@ -293,21 +295,27 @@ export async function checkOutline(file) {
       );
     if (f.html && /<script\b|\son\w+\s*=|javascript:/i.test(String(f.html)))
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
-    if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^C-\d{3,}$/.test(c)))) err(s, "claims は [C-001, C-002] の形にする");
+    if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^[CR]-\d{3,}$/.test(c))))
+      err(s, "claims は [C-001, R-002] の形にする（C は research.md の主張、R は reference/ の資料）");
   }
-  // claims と research.md の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
+  // claims と research.md・reference/ の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
+  // C-001：AI の調査の主張（reference/research.md。前からのデッキは直下の research.md）。R-001：人が渡した資料の md（reference/sources/・chat/）
   const withClaims = o.slides.filter((s) => s.fields.claims !== undefined);
   if (withClaims.length) {
-    const rf = path.join(path.dirname(file), "research.md");
+    const rf = researchFile(path.dirname(file));
+    const sources = new Set(readSources(path.dirname(file)).map((x) => x.meta.id));
     const claims = fs.existsSync(rf) ? Object.fromEntries(checkResearch(fs.readFileSync(rf, "utf8")).claims.map((c) => [c.id, c.fields])) : null;
     for (const s of withClaims) {
       const ids = s.fields.claims;
       if (!Array.isArray(ids) || ids.some((x) => typeof x !== "string")) continue; // 形の誤りは上で出している
-      if (!claims) {
-        err(s, `claims（${ids.join("・")}）があるのに research.md がない`);
+      for (const id of ids.filter((x) => x.startsWith("R-")))
+        if (!sources.has(id)) err(s, `claims の ${id} が reference/ の資料にない（slide-intake/reference-format.md）`);
+      const cs = ids.filter((x) => x.startsWith("C-"));
+      if (cs.length && !claims) {
+        err(s, `claims（${cs.join("・")}）があるのに research.md がない`);
         continue;
       }
-      for (const id of ids) {
+      for (const id of cs) {
         const c = claims[id];
         if (!c) err(s, `claims の ${id} が research.md にない`);
         else if (c.dropped) err(s, `claims の ${id} は research.md で使わなくなった主張（dropped：${c.dropped}）`);

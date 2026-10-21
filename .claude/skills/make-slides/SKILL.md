@@ -31,7 +31,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 ```
 
 - **承認の仕組み**：AI が `request.mjs` で依頼を出す → 人間が答える → hook（`approve-hook.mjs`）が判定して `approvals.yaml` に sha256 付きで記録する → AI は `status.mjs`・`gate.mjs` で確かめる。承認のあとにファイルが変わると、ゲートが止める。
-- **誰が何をするか**：AI は資料を読み、質問し、`brief.md`・`outline.md`・`research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする（チャットの承認で、AI に `merge.mjs` でマージさせることもできる）。
+- **誰が何をするか**：AI は資料を読み、質問し、資料を md にして（`reference/`）、`brief.md`・`outline.md`・`reference/research.md`・`factcheck.md` を書き、ビルドする。人間は資料を渡し、質問に答え、承認し、ブラウザで見た目を確かめ、PR をマージする（チャットの承認で、AI に `merge.mjs` でマージさせることもできる）。
 - **AI がしないこと**：承認の記録、`deck.html` を読む・直す、見た目や文章の良し悪しの判定、ハーネス（`.claude/`・`CLAUDE.md`）の変更。
 
 ## 手順
@@ -52,7 +52,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 |---|---|---|---|---|
 | 0 開始・1a 事前情報の取り込み | `slide-intake` | `decks/<deck-id>/`、`brief.md`（草案） | 入力に足りないものを聞くとき | 入力から brief.md を書き、ヒアリングへ |
 | 1b ヒアリング | `slide-hearing` | `brief.md` | 質問（聞き方は `slide-hearing/questions.md`）。brief.md（と outline-draft.md）の承認 | — |
-| 2 構成 | `slide-outline` | `outline.md`、`research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
+| 2 構成 | `slide-outline` | `outline.md`、`reference/research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
 | 2b ファクトチェック（構成のあと。「2回」のときだけ） | `slide-factcheck` | `factcheck.md`（`round: 構成のあと`） | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | fact-checker の実行 |
 | 3 HTML 作成（ライセンスを含む） | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml` | ビルドが不合格で、内容を変える直しが要るとき。見た目の直しを人間に頼まれたとき | 構成の承認のあと、ゲートが通ればそのままビルドする。見た目の直しは、承認を頼まずに直してビルドし直す |
 | 4 ファクトチェック | `slide-factcheck` | `factcheck.md` | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | 見た目の直しが済んだら、そのまま fact-checker を実行する |

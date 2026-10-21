@@ -14,11 +14,11 @@ round: 最後                                    # どの回か。brief.md の f
 
 ## 信頼して使う資料
 
-inputs/references/book-summary.md は書籍の要約として採用（brief.md）。資料と一致した記述は確かめたものとし、原本とは照らしていない。
+R-003（書籍の要約）は採用（brief.md）。資料と一致した記述は確かめたものとし、原本とは照らしていない。
 
 ## FC-101
 - slide: S04                                   # スライドの番号（outline.md の見出し）
-- claim_id: C-003                              # research.md の主張の ID。ID のない記述は「なし」
+- claim_id: C-003                              # research.md の主張の ID（C-）か、資料の ID（R-）。ID のない記述は「なし」
 - target: 「〇〇は2020年に提供開始」             # 対象の記述。outline.md から言葉を変えずに写す
 - level: P0                                    # P0・P1・要確認
 - problem: 公式のリリースノートでは提供開始は2021年4月

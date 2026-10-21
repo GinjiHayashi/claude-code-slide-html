@@ -1,8 +1,8 @@
 # research.md の書式
 
-`decks/<deck-id>/research.md` は、調査の結果を主張ごとにまとめるファイル。`researcher` の結果を呼び出し元がここにまとめ、`outline.md` の `claims` と `factcheck.md` が同じ ID で参照する。
+`decks/<deck-id>/reference/research.md`（前からのデッキはデッキの直下の `research.md`）は、調査の結果を主張ごとにまとめるファイル。`researcher` の結果を呼び出し元がここにまとめ、`outline.md` の `claims` と `factcheck.md` が同じ ID で参照する。
 
-チェック：`node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id>/research.md`
+チェック：`node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id>/reference/research.md`
 
 ## 書式
 

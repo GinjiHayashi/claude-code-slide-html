@@ -16,7 +16,7 @@
 ## チェック
 
 ```
-node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id>/research.md
+node .claude/skills/research-standards/scripts/check-research.mjs decks/<deck-id>/reference/research.md
 ```
 
 - 書式、必須の項目、確度と出典の食い違い、「引用しない」「除外」のドメインの出典をエラーにする。内容が正しいかは見ない（ファクトチェックで確かめる）。

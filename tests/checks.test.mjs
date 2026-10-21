@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { SKILLS, SAMPLE, tempDeck } from "./helpers.mjs";
 
-const { checkBrief, checkInputs } = await import(path.join(SKILLS, "slide-hearing/scripts/check-brief.mjs"));
+const { checkBrief, checkSources } = await import(path.join(SKILLS, "slide-hearing/scripts/check-brief.mjs"));
 const { checkOutline } = await import(path.join(SKILLS, "html-build/scripts/check-outline.mjs"));
 const { checkResearch } = await import(path.join(SKILLS, "research-standards/scripts/check-research.mjs"));
 const { checkFactcheck } = await import(path.join(SKILLS, "slide-factcheck/scripts/check-factcheck.mjs"));
@@ -38,24 +38,24 @@ test("brief.md：factcheck は「最後に1回」か「構成のあとと最後�
   assert.equal(brief("毎回"), true);
 });
 
-test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた資料が inputs/ になければエラー", () => {
+test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた ID が reference/ になければエラー", () => {
   const dir = tempDeck();
   const f = path.join(dir, "brief.md");
   const base = fs.readFileSync(f, "utf8");
   assert.ok(!checkBrief(base).missing.includes("信頼して使う資料")); // 見出しのない前からのデッキは聞かない
   assert.ok(checkBrief(base + "\n## 信頼して使う資料\n").missing.includes("信頼して使う資料"));
-  fs.mkdirSync(path.join(dir, "inputs"));
-  fs.copyFileSync(path.join(dir, "assets", "screen-entry.png"), path.join(dir, "inputs", "screen-entry.png")); // 入力の一覧にある元の資料
-  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- inputs/references/summary.md は書籍の要約として採用。原本との照合は不要\n");
-  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("「信頼して使う資料」の inputs/references/summary.md")));
+  const r = checkBrief(base + "\n## 信頼して使う資料\n\n- R-009 は書籍の要約として採用。原本との照合は不要\n- inputs/old.md は前からの書き方\n");
+  const e = checkSources(r.sections, dir);
+  assert.ok(e.some((x) => x.includes("「信頼して使う資料」の R-009 が reference/ の資料にない")));
+  assert.ok(e.some((x) => x.includes("「信頼して使う資料」の inputs/old.md が inputs/ にない")));
 });
 
-test("brief.md：inputs/ のファイルが入力の一覧にないとエラー", () => {
+test("brief.md：inputs/ の資料が md になっていないとエラー（reference.mjs の検査）", () => {
   const dir = tempDeck();
   fs.mkdirSync(path.join(dir, "inputs"), { recursive: true });
   fs.writeFileSync(path.join(dir, "inputs", "memo.txt"), "メモ");
   const r = checkBrief(fs.readFileSync(path.join(dir, "brief.md"), "utf8"));
-  assert.ok(checkInputs(r.sections, dir).some((e) => e.includes("inputs/memo.txt")));
+  assert.ok(checkSources(r.sections, dir).some((e) => e.includes("資料：inputs/memo.txt の md がない")));
 });
 
 test("見本の outline.md は書式の誤りがない", async () => {
@@ -221,8 +221,23 @@ test("outline.md：claims の ID が research.md にないとエラー", async (
   assert.ok(r.errors.some((e) => e.includes("C-999")));
 });
 
+test("outline.md：claims の R-ID は reference/ の資料にあれば通り、なければエラー。前からのデッキの直下の research.md も読む", async () => {
+  const dir = tempDeck();
+  fs.mkdirSync(path.join(dir, "reference/sources"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "reference/sources/R-001-memo.md"), "---\nid: R-001\nsource: inputs/memo.txt\n---\n\nメモ\n");
+  const body = (ids) => outline(["## S01", "- layout: title-body", "- title: t", "- lead: false", "- body: [a]", `- claims: [${ids}]`]);
+  fs.writeFileSync(path.join(dir, "outline.md"), body("R-001, C-001"));
+  assert.deepEqual((await checkOutline(path.join(dir, "outline.md"))).errors, []);
+  fs.writeFileSync(path.join(dir, "outline.md"), body("R-002"));
+  assert.ok((await checkOutline(path.join(dir, "outline.md"))).errors.some((e) => e.includes("R-002 が reference/ の資料にない")));
+  // 前からのデッキ：research.md が直下にある
+  fs.renameSync(path.join(dir, "reference/research.md"), path.join(dir, "research.md"));
+  fs.writeFileSync(path.join(dir, "outline.md"), body("C-001"));
+  assert.deepEqual((await checkOutline(path.join(dir, "outline.md"))).errors, []);
+});
+
 test("見本の research.md は書式の誤りがない", () => {
-  assert.deepEqual(checkResearch(read("research.md")).errors, []);
+  assert.deepEqual(checkResearch(read("reference/research.md")).errors, []);
 });
 
 test("research.md：確認済みなのに一次情報が1つならエラー", () => {

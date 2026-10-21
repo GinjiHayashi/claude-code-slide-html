@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import { YAML as YAMLlib, readApprovals, latest, sha256, readRequest, targetName } from "./approvals.mjs";
 import { checkGate, factcheckedChanges, timing, round } from "./gate.mjs";
-import { checkBrief, checkInputs } from "../../slide-hearing/scripts/check-brief.mjs";
+import { checkBrief, checkSources } from "../../slide-hearing/scripts/check-brief.mjs";
 import { checkStructure } from "../../slide-outline/scripts/check-structure.mjs";
 import { checkFactcheck } from "../../slide-factcheck/scripts/check-factcheck.mjs";
 import { frontMatter, isMain } from "../../../lib/common.mjs";
@@ -51,7 +51,7 @@ export function deckStatus(deckDir) {
   const briefFile = path.join(deckDir, "brief.md");
   if (!fs.existsSync(briefFile)) return at("1a 事前情報の取り込み", "brief.md がない", "slide-intake");
   const b = checkBrief(read(briefFile));
-  b.errors.push(...checkInputs(b.sections, deckDir));
+  b.errors.push(...checkSources(b.sections, deckDir));
   if (b.errors.length) return at("1a 事前情報の取り込み", "brief.md に書式の誤り", "slide-intake（直して check-brief.mjs を0件にする）", b.errors);
   // 承認済みで変わっていない brief.md は、あとから増えた項目（max_subagents など）が空でもヒアリングに戻さない（空の項目は既定の値で進む）
   if ((b.missing.length && approved(deckDir, approvals, "brief.md") !== "承認済み") || b.questions.length)

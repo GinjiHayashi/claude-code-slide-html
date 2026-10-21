@@ -52,7 +52,7 @@ description: スライド作成の全体の入口。新しいデッキを始め�
 |---|---|---|---|---|
 | 0 開始・1a 事前情報の取り込み | `slide-intake` | `decks/<deck-id>/`、`brief.md`（草案） | 入力に足りないものを聞くとき | 入力から brief.md を書き、ヒアリングへ |
 | 1b ヒアリング | `slide-hearing` | `brief.md` | 質問（聞き方は `slide-hearing/questions.md`）。brief.md（と outline-draft.md）の承認 | — |
-| 2 構成 | `slide-outline` | `outline.md`、`reference/research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
+| 2 構成 | `slide-outline` | `knowledge-map.md`（たたき台・相談のとき）、`outline.md`、`reference/research.md` | モードごとの相談（章立ての案、修正案、問題の報告）。outline.md の承認 | 調査（`researcher`） |
 | 2b ファクトチェック（構成のあと。「2回」のときだけ） | `slide-factcheck` | `factcheck.md`（`round: 構成のあと`） | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | fact-checker の実行 |
 | 3 HTML 作成（ライセンスを含む） | `html-build`（ライセンスはビルドの中で `license-notice` のスクリプトが行う） | `build/` の `deck.html`・`deck.pdf`・`build-log.md`・`assets-manifest.yaml` | ビルドが不合格で、内容を変える直しが要るとき。見た目の直しを人間に頼まれたとき | 構成の承認のあと、ゲートが通ればそのままビルドする。見た目の直しは、承認を頼まずに直してビルドし直す |
 | 4 ファクトチェック | `slide-factcheck` | `factcheck.md` | P0 の判断。outline.md と factcheck.md をまとめて1回で承認 | 見た目の直しが済んだら、そのまま fact-checker を実行する |

@@ -83,3 +83,69 @@ test("layers：Must だけで層を作り、同じ層は次の層で前提にな
     [["K-003", "K-002", "K-001"], ["K-004", "K-005"], ["K-006"]],
   );
 });
+
+// outline.md との突き合わせ（check-outline.mjs が checkConcepts を呼ぶ）
+const { checkOutline } = await import(path.join(SKILLS, "html-build/scripts/check-outline.mjs"));
+const { story } = await import(path.join(SKILLS, "slide-outline/scripts/story.mjs"));
+function outlineDeck(edit) {
+  const dir = tempDeck("2026-10-17-report-automation", ["brief.md", "outline.md", "reference/research.md", KNOWLEDGE]);
+  const f = path.join(dir, "outline.md");
+  fs.writeFileSync(f, edit(fs.readFileSync(f, "utf8")));
+  return f;
+}
+
+test("check-outline：見本は知識マップと合う（前方参照なし、Must はどれも new）", async () => {
+  const r = await checkOutline(outlineDeck((t) => t));
+  assert.deepEqual(r.errors, []);
+  assert.deepEqual(r.warnings, []);
+});
+
+test("check-outline：前方参照、表にない ID、new にならない Must はエラー", async () => {
+  const r = await checkOutline(
+    outlineDeck((t) =>
+      t
+        .replace("- uses: [K-001]\n", "- uses: [K-001, K-005]\n") // S05 で、S09 で説明する K-005 を使う
+        .replace("- new: [K-006, K-007]", "- new: [K-006, K-099]"),
+    ),
+  );
+  const e = r.errors.join("\n");
+  assert.match(e, /S05.*前方参照：uses の K-005（試行の結果）/);
+  assert.match(e, /S12.*K-099 が知識マップにない/);
+  assert.match(e, /Must の K-007（来年度の全部門への展開）を、どのスライドの new にもしていない/);
+});
+
+test("check-outline：問いがない、2回 new、抽象の Must の adept 不足は注意。形の誤りはエラー", async () => {
+  const r = await checkOutline(
+    outlineDeck((t) =>
+      t
+        .replace("- question: 時間はどこにかかっているか\n", "")
+        .replace("- uses: [K-003]\n", "- new: [K-003]\n- uses: [K-003]\n")
+        .replace("- adept: [E, T]", "- adept: [E]")
+        .replace("- question: 配る前に何を確かめるか", "- question: [配る前]\n- adept: [X]"),
+    ),
+  );
+  const w = r.warnings.join("\n");
+  assert.match(w, /S05.*question（このスライドが答える問い）がない/);
+  assert.match(w, /S10.*K-003（入力の画面の統一）は S08 でも new/);
+  assert.match(w, /S12.*抽象の Must の K-006/);
+  const e = r.errors.join("\n");
+  assert.match(e, /S14.*question は1文の文字列/);
+  assert.match(e, /S14.*adept は \[A, D, E, P, T\]/);
+});
+
+test("check-outline：知識マップがなければ突き合わせず、項目があれば注意だけ出す", async () => {
+  const f = outlineDeck((t) => t);
+  fs.rmSync(path.join(path.dirname(f), KNOWLEDGE));
+  const r = await checkOutline(f);
+  assert.deepEqual(r.errors, []);
+  assert.match(r.warnings.join("\n"), /knowledge-map\.md がないので、前方参照を確かめていない/);
+});
+
+test("story：番号・問い・タイトル・新出と使う概念の名前を並べる", () => {
+  const rows = story(path.dirname(outlineDeck((t) => t)));
+  const s09 = rows.find((r) => r.id === "S09");
+  assert.equal(s09.question, "変えた結果、作成時間はどれだけ減ったか");
+  assert.equal(s09.title, "作成時間は現状の 1/7 になる見込み");
+  assert.equal(s09.new, "K-005 試行の結果");
+  assert.equal(rows.find((r) => r.id === "S01").title, "月次レポート作成の自動化 試行の結果と全体展開の提案");
+});

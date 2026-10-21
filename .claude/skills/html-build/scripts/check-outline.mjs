@@ -8,6 +8,7 @@ import { DECK_ID, isMain, researchFile } from "../../../lib/common.mjs";
 import { readSources } from "../../slide-intake/scripts/reference.mjs";
 import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, IDEA, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
+import { KNOWLEDGE, parseKnowledge, conceptFieldErrors, checkConcepts } from "../../slide-outline/scripts/check-knowledge.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
 // 使い方：node check-outline.mjs decks/<deck-id>/outline.md
@@ -20,6 +21,8 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：C-001 は research.md（reference/research.md か、前からのデッキは直下）にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
 //   R-001 は reference/ の資料の md にある ID か（ないとエラー）。
+// question・new・uses・adept（構成のフレームワーク）：knowledge-map.md があれば突き合わせる（前方参照、new にならない Must はエラー。問いがないなどは注意）。
+//   知識マップの検査そのもの（循環など）は check-knowledge.mjs。知識マップが読めないときは突き合わせない。
 // 型の決まり（項目・数・文字数）は spec.mjs、図の項目は各部品の schema。
 // 終了コード：0＝エラーなし（注意はあってもよい）、2＝エラーあり（ほかのチェックと同じ）
 
@@ -297,6 +300,7 @@ export async function checkOutline(file) {
       err(s, "html: にスクリプト（script タグ・on〜 属性・javascript:）は書けない。スライドに動く処理は入れない");
     if (f.claims != null && (!Array.isArray(f.claims) || f.claims.some((c) => !/^[CR]-\d{3,}$/.test(c))))
       err(s, "claims は [C-001, R-002] の形にする（C は research.md の主張、R は reference/ の資料）");
+    for (const m of conceptFieldErrors(f)) err(s, m);
   }
   // claims と research.md・reference/ の突き合わせ（ファクトチェックが同じ ID で主張と出典を読むため）
   // C-001：AI の調査の主張（reference/research.md。前からのデッキは直下の research.md）。R-001：人が渡した資料の md（reference/sources/・chat/）
@@ -326,6 +330,18 @@ export async function checkOutline(file) {
       }
     }
   }
+  // 知識マップとの突き合わせ（slide-outline/structure-framework.md 3-4・4-2・5-2）
+  const km = path.join(path.dirname(file), KNOWLEDGE);
+  const conceptual = o.slides.some((s) => ["question", "new", "uses", "adept"].some((k) => s.fields[k] != null));
+  if (fs.existsSync(km)) {
+    const k = parseKnowledge(fs.readFileSync(km, "utf8"));
+    if (k.errors.length || !k.nodes.length) warnings.push(`${KNOWLEDGE} が読めないので、new・uses を確かめていない（check-knowledge.mjs で直す）`);
+    else {
+      const r = checkConcepts(o.slides, k.nodes);
+      for (const [s, m] of r.errors) s ? err(s, m) : errors.push(m);
+      for (const [s, m] of r.warnings) s ? warn(s, m) : warnings.push(m);
+    }
+  } else if (conceptual) warnings.push(`question・new・uses・adept を書いているが ${KNOWLEDGE} がないので、前方参照を確かめていない`);
   for (const a of deck.assets) if (a?.src && !usedAssets.has(a.src)) warnings.push(`assets の ${a.src} はどのスライドでも使っていない`);
   warnings.push(...layoutBalance(o.slides));
   return { errors, warnings, slides: o.slides.length };

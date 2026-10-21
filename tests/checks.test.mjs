@@ -38,6 +38,23 @@ test("brief.md：factcheck は「最後に1回」か「構成のあとと最後�
   assert.equal(brief("毎回"), true);
 });
 
+test("brief.md：ゴールの定義。資料の種類は解説型か提案型、前提知識は割合がなければ聞き、過半数に満たなければ注意。見出しのない前からのデッキは聞かない", () => {
+  const base = fs.readFileSync(path.join(SAMPLE, "brief.md"), "utf8");
+  const r = checkBrief(base);
+  assert.deepEqual([r.errors, r.warnings], [[], []]);
+  assert.ok(!r.missing.includes("前提知識の割合"));
+  const low = checkBrief(base.replace("- 2部門での試行：8割", "- 2部門での試行：3割"));
+  assert.ok(low.warnings.some((w) => w.includes("「2部門での試行」は聞き手の3割")));
+  assert.ok(checkBrief(base.replace("- 2部門での試行：8割", "- 2部門での試行")).missing.includes("前提知識の割合"));
+  assert.ok(checkBrief(base.replace("\n提案型\n", "\n説明\n")).errors.some((e) => e.includes("「資料の種類」の1行目")));
+  assert.ok(checkBrief(base.replace("\n提案型\n", "\n")).missing.includes("資料の種類"));
+  // 前からのデッキ：ゴールの見出しも前提知識の行もない
+  const old = base.replace(/## 終わったあとの行動[\s\S]*?(?=## 発表時間)/, "").replace(/- 月次レポートの作り方：10割\n- 2部門での試行：8割\n/, "");
+  const o = checkBrief(old);
+  assert.deepEqual(o.errors, []);
+  assert.ok(!o.missing.includes("資料の種類") && !o.missing.includes("前提知識の割合"));
+});
+
 test("brief.md：信頼して使う資料は、見出しがあって空なら聞く。書いた ID が reference/ になければエラー", () => {
   const dir = tempDeck();
   const f = path.join(dir, "brief.md");

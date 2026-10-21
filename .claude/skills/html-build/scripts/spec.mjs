@@ -126,7 +126,7 @@ export const LAYOUTS = {
   checklist: { required: ["title", "items"], optional: BODY, lead: true, text: { title: 30 }, checks: { min: 1, max: 8, text: 24 } },
   closing: { required: [], optional: ["contact", "email"], text: { contact: 50, email: 50 } },
 };
-// どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 5）
+// どの型にも書ける項目。idea・match は図（diagram・diagrams・html）のあるスライドに書く（slide-outline の手順 6）
 // id：スライドの安定した名前（例：tdd-intro）。番号（## S41）が変わっても、承認のときのスライドと対応づけるのに使う
 // change：人間が書く、図の変更の指示（スライドごと）。AI が図を直して idea に統合し、空にする（make-slides の「直すとき」、edit-check.mjs）。
 //   スライドには出さず、承認の sha256（approvals.mjs の slideDigests）にも入れない。残っている間は outline.md の承認を頼めない（request.mjs）

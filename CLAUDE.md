@@ -32,7 +32,7 @@
 | `inputs/` | 人間が渡した元の資料（記入シート `intake.md`、Excel、PDF、メモなど）。git の管理外 | 人間が置く。AI は書き換えない（スライドに載せる画像だけ `assets/` に移す） |
 | `reference/` | 元の資料を md にしたもの（`sources/`・`chat/`）と一覧 `index.md`、AI の調査 `research.md`。以降の工程はここを読む（`slide-intake/reference-format.md`） | `reference.mjs` が作り、AI が要約と読み取りと調査を書く |
 | `assets/` | スライドに載せる画像（`inputs/` から移したもの） | AI が移す |
-| フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml`、`worklog.jsonl`（作業記録） | 人間と AI（`approvals.yaml` は hook だけ。`worklog.jsonl` は hook とスクリプトだけ） |
+| フォルダの直下 | `brief.md`、`outline-draft.md`（人間の構成の草案。確認後は変えない）、`knowledge-map.md`（知識マップ）、`outline.md`、`factcheck.md`、`approvals.yaml`、`approval-request.yaml`、`worklog.jsonl`（作業記録） | 人間と AI（`approvals.yaml` は hook だけ。`worklog.jsonl` は hook とスクリプトだけ） |
 | `build/` | `deck.html`、`deck.pdf`、`build-log.md`、`assets-manifest.yaml`、`shots/`（確かめるための画像。git の管理外） | ビルドのスクリプトだけ。手で直さない |
 
 - 動作確認用のサンプルは `examples/sample-deck/` にある。

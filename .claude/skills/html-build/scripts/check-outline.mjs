@@ -257,7 +257,7 @@ export async function checkOutline(file) {
       }
     const n = (Array.isArray(ds) ? ds : []).filter((d) => d?.kind !== "kpi").length + (f.html && (f.diagram || f.diagrams) ? 1 : 0);
     if (n > 2) warn(s, `図が${n}つある（1枚に2つまで。人間の確認で見る）`);
-    // 図のイメージ（slide-outline の手順 5）：先に idea で絵を書き、match で部品で描けるかを決める
+    // 図のイメージ（slide-outline の手順 6）：先に idea で絵を書き、match で部品で描けるかを決める
     const hasFigure = !!(f.diagram || f.diagrams || f.html);
     const match = f.match == null ? null : String(f.match).trim();
     const matchKind = match && MATCHES.find((x) => match.startsWith(x));

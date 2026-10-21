@@ -3,7 +3,8 @@
 // 使い方：node .claude/skills/slide-hearing/scripts/check-brief.mjs decks/<deck-id>/brief.md
 // - 書式は slide-hearing/brief-template.md。空＝まだ聞いていない、「なし」＝聞いて不要とわかった
 // - 資料（reference/）の検査も行う：inputs/ の資料がすべて md になっているか、AI の読み取りが終わっているかなど（slide-intake/reference-format.md）
-// - 戻り値：{ errors（書式の誤り）, missing（空の項目）, questions（「確認したいこと」に書かれた行）, meta, sections }
+// - 戻り値：{ errors（書式の誤り）, missing（空の項目）, questions（「確認したいこと」に書かれた行）, warnings（前提知識の割合が過半数に満たない など）, meta, sections }
+// - ゴールの定義（終わったあとの行動・資料の種類・前提知識の割合）は slide-outline/structure-framework.md 1章
 // - 終了コード：0＝すべて埋まっている、1＝空の項目か確認したいことがある、2＝書式の誤り
 import fs from "fs";
 import path from "path";
@@ -21,12 +22,19 @@ export const SECTIONS = [
   "目的・この資料で決めたいこと",
   "聞き手と前提知識",
   "伝えたい結論（1文）",
+  "終わったあとの行動",
+  "資料の種類",
   "発表時間・枚数の目安",
   "調査が必要な項目",
   "必ず入れる要素・入れない要素",
   "構成の進め方",
 ];
 export const PLAN = ["決まっている", "たたき台がある", "相談して決めたい"];
+// ゴールの定義（slide-outline/structure-framework.md 1章）で足した見出し。前からのデッキにはないので、見出しがなければ聞かない
+export const GOAL = ["終わったあとの行動", "資料の種類"];
+export const KINDS = ["解説型", "提案型"];
+// 前提知識：「聞き手と前提知識」の「- 概念：N割」の行。聞き手の過半数（5割）に満たない概念は、前提知識から外して構成で説明する
+export const PRIOR_MAJORITY = 5;
 // 信頼して使う資料（fact-checker が、原本と照らさずに「確かめた」と扱う資料）。1行に1つ、資料の ID（R-001）を先頭に書く
 export const TRUSTED = "信頼して使う資料";
 const NONE = "なし";
@@ -34,7 +42,8 @@ const NONE = "なし";
 export function checkBrief(text) {
   const errors = [],
     missing = [],
-    missingMeta = [];
+    missingMeta = [],
+    warnings = [];
   const m = frontMatter(text);
   let meta = {};
   if (!m) errors.push("先頭に --- で囲んだ設定（deck_id など）がない");
@@ -84,8 +93,28 @@ export function checkBrief(text) {
   }
   // 空の項目は、ヒアリングで聞く順（questions.md の表の順：本文の見出し → 先頭の設定）に並べる
   for (const s of SECTIONS) {
-    if (!(s in sections)) errors.push(`見出し「## ${s}」がない`);
-    else if (!sections[s]) missing.push(s);
+    if (!(s in sections)) {
+      if (!GOAL.includes(s)) errors.push(`見出し「## ${s}」がない`);
+    } else if (!sections[s]) missing.push(s);
+  }
+  // 資料の種類：1行目は解説型か提案型
+  const kind = sections["資料の種類"];
+  if (kind && !KINDS.some((k) => kind.replace(/^[-*]\s*/, "").startsWith(k))) errors.push(`「資料の種類」の1行目は ${KINDS.join("・")} のどちらかで始める`);
+  // 前提知識の割合（ゴールの見出しのあるデッキだけ）：「- 概念：N割」。割合のない行は聞く。過半数に満たない概念は注意
+  if (GOAL.some((g) => g in sections) && sections["聞き手と前提知識"]) {
+    const items = sections["聞き手と前提知識"].split("\n").filter((l) => /^\s*[-*]\s+/.test(l));
+    const ratio = (l) => {
+      const m = l.match(/(\d+(?:\.\d+)?)\s*割/) ?? l.match(/(\d+(?:\.\d+)?)\s*[%％]/);
+      return m ? (m[0].includes("割") ? +m[1] : +m[1] / 10) : null;
+    };
+    if (!items.length || items.some((l) => ratio(l) === null)) missing.push("前提知識の割合");
+    for (const l of items) {
+      const r = ratio(l);
+      if (r !== null && r < PRIOR_MAJORITY)
+        warnings.push(
+          `前提知識「${l.replace(/^\s*[-*]\s+/, "").split(/[：:]/)[0]}」は聞き手の${r}割しか説明できない。前提知識から外し、構成で説明する概念にする（structure-framework.md 1章）`,
+        );
+    }
   }
   // 信頼して使う資料：見出しは任意（前からのデッキにはない）。見出しがあって空なら、まだ聞いていない
   if (TRUSTED in sections && !sections[TRUSTED]) missing.push(TRUSTED);
@@ -97,7 +126,7 @@ export function checkBrief(text) {
     .split("\n")
     .map((l) => l.replace(/^[-*]\s*/, "").trim())
     .filter(Boolean);
-  return { errors, missing, questions, meta, sections };
+  return { errors, missing, questions, warnings, meta, sections };
 }
 
 // 信頼して使う資料（各行の先頭の R-001。前からのデッキは inputs/…）
@@ -140,6 +169,7 @@ if (isMain(import.meta.url)) {
   r.errors.push(...checkSources(r.sections, path.dirname(file)));
   for (const e of r.errors) console.log(`エラー  ${e}`);
   for (const k of r.missing) console.log(`空      ${k}`);
+  for (const w of r.warnings) console.log(`注意    ${w}`);
   for (const q of r.questions) console.log(`確認    ${q}`);
   console.log(`エラー ${r.errors.length}件、空の項目 ${r.missing.length}件、確認したいこと ${r.questions.length}件`);
   process.exit(r.errors.length ? 2 : r.missing.length || r.questions.length ? 1 : 0);

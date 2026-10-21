@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { readOutline, width, plain, LEAD, LEAD_LIMIT } from "./outline.mjs";
 import { checkResearch } from "../../research-standards/scripts/check-research.mjs";
 import { DECK_ID, isMain } from "../../../lib/common.mjs";
-import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, allowedFields } from "./spec.mjs";
+import { MATCHES, KINDS, LAYOUTS, SUB_ITEMS, BOLD, LEAD_BOLD, BULLETS, VARIETY, SLIDE_ID, IDEA, allowedFields } from "./spec.mjs";
 import { isIconRef, readIcon } from "../components/_asset.mjs";
 
 // 書式チェック：outline.md をビルドの前に検査する。
@@ -13,7 +13,8 @@ import { isIconRef, readIcon } from "../components/_asset.mjs";
 // - エラー（ビルドを止める）：型や図の名前が一覧にない、必須の項目がない、知らない項目（書き間違い）、
 //   数の上限（箇条書きの数など）を超えた、図のデータが部品の決まりに合わない、スライドの番号の重複。
 // - 注意（止めずに報告し、人間の確認で見る）：文字数の目安を超えた（最後はブラウザで実際の行数を測る）、
-//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた。
+//   図が3つ以上、太字の数、独自の表現（html:）を使った、図のイメージ（idea・match）がない、match と描き方が合わない、idea に順序がないと書いたのに steps で描いた、
+//   idea が長い（spec.mjs の IDEA）、図の変更の指示（change）が残っている。
 // match は そのまま・意味が欠ける・描けない のどれかで始める（そのまま以外は「：」のあとに理由）。違えばエラー。
 // html: の中のスクリプト（script タグ・on〜 属性・javascript:）はエラー。
 // claims：同じフォルダの research.md にある主張の ID か（ない ID、使わなくなった主張はエラー。確度が未確認・矛盾あり、推測の主張は注意）。
@@ -259,6 +260,17 @@ export async function checkOutline(file) {
     if (hasFigure && !f.idea) warn(s, "図のイメージ（idea）がない。部品を選ぶ前に、見せたい絵を1〜3行で書く");
     if (hasFigure && match == null) warn(s, `match がない（${MATCHES.join("・")}）`);
     if (!hasFigure && (f.idea || match != null)) warn(s, "idea・match があるのに図がない");
+    // idea は足していかず、今の絵の説明に書き換える（change の統合。make-slides の「直すとき」）
+    if (typeof f.idea === "string") {
+      const lines = f.idea.replace(/\n+$/, "").split("\n").length;
+      const n = width(plain(f.idea));
+      if (lines > IDEA.lines || n > IDEA.chars)
+        warn(s, `idea が長い（${lines}行、全角${n}字。目安は${IDEA.lines}行・${IDEA.chars}字まで）。足していかず、今の絵の説明に書き換える`);
+    }
+    // change：人間が書く図の変更の指示。図を直したら idea に統合して空にする
+    if (f.change != null && typeof f.change !== "string") err(s, "change は文章で書く（図の変更の指示）");
+    else if (typeof f.change === "string" && f.change.trim())
+      warn(s, "図の変更の指示（change）が残っている。図を直して idea に統合し、change を空にする（make-slides の「直すとき」）");
     if (match != null && !matchKind) err(s, `match は ${MATCHES.join("・")} のどれかで始める`);
     else if (matchKind && matchKind !== MATCHES[0] && !/^[^：:]+[：:]\s*\S/.test(match))
       err(s, `match が「${matchKind}」のときは「：」のあとに、何が欠けるか・なぜ描けないかを書く`);

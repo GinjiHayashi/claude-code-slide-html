@@ -51,6 +51,7 @@ const words = (v, key, out) => {
   }
   return out;
 };
+// change（図の変更の指示）は比べない。指示を書いても、図を直して空にしても、それだけでは変わった扱いにしない（spec.mjs の COMMON）
 export function slideDigests(text) {
   let o;
   try {
@@ -58,12 +59,15 @@ export function slideDigests(text) {
   } catch {
     return null;
   }
-  return o.slides.map((s) => ({
-    slide: s.id,
-    ...(typeof s.fields.id === "string" ? { id: s.fields.id } : {}),
-    text: sha256(JSON.stringify(Object.entries(s.fields).flatMap(([k, v]) => words(v, k, [])))),
-    all: sha256(JSON.stringify(s.fields)),
-  }));
+  return o.slides.map((s) => {
+    const { change, ...fields } = s.fields;
+    return {
+      slide: s.id,
+      ...(typeof fields.id === "string" ? { id: fields.id } : {}),
+      text: sha256(JSON.stringify(Object.entries(fields).flatMap(([k, v]) => words(v, k, [])))),
+      all: sha256(JSON.stringify(fields)),
+    };
+  });
 }
 
 // 前の記録（then）と今（now）のスライドを対応づけて、変わったものを返す。

@@ -52,8 +52,8 @@ test("edit-check：change のないスライド・図のほかの項目が変わ
   write(
     dir,
     read(dir)
-      .replace("- title: 作成時間の内訳", "- title: 作成時間の内訳（部署別）") // S05 の文
-      .replace("- title: 今の作成手順", "- title: 今の作成の手順"), // S06（change なし）
+      .replace("- title: 作成時間の3割を窓口サービスが占める", "- title: 作成時間の3割を窓口サービスが占めている") // S05 の文
+      .replace("- title: 手での貼り合わせに最も時間がかかっている", "- title: 手での貼り合わせに一番時間がかかっている"), // S06（change なし）
   );
   const r = end(dir);
   assert.ok(r.errors.some((e) => e.startsWith("S05：図のほかの項目が変わった（title）")));
